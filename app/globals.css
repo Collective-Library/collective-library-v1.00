@@ -1,26 +1,172 @@
 @import "tailwindcss";
 
+/* =====================================================================
+   Collective Library — Design Tokens
+   Foundation: Notion warm-neutral grammar, pushed warmer toward parchment
+   to match the letterpress feel of the brand monogram.
+   Marketplace patterns: Airbnb (photo-first cards, pill search, sticky CTA).
+   Brand voltage: warm sepia/walnut from the logo (#3D2E1F) — used scarcely.
+   ===================================================================== */
+
+@theme {
+  /* --- Brand & ink --- */
+  --color-ink: #3D2E1F;          /* logo brown — primary brand voltage */
+  --color-ink-soft: #5A4632;     /* secondary text */
+  --color-muted: #8B7355;        /* tertiary text, captions */
+  --color-muted-soft: #B5A188;   /* placeholder, disabled */
+
+  /* --- Surfaces --- */
+  --color-parchment: #F0E8D8;    /* page canvas — warm cream */
+  --color-cream: #F9F4E8;        /* section alternation */
+  --color-paper: #FFFFFF;        /* card surface */
+
+  /* --- Lines & borders (whisper, ink at low opacity) --- */
+  --color-hairline: rgb(61 46 31 / 0.10);
+  --color-hairline-soft: rgb(61 46 31 / 0.06);
+  --color-hairline-strong: rgb(61 46 31 / 0.20);
+
+  /* --- Status badges (book status pills) --- */
+  --color-sell: #C2410C;         /* warmed orange */
+  --color-sell-bg: #FDEDD8;
+  --color-lend: #166534;         /* warmed forest green */
+  --color-lend-bg: #DCEFE0;
+  --color-trade: #6D28D9;        /* deep violet */
+  --color-trade-bg: #EDE5FB;
+  --color-wanted: #B45309;       /* amber */
+  --color-wanted-bg: #FCEFD3;
+  --color-unavailable: #8B7355;
+  --color-unavailable-bg: #EFE8DA;
+
+  /* --- Semantic --- */
+  --color-error: #B91C1C;
+  --color-success: #166534;
+
+  /* --- Typography --- */
+  --font-display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* --- Type scale (Notion-derived, with display family for hero moments) --- */
+  --text-display-hero: 56px;
+  --text-display-hero--line-height: 1.04;
+  --text-display-hero--letter-spacing: -1.4px;
+
+  --text-display-xl: 40px;
+  --text-display-xl--line-height: 1.08;
+  --text-display-xl--letter-spacing: -1px;
+
+  --text-display-lg: 32px;
+  --text-display-lg--line-height: 1.12;
+  --text-display-lg--letter-spacing: -0.6px;
+
+  --text-display-md: 26px;
+  --text-display-md--line-height: 1.20;
+  --text-display-md--letter-spacing: -0.4px;
+
+  --text-title-lg: 22px;
+  --text-title-lg--line-height: 1.27;
+  --text-title-lg--letter-spacing: -0.25px;
+
+  --text-title-md: 18px;
+  --text-title-md--line-height: 1.33;
+  --text-title-md--letter-spacing: -0.15px;
+
+  --text-title-sm: 16px;
+  --text-title-sm--line-height: 1.4;
+
+  --text-body-lg: 17px;
+  --text-body-lg--line-height: 1.55;
+
+  --text-body: 15px;
+  --text-body--line-height: 1.55;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.5;
+
+  --text-caption: 13px;
+  --text-caption--line-height: 1.4;
+
+  --text-badge: 11px;
+  --text-badge--line-height: 1.2;
+  --text-badge--letter-spacing: 0.25px;
+
+  /* --- Spacing scale (4px base) --- */
+  --spacing-section: 80px;
+
+  /* --- Radii --- */
+  --radius-button: 8px;
+  --radius-card: 12px;
+  --radius-card-lg: 16px;
+  --radius-pill: 9999px;
+
+  /* --- Shadows (Notion multi-layer) --- */
+  --shadow-card: 0 4px 18px 0 rgb(61 46 31 / 0.04),
+                 0 2.025px 7.85px 0 rgb(61 46 31 / 0.027),
+                 0 0.8px 2.925px 0 rgb(61 46 31 / 0.02),
+                 0 0.175px 1.04px 0 rgb(61 46 31 / 0.01);
+  --shadow-card-hover: 0 6px 24px 0 rgb(61 46 31 / 0.06),
+                       0 3px 10px 0 rgb(61 46 31 / 0.035),
+                       0 1.2px 4px 0 rgb(61 46 31 / 0.025),
+                       0 0.3px 1.5px 0 rgb(61 46 31 / 0.015);
+  --shadow-modal: 0 1px 3px 0 rgb(61 46 31 / 0.01),
+                  0 3px 7px 0 rgb(61 46 31 / 0.02),
+                  0 7px 15px 0 rgb(61 46 31 / 0.02),
+                  0 14px 28px 0 rgb(61 46 31 / 0.04),
+                  0 23px 52px 0 rgb(61 46 31 / 0.05);
+}
+
+/* =====================================================================
+   Base layer
+   ===================================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "lnum", "locl";
+  text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  font-weight: 400;
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-parchment);
+}
+
+/* Display headings carry the editorial / bookish voice */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 400; /* DM Serif Display only ships 400 */
+}
+
+/* Whisper border utility */
+.border-hairline {
+  border-color: var(--color-hairline);
+}
+
+/* Focus visible — soft ink ring */
+*:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Hide scrollbar utility for horizontal pill rows */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

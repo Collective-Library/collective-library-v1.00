@@ -1,0 +1,147 @@
+// =============================================================================
+// Collective Library — shared types (mirrors supabase/migrations/0001_init.sql)
+// =============================================================================
+
+export type BookStatus = "sell" | "lend" | "trade" | "unavailable";
+export type BookVisibility = "public" | "community" | "trusted";
+export type BookCondition = "new" | "like_new" | "good" | "used" | "heavily_used";
+export type ContactMethod = "whatsapp" | "instagram" | "discord";
+export type BookSource = "manual" | "goodreads_import";
+export type WantedStatus = "open" | "fulfilled" | "closed";
+export type CommunityRole = "member" | "moderator" | "admin";
+export type ReportTargetType = "book" | "user" | "wanted";
+
+export interface Profile {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  photo_url: string | null;
+  cover_url: string | null;
+  city: string | null;
+  address_area: string | null;
+  bio: string | null;
+  instagram: string | null;
+  whatsapp: string | null;
+  whatsapp_public: boolean;
+  discord: string | null;
+  goodreads_url: string | null;
+  storygraph_url: string | null;
+  campus_or_workplace: string | null;
+  favorite_genres: string[] | null;
+  open_for_discussion: boolean;
+  open_for_lending: boolean;
+  open_for_selling: boolean;
+  open_for_trade: boolean;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Community {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  city: string | null;
+  cover_url: string | null;
+  created_at: string;
+}
+
+export interface CommunityMember {
+  user_id: string;
+  community_id: string;
+  role: CommunityRole;
+  joined_at: string;
+}
+
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  isbn: string | null;
+  cover_url: string | null;
+  genre: string | null;
+  language: string;
+  publisher: string | null;
+  description: string | null;
+  owner_id: string;
+  community_id: string | null;
+  status: BookStatus;
+  visibility: BookVisibility;
+  condition: BookCondition;
+  price: number | null;
+  negotiable: boolean;
+  lending_duration_days: number | null;
+  deposit_required: boolean;
+  deposit_amount: number | null;
+  pickup_area: string | null;
+  contact_method: ContactMethod;
+  notes: string | null;
+  source: BookSource;
+  is_featured: boolean;
+  is_hidden: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A Book joined with its owner profile (for shelf cards & detail). */
+export interface BookWithOwner extends Book {
+  owner: Pick<Profile, "id" | "full_name" | "username" | "photo_url" | "city" | "whatsapp" | "whatsapp_public" | "instagram" | "discord" | "goodreads_url" | "storygraph_url">;
+  community: Pick<Community, "id" | "name" | "slug"> | null;
+}
+
+export interface WantedRequest {
+  id: string;
+  requester_id: string;
+  title: string;
+  author: string | null;
+  max_budget: number | null;
+  desired_condition: string | null;
+  city: string | null;
+  notes: string | null;
+  status: WantedStatus;
+  created_at: string;
+}
+
+/** A WantedRequest joined with its requester profile (contact pills). */
+export interface WantedRequestWithRequester extends WantedRequest {
+  requester: Pick<
+    Profile,
+    "id" | "full_name" | "username" | "photo_url" | "city" | "whatsapp" | "whatsapp_public" | "instagram" | "discord" | "goodreads_url" | "storygraph_url"
+  >;
+}
+
+export interface SavedBook {
+  user_id: string;
+  book_id: string;
+  created_at: string;
+}
+
+/** Form value types — what the Add Book form posts. */
+export interface BookFormValues {
+  title: string;
+  author: string;
+  status: BookStatus;
+  isbn?: string;
+  cover_url?: string;
+  genre?: string;
+  language?: string;
+  publisher?: string;
+  description?: string;
+  condition?: BookCondition;
+  price?: number;
+  negotiable?: boolean;
+  lending_duration_days?: number;
+  pickup_area?: string;
+  contact_method?: ContactMethod;
+  notes?: string;
+}
+
+/** Profile completion check — at least one contact method + username. */
+export function isProfileComplete(p: Profile | null): p is Profile {
+  if (!p) return false;
+  if (!p.username) return false;
+  return Boolean(
+    p.instagram || p.whatsapp || p.discord || p.goodreads_url || p.storygraph_url,
+  );
+}
