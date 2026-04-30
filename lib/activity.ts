@@ -47,15 +47,36 @@ const SELECT = `
 
 /**
  * Reads the unified activity feed from public.activity_log.
- * Replaces lib/books.ts:getRecentBookActivity once the migration is run.
+ * Optional `interest` filter narrows to events whose actor has that interest slug.
  */
-export async function listActivity(limit = 50): Promise<ActivityItem[]> {
+export async function listActivity(
+  limitOrOpts: number | { limit?: number; interest?: string } = 50,
+): Promise<ActivityItem[]> {
+  const opts =
+    typeof limitOrOpts === "number" ? { limit: limitOrOpts } : limitOrOpts;
+  const limit = opts.limit ?? 50;
+
   const supabase = await createClient();
-  const { data, error } = await supabase
+
+  let actorIds: string[] | null = null;
+  if (opts.interest) {
+    const { data: matchingProfiles } = await supabase
+      .from("profiles_public")
+      .select("id")
+      .contains("interests", [opts.interest]);
+    actorIds = (matchingProfiles ?? []).map((p) => p.id as string);
+    if (actorIds.length === 0) return [];
+  }
+
+  let query = supabase
     .from("activity_log")
     .select(SELECT)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (actorIds) {
+    query = query.in("actor_user_id", actorIds);
+  }
+  const { data, error } = await query;
 
   if (error) {
     console.error("listActivity", error);

@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProfileByUsername, getProfileCommunities } from "@/lib/profile";
 import { getBooksByOwnerUsername } from "@/lib/books";
 import { getCurrentUser } from "@/lib/auth";
 import { getContactLinks } from "@/lib/contact";
 import { profileUrl } from "@/lib/url";
+import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/ui/avatar";
 import { CommunityBadge } from "@/components/ui/community-badge";
 import { SecondaryContactRow } from "@/components/books/contact-pills";
@@ -38,11 +40,37 @@ export default async function ProfilePage({
     { sell: 0, lend: 0, trade: 0, unavailable: 0 },
   );
 
+  // Currently reading book — fetched separately to keep type clean
+  type CurrentlyReading = { id: string; title: string; author: string; cover_url: string | null };
+  let currentlyReading: CurrentlyReading | null = null;
+  if (profile.currently_reading_book_id) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("books")
+      .select("id, title, author, cover_url")
+      .eq("id", profile.currently_reading_book_id)
+      .maybeSingle();
+    if (data) currentlyReading = data as unknown as CurrentlyReading;
+  }
+
   const url = profileUrl(profile.username);
   const cityLine = [profile.city, profile.address_area].filter(Boolean).join(" · ");
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Banner — only when present */}
+      {profile.cover_url && (
+        <div className="-mx-4 md:-mx-6 mb-6 overflow-hidden md:rounded-card-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={profile.cover_url}
+            alt=""
+            className="w-full h-32 md:h-48 object-cover"
+            loading="eager"
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start gap-5 mb-7">
         <Avatar src={profile.photo_url} name={profile.full_name} size={88} />
@@ -86,6 +114,38 @@ export default async function ProfilePage({
           )}
         </div>
       </div>
+
+      {/* Currently reading widget */}
+      {currentlyReading && (
+        <Link
+          href={`/book/${currentlyReading.id}`}
+          className="mb-7 flex items-center gap-3 p-3 -ml-1 -mr-1 rounded-card bg-paper border border-hairline hover:bg-cream transition-colors"
+        >
+          <span className="text-[20px]" aria-hidden>📖</span>
+          <div className="w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline">
+            {currentlyReading.cover_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={currentlyReading.cover_url}
+                alt=""
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : null}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-caption text-muted uppercase tracking-wide font-semibold">
+              Currently reading
+            </p>
+            <p className="text-body-sm font-semibold text-ink line-clamp-1">
+              {currentlyReading.title}
+            </p>
+            <p className="text-caption text-muted line-clamp-1">
+              {currentlyReading.author}
+            </p>
+          </div>
+        </Link>
+      )}
 
       {/* Contact pills */}
       {links.length > 0 ? (

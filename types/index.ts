@@ -37,6 +37,7 @@ export interface Profile {
   open_for_selling: boolean;
   open_for_trade: boolean;
   is_admin: boolean;
+  currently_reading_book_id: string | null;
   created_at: string;
   updated_at: string;
 }

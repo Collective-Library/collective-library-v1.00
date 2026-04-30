@@ -11,9 +11,23 @@ import { InterestChips } from "@/components/profile/interest-chips";
 import { slugify } from "@/lib/format";
 import type { Profile } from "@/types";
 
-export function ProfileEditForm({ initial }: { initial: Profile }) {
+interface MyBook {
+  id: string;
+  title: string;
+  author: string;
+  cover_url: string | null;
+}
+
+export function ProfileEditForm({
+  initial,
+  myBooks = [],
+}: {
+  initial: Profile;
+  myBooks?: MyBook[];
+}) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const bannerRef = useRef<HTMLInputElement>(null);
 
   // Identity
   const [fullName, setFullName] = useState(initial.full_name ?? "");
@@ -30,9 +44,19 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
   const [campus, setCampus] = useState(initial.campus_or_workplace ?? "");
   const [interests, setInterests] = useState<string[]>(initial.interests ?? []);
 
-  // Photo
+  // Currently reading (W2)
+  const [currentlyReading, setCurrentlyReading] = useState<string>(
+    initial.currently_reading_book_id ?? "",
+  );
+
+  // Photo (avatar)
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(initial.photo_url);
+
+  // Banner (cover image at top of profile)
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(initial.cover_url);
+  const [removeBanner, setRemoveBanner] = useState(false);
 
   // Contact
   const [instagram, setInstagram] = useState(initial.instagram ?? "");
@@ -60,6 +84,18 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
     }
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  function onBannerFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Ukuran banner maks 5MB.");
+      return;
+    }
+    setBannerFile(file);
+    setBannerPreview(URL.createObjectURL(file));
+    setRemoveBanner(false);
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -101,6 +137,24 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
       photo_url = `${pub.publicUrl}?t=${Date.now()}`;
     }
 
+    // Banner resolution: remove → null, new file → upload, else keep existing
+    let cover_url: string | null = initial.cover_url;
+    if (removeBanner) {
+      cover_url = null;
+    } else if (bannerFile) {
+      const ext = bannerFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const path = `${initial.id}/banner.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("book-covers")
+        .upload(path, bannerFile, { upsert: true, contentType: bannerFile.type });
+      if (upErr) {
+        setSaving(false);
+        return setError(`Upload banner gagal: ${upErr.message}`);
+      }
+      const { data: pub } = supabase.storage.from("book-covers").getPublicUrl(path);
+      cover_url = `${pub.publicUrl}?t=${Date.now()}`;
+    }
+
     const { error: updErr } = await supabase
       .from("profiles")
       .update({
@@ -113,6 +167,8 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
           ? genres.split(",").map((g) => g.trim()).filter(Boolean)
           : null,
         photo_url,
+        cover_url,
+        currently_reading_book_id: currentlyReading || null,
         instagram: instagram.trim() || null,
         whatsapp: whatsapp.replace(/\D/g, "") || null,
         whatsapp_public: whatsappPublic && Boolean(whatsapp),
@@ -149,12 +205,55 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
 
   return (
     <form onSubmit={onSubmit} className="bg-paper border border-hairline rounded-card-lg shadow-card p-6 md:p-8 flex flex-col gap-6">
+      {/* Banner */}
+      <div className="flex flex-col gap-2">
+        <p className="text-caption font-medium text-ink-soft">Banner / cover</p>
+        <button
+          type="button"
+          onClick={() => bannerRef.current?.click()}
+          className="relative h-32 w-full rounded-card-lg overflow-hidden border border-hairline-strong hover:border-ink transition-colors bg-cream"
+          aria-label="Ganti banner"
+        >
+          {bannerPreview && !removeBanner ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={bannerPreview} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-caption text-muted">
+              + Tambah banner (1280×400 ideal)
+            </div>
+          )}
+        </button>
+        <input
+          ref={bannerRef}
+          type="file"
+          accept="image/*"
+          onChange={onBannerFile}
+          className="hidden"
+        />
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-caption text-muted">Klik banner buat ganti. Maks 5MB.</p>
+          {(bannerPreview || initial.cover_url) && !removeBanner && (
+            <button
+              type="button"
+              onClick={() => {
+                setRemoveBanner(true);
+                setBannerFile(null);
+                setBannerPreview(null);
+              }}
+              className="text-caption text-(--color-error) underline underline-offset-4"
+            >
+              Hapus banner
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Photo */}
       <div className="flex items-center gap-5">
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="relative w-20 h-20 rounded-pill overflow-hidden border border-hairline-strong hover:border-ink transition-colors"
+          className="relative w-20 h-20 rounded-pill overflow-hidden border border-hairline-strong hover:border-ink transition-colors shrink-0"
           aria-label="Ganti foto profil"
         >
           {photoPreview ? (
@@ -326,6 +425,34 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
       />
 
       <InterestChips value={interests} onChange={setInterests} min={3} />
+
+      {/* Currently reading — pick one of your own books */}
+      <div className="flex flex-col gap-2">
+        <p className="text-caption font-medium text-ink-soft">
+          Currently reading (opsional)
+        </p>
+        {myBooks.length === 0 ? (
+          <p className="text-caption text-muted">
+            Tambah buku ke rak lo dulu, baru bisa pilih yang lagi lo baca.
+          </p>
+        ) : (
+          <select
+            value={currentlyReading}
+            onChange={(e) => setCurrentlyReading(e.target.value)}
+            className="h-12 px-3.5 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] transition-colors appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%238B7355%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3e%3cpolyline%20points=%276%209%2012%2015%2018%209%27%3e%3c/polyline%3e%3c/svg%3e')] bg-no-repeat bg-[right_12px_center] bg-[length:18px] pr-10"
+          >
+            <option value="">— Lagi gak baca apa-apa —</option>
+            {myBooks.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.title} — {b.author}
+              </option>
+            ))}
+          </select>
+        )}
+        <p className="text-caption text-muted">
+          Tampil di header profil lo. Cuma buku-buku yang ada di rak lo yang bisa dipilih.
+        </p>
+      </div>
 
       <hr className="border-hairline" />
 

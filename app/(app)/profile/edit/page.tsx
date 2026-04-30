@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { ProfileEditForm } from "./profile-edit-form";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +8,15 @@ export const dynamic = "force-dynamic";
 export default async function ProfileEditPage() {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/auth/login");
+
+  // Fetch user's own books for the "Currently reading" picker
+  const supabase = await createClient();
+  const { data: myBooks } = await supabase
+    .from("books")
+    .select("id, title, author, cover_url")
+    .eq("owner_id", profile.id)
+    .eq("is_hidden", false)
+    .order("title", { ascending: true });
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -16,10 +26,13 @@ export default async function ProfileEditPage() {
           Edit profil lo
         </h1>
         <p className="mt-2 text-body text-muted">
-          Update info, foto, atau cara orang ngehubungin lo.
+          Update info, foto, banner, atau cara orang ngehubungin lo.
         </p>
       </div>
-      <ProfileEditForm initial={profile} />
+      <ProfileEditForm
+        initial={profile}
+        myBooks={(myBooks ?? []) as { id: string; title: string; author: string; cover_url: string | null }[]}
+      />
     </div>
   );
 }

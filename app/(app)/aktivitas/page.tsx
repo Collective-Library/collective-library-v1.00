@@ -1,14 +1,21 @@
 import Link from "next/link";
 import { listActivity } from "@/lib/activity";
+import { BROAD_INTERESTS } from "@/lib/interests";
 import { ActivityFeedList } from "@/components/activity/activity-feed-list";
 import { ButtonLink } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
 
-export default async function AktivitasPage() {
-  // Pull a generous window — ~50 entries. When traffic grows, paginate via
-  // ?offset= and add a "Load more" client component.
-  const items = await listActivity(50);
+type SP = { interest?: string };
+
+export default async function AktivitasPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP>;
+}) {
+  const { interest } = await searchParams;
+  const items = await listActivity({ limit: 50, interest });
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
@@ -44,6 +51,34 @@ export default async function AktivitasPage() {
         </a>
       </div>
 
+      {/* Interest filter — narrow feed to events from members with that interest */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <p className="text-caption font-semibold text-ink-soft uppercase tracking-wide">
+            Filter by interest
+          </p>
+          {interest && (
+            <Link
+              href="/aktivitas"
+              className="text-caption text-muted hover:text-ink underline underline-offset-4"
+            >
+              Reset
+            </Link>
+          )}
+        </div>
+        <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
+          <FilterPill href="/aktivitas" active={!interest} label="Semua" />
+          {BROAD_INTERESTS.map((i) => (
+            <FilterPill
+              key={i.slug}
+              href={`/aktivitas?interest=${i.slug}`}
+              active={interest === i.slug}
+              label={`${i.emoji} ${i.label}`}
+            />
+          ))}
+        </div>
+      </div>
+
       <ActivityFeedList items={items} />
 
       <div className="pt-2">
@@ -52,6 +87,30 @@ export default async function AktivitasPage() {
         </ButtonLink>
       </div>
     </div>
+  );
+}
+
+function FilterPill({
+  href,
+  active,
+  label,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "shrink-0 inline-flex items-center h-9 px-4 rounded-pill text-body-sm font-medium transition-colors",
+        active
+          ? "bg-ink text-parchment"
+          : "bg-paper text-ink-soft border border-hairline hover:bg-cream",
+      )}
+    >
+      {label}
+    </Link>
   );
 }
 
