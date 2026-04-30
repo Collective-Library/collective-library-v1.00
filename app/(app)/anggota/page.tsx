@@ -1,10 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { listMembers, listAreas, type AreaOption } from "@/lib/profile";
 import { BROAD_INTERESTS, INTENTS } from "@/lib/interests";
 import { MemberCard } from "@/components/profile/member-card";
 import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Anggota komunitas",
+  description:
+    "Direktori anggota Collective Library. Cari pembaca sefrekuensi by area, interest, atau mode (pinjam / jual / tukar).",
+};
 
 type SP = {
   interest?: string;

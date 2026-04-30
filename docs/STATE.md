@@ -139,6 +139,12 @@ If all four are no, we don't build it.
 - **~~Location picker (kecamatan-first)~~** ✅ shipped — `LocationPicker` replaces the old `PostalCodePicker`. Now type kecamatan name OR kode pos; the kodepos.vercel.app upstream handles both. Pick → fills district + regency + postal_code + lat/lng. Resolved chip shows kecamatan + desa + kota + kode pos so users can verify before save.
 - **~~Image optimization (Next/Image)~~** ✅ shipped — high-impact `<img>` swapped to `next/image`: BookCard cover, Avatar, landing books strip, landing members strip, profile banner, currently-reading widget. Auto AVIF/WebP, responsive srcset, lazy by default. Domains pre-allowed in `next.config.ts` (Supabase + Open Library + Google Books).
 - **~~Pagination on /shelf~~** ✅ shipped — 24 books per page, `?page=N` query param, footer pagination control with range counter ("Buku 1–24 dari 312"). `listShelfBooks` returns `{ books, total }`.
+- **~~Pre-launch hygiene~~** ✅ shipped:
+  - `app/opengraph-image.tsx` — dynamic OG card via `next/og` (parchment palette + tagline + tribe positioning)
+  - Per-route `metadata` exports on /shelf, /anggota, /peta + `generateMetadata` on /profile/[username] + /book/[id]
+  - `app/robots.ts` — disallows /auth, /onboarding, /api, /book/add, /book/import, /wanted/add. Allows everything else.
+  - `app/sitemap.ts` — landing + about + privacy + RSS/JSON feeds + opt-in member profiles (up to 500 latest)
+  - `app/error.tsx`, `app/(app)/error.tsx`, `app/global-error.tsx` — 3-tier error boundaries with Sentry capture + retry button
 - **Visibility consolidation** — `show_on_map` toggle now gates BOTH /peta pin AND landing member card. Toggle copy renamed to "Tampilin gue publik (peta + landing)" so consent intent is explicit. One flag, two surfaces.
 - **Founder attribution** — Both `/` and `/about` updated: now reads "Cole, Initiator Journey Perintis & Collective Library" with linked IG `@nikolaswidad_` (consolidating from prior "Cole & Nikolas" 2-name framing).
 - **FTS query swap** — flip lib/books.ts:searchBooks from ilike to `.textSearch('search_text', q, { type: 'websearch' })` once 0006 is run and we have enough books to feel ranking.

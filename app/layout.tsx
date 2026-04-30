@@ -40,6 +40,26 @@ export const metadata: Metadata = {
       "application/feed+json": "/feed.json",
     },
   },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: "Collective Library",
+    title: "Collective Library — Where books connect people",
+    description:
+      "Katalog buku kolektif + jaringan pembaca yang saling berbagi, berdiskusi, dan berkembang bareng. Gratis selamanya. No take-rate.",
+    // app/opengraph-image.tsx is auto-attached by Next; this also provides a
+    // fallback URL for tools that don't read the convention file.
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Collective Library — Where books connect people",
+    description:
+      "Katalog buku kolektif + jaringan pembaca. Berbasis di Semarang, untuk Journey Perintis & sekitar.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export const viewport: Viewport = {

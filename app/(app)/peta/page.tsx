@@ -1,9 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { listMembersForMap } from "@/lib/profile";
 import { getCurrentProfile } from "@/lib/auth";
 import { PetaClient } from "@/components/map/peta-client";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Peta komunitas",
+  description:
+    "Sebaran anggota Collective Library di kecamatan masing-masing. Klik bubble buat lihat siapa & rak buku mereka.",
+};
 
 export default async function PetaPage() {
   const [members, me] = await Promise.all([

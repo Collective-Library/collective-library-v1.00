@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getBookById } from "@/lib/books";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth";
 import { getContactLinks, intentForStatus } from "@/lib/contact";
@@ -12,6 +13,37 @@ import { CONDITION_LABELS } from "@/lib/status";
 import { formatIDR, formatRelativeID } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const book = await getBookById(id);
+  if (!book) return { title: "Buku gak ditemukan" };
+
+  const owner = book.owner.full_name ?? book.owner.username ?? "anggota";
+  const statusLabel: Record<string, string> = {
+    sell: "dijual",
+    lend: "dipinjamkan",
+    trade: "ditukar",
+    unavailable: "koleksi pribadi",
+  };
+  const status = statusLabel[book.status] ?? book.status;
+  const description = `${book.title} oleh ${book.author} — ${status} oleh ${owner} di Collective Library.`;
+
+  return {
+    title: book.title,
+    description,
+    openGraph: {
+      title: `${book.title} · ${book.author}`,
+      description,
+      type: "book",
+      images: book.cover_url ? [{ url: book.cover_url }] : undefined,
+    },
+  };
+}
 
 export default async function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

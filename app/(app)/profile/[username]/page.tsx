@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProfileByUsername, getProfileCommunities } from "@/lib/profile";
 import { getBooksByOwnerUsername } from "@/lib/books";
@@ -20,6 +21,34 @@ import { ShareProfileButton } from "@/components/profile/share-profile-button";
 import type { BookStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}): Promise<Metadata> {
+  const { username } = await params;
+  const profile = await getProfileByUsername(username);
+  if (!profile) {
+    return { title: "Profil gak ditemukan" };
+  }
+  const name = profile.full_name ?? profile.username ?? "Anggota";
+  const where = profile.city ?? "Semarang";
+  const bio = profile.bio?.trim();
+  const description =
+    bio && bio.length > 20
+      ? bio.slice(0, 160)
+      : `Profil ${name} di Collective Library — ${profile.profession ?? "pembaca"} di ${where}.`;
+  return {
+    title: `${name} (@${profile.username})`,
+    description,
+    openGraph: {
+      title: `${name} (@${profile.username}) · Collective Library`,
+      description,
+      type: "profile",
+    },
+  };
+}
 
 export default async function ProfilePage({
   params,

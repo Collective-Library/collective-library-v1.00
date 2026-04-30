@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { listShelfBooks, getShelfCounts } from "@/lib/books";
 import { listActivity } from "@/lib/activity";
 import { BookGrid } from "@/components/books/book-grid";
@@ -9,6 +10,12 @@ import { cn } from "@/lib/cn";
 import type { BookStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Rak Kolektif",
+  description:
+    "Buku-buku komunitas Collective Library — tukar, pinjam, atau beli langsung dari pemiliknya.",
+};
 
 type SP = { status?: string; q?: string; page?: string };
 
