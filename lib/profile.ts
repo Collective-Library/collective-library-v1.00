@@ -47,9 +47,48 @@ export interface MemberSummary {
  * Joins books count via a separate query (PostgREST count-aggregate is heavy
  * for this shape; two queries keeps it predictable).
  */
+/**
+ * Returns distinct city/area pairs from profiles_public for filter pills.
+ * Aggregated client-side — small dataset for first 100s of users; if it
+ * grows past 1k profiles, replace with an SQL aggregate.
+ */
+export interface AreaOption {
+  city: string;
+  area: string | null;
+  member_count: number;
+}
+
+export async function listAreas(): Promise<AreaOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles_public")
+    .select("city, address_area")
+    .not("username", "is", null)
+    .not("city", "is", null);
+  if (error || !data) return [];
+
+  const map = new Map<string, AreaOption>();
+  for (const row of data) {
+    const city = ((row.city as string) ?? "").trim();
+    if (!city) continue;
+    const area = ((row.address_area as string | null) ?? "").trim() || null;
+    const key = `${city}::${area ?? ""}`;
+    const existing = map.get(key);
+    if (existing) existing.member_count++;
+    else map.set(key, { city, area, member_count: 1 });
+  }
+  return Array.from(map.values()).sort(
+    (a, b) =>
+      b.member_count - a.member_count ||
+      a.city.localeCompare(b.city) ||
+      (a.area ?? "").localeCompare(b.area ?? ""),
+  );
+}
+
 export async function listMembers(opts?: {
   interest?: string;
   city?: string;
+  area?: string;
   openFor?: "lending" | "selling" | "trade";
   limit?: number;
 }): Promise<MemberSummary[]> {
@@ -68,6 +107,9 @@ export async function listMembers(opts?: {
   }
   if (opts?.city) {
     query = query.ilike("city", opts.city);
+  }
+  if (opts?.area) {
+    query = query.ilike("address_area", opts.area);
   }
   if (opts?.openFor === "lending") query = query.eq("open_for_lending", true);
   if (opts?.openFor === "selling") query = query.eq("open_for_selling", true);

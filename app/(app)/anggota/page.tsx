@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listMembers } from "@/lib/profile";
+import { listMembers, listAreas, type AreaOption } from "@/lib/profile";
 import { BROAD_INTERESTS } from "@/lib/interests";
 import { MemberCard } from "@/components/profile/member-card";
 import { cn } from "@/lib/cn";
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 type SP = {
   interest?: string;
   city?: string;
+  area?: string;
   open?: "lending" | "selling" | "trade";
 };
 
@@ -17,8 +18,27 @@ export default async function AnggotaPage({
 }: {
   searchParams: Promise<SP>;
 }) {
-  const { interest, city, open } = await searchParams;
-  const members = await listMembers({ interest, city, openFor: open });
+  const { interest, city, area, open } = await searchParams;
+  const [members, areas] = await Promise.all([
+    listMembers({ interest, city, area, openFor: open }),
+    listAreas(),
+  ]);
+
+  // Aggregate to city-level for the city row, keeping per-city total
+  const cityCounts = areas.reduce<Record<string, number>>((acc, a) => {
+    acc[a.city] = (acc[a.city] ?? 0) + a.member_count;
+    return acc;
+  }, {});
+  const distinctCities = Object.keys(cityCounts).sort(
+    (a, b) => cityCounts[b] - cityCounts[a] || a.localeCompare(b),
+  );
+
+  // Areas filtered to the selected city — keeps the kecamatan list scoped
+  const areasInCity = city
+    ? areas.filter((a) => a.city.toLowerCase() === city.toLowerCase() && a.area)
+    : areas.filter((a) => a.area);
+
+  const hasAnyFilter = Boolean(interest || city || area || open);
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,61 +50,112 @@ export default async function AnggotaPage({
           Anggota komunitas
         </h1>
         <p className="mt-2 text-body text-ink-soft max-w-xl">
-          {members.length} anggota udah daftarin rak buku-nya. Filter sesuai minat lo, atau cari orang yang buka untuk pinjam-meminjam.
+          {members.length} anggota cocok. Filter buat nemu temen di area lo, atau yang baca-buku-mirip.
         </p>
       </div>
 
-      {/* Interest filter row — horizontally scrollable on mobile */}
+      {/* Filters */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="text-caption font-semibold text-ink-soft uppercase tracking-wide">
             Filter
           </p>
-          {(interest || city || open) && (
-            <Link href="/anggota" className="text-caption text-muted hover:text-ink underline underline-offset-4">
+          {hasAnyFilter && (
+            <Link
+              href="/anggota"
+              className="text-caption text-muted hover:text-ink underline underline-offset-4"
+            >
               Reset
             </Link>
           )}
         </div>
 
-        <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
+        {/* City row — only if there are >1 distinct cities */}
+        {distinctCities.length > 1 && (
+          <FilterRow label="Kota">
+            <FilterPill
+              href={buildHref({ interest, open })}
+              active={!city}
+              label="Semua kota"
+            />
+            {distinctCities.map((c) => (
+              <FilterPill
+                key={c}
+                href={buildHref({ interest, city: c, open })}
+                active={city?.toLowerCase() === c.toLowerCase()}
+                label={`${c} (${cityCounts[c]})`}
+              />
+            ))}
+          </FilterRow>
+        )}
+
+        {/* Area row — only if there are kecamatan-level entries */}
+        {areasInCity.length > 0 && (
+          <FilterRow label="Area / kecamatan">
+            <FilterPill
+              href={buildHref({ interest, city, open })}
+              active={!area}
+              label="Semua area"
+            />
+            {areasInCity.map((a) => (
+              <FilterPill
+                key={`${a.city}-${a.area}`}
+                href={buildHref({
+                  interest,
+                  city: a.city,
+                  area: a.area ?? undefined,
+                  open,
+                })}
+                active={
+                  area?.toLowerCase() === (a.area ?? "").toLowerCase() &&
+                  city?.toLowerCase() === a.city.toLowerCase()
+                }
+                label={`${a.area} (${a.member_count})`}
+              />
+            ))}
+          </FilterRow>
+        )}
+
+        {/* Interest row */}
+        <FilterRow label="Interest">
           <FilterPill
-            href={buildHref({ city, open })}
+            href={buildHref({ city, area, open })}
             active={!interest}
             label="Semua interest"
           />
           {BROAD_INTERESTS.map((i) => (
             <FilterPill
               key={i.slug}
-              href={buildHref({ interest: i.slug, city, open })}
+              href={buildHref({ interest: i.slug, city, area, open })}
               active={interest === i.slug}
               label={`${i.emoji} ${i.label}`}
             />
           ))}
-        </div>
+        </FilterRow>
 
-        <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
+        {/* Mode row */}
+        <FilterRow label="Mode">
           <FilterPill
-            href={buildHref({ interest, city })}
+            href={buildHref({ interest, city, area })}
             active={!open}
             label="Semua mode"
           />
           <FilterPill
-            href={buildHref({ interest, city, open: "lending" })}
+            href={buildHref({ interest, city, area, open: "lending" })}
             active={open === "lending"}
             label="Buka pinjam"
           />
           <FilterPill
-            href={buildHref({ interest, city, open: "selling" })}
+            href={buildHref({ interest, city, area, open: "selling" })}
             active={open === "selling"}
             label="Buka jual"
           />
           <FilterPill
-            href={buildHref({ interest, city, open: "trade" })}
+            href={buildHref({ interest, city, area, open: "trade" })}
             active={open === "trade"}
             label="Buka tukar"
           />
-        </div>
+        </FilterRow>
       </div>
 
       {/* Grid */}
@@ -106,10 +177,24 @@ export default async function AnggotaPage({
   );
 }
 
+function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-[11px] font-semibold text-muted uppercase tracking-wide px-4 md:px-0">
+        {label}
+      </p>
+      <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function buildHref(opts: SP): string {
   const params = new URLSearchParams();
   if (opts.interest) params.set("interest", opts.interest);
   if (opts.city) params.set("city", opts.city);
+  if (opts.area) params.set("area", opts.area);
   if (opts.open) params.set("open", opts.open);
   const qs = params.toString();
   return qs ? `/anggota?${qs}` : "/anggota";
