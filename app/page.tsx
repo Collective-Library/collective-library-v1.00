@@ -7,6 +7,7 @@ import { RecentBooksStrip } from "@/components/landing/recent-books-strip";
 import { RecentMembersStrip } from "@/components/landing/recent-members-strip";
 import { RecentInstagramStrip } from "@/components/landing/recent-instagram-strip";
 import { LoginNudgeProvider } from "@/components/landing/login-nudge";
+import { GatedLink } from "@/components/landing/gated-link";
 import { getCurrentUser } from "@/lib/auth";
 import { getCommunityStats } from "@/lib/stats";
 import { listActivity } from "@/lib/activity";
@@ -77,9 +78,14 @@ export default async function HomePage() {
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <ButtonLink href="/shelf" size="md">
+              {/* Anon click → login-nudge modal (consistent with card clicks).
+                  Authed users get straight-through navigation. */}
+              <GatedLink
+                href="/shelf"
+                className="inline-flex items-center justify-center gap-2 font-medium select-none whitespace-nowrap bg-ink text-parchment hover:bg-ink-soft active:scale-[0.98] h-12 px-5 text-[15px] rounded-button transition-all duration-150"
+              >
                 Lihat {stats.total_books} buku komunitas →
-              </ButtonLink>
+              </GatedLink>
               <ButtonLink href="/auth/register" size="md" variant="secondary">
                 Daftarkan Rak Bukumu
               </ButtonLink>

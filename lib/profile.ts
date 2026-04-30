@@ -163,6 +163,7 @@ export interface MapMember {
   bio: string | null;
   profession: string | null;
   interests: string[] | null;
+  intents: string[] | null;
   open_for_lending: boolean;
   open_for_selling: boolean;
   open_for_trade: boolean;
@@ -177,7 +178,7 @@ export async function listMembersForMap(): Promise<MapMember[]> {
   const { data: profiles, error } = await supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, bio, profession, interests, open_for_lending, open_for_selling, open_for_trade, map_lat, map_lng",
+      "id, full_name, username, photo_url, city, address_area, bio, profession, interests, intents, open_for_lending, open_for_selling, open_for_trade, map_lat, map_lng",
     )
     .eq("show_on_map", true)
     .not("map_lat", "is", null)
@@ -222,6 +223,7 @@ export async function listMembersForMap(): Promise<MapMember[]> {
     bio: (p.bio as string | null) ?? null,
     profession: (p.profession as string | null) ?? null,
     interests: (p.interests as string[] | null) ?? null,
+    intents: (p.intents as string[] | null) ?? null,
     open_for_lending: Boolean(p.open_for_lending),
     open_for_selling: Boolean(p.open_for_selling),
     open_for_trade: Boolean(p.open_for_trade),
