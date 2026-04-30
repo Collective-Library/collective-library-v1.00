@@ -108,7 +108,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-parchment/40 to-parchment" />
         </div>
-        <div className="relative -mt-32 md:-mt-40 px-4 md:px-6 flex flex-col md:flex-row gap-6 items-end">
+        <div className="relative -mt-32 md:-mt-40 px-4 md:px-6 flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-end">
           <div className="relative w-32 md:w-48 aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline shadow-card-hover shrink-0">
             {book.cover_url ? (
               <Image
@@ -117,7 +117,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
                 fill
                 sizes="(max-width: 768px) 128px, 192px"
                 className="object-cover"
-                preload
+                priority
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-3 bg-gradient-to-br from-cream to-parchment">
@@ -140,13 +140,13 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
                 </Link>
               )}
             </div>
-            <h1 className="font-display text-display-xl text-ink leading-tight">{book.title}</h1>
+            <h1 className="font-display text-display-lg md:text-display-xl text-ink leading-tight">{book.title}</h1>
             <p className="mt-1 text-body-lg text-ink-soft">{book.author}</p>
           </div>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-[1fr_320px] gap-8">
+      <div className="grid md:grid-cols-[1fr_320px] gap-5 md:gap-8">
         <div className="flex flex-col gap-6">
           {/* Synopsis — story first. When present, this is the page's voltage.
               When absent, soft permission-y prompt instead of empty silence. */}
@@ -240,8 +240,10 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
           )}
         </div>
 
-        {/* Sticky CTA panel */}
-        <aside className="md:sticky md:top-20 md:self-start">
+        {/* Sticky CTA panel — order-first puts it right below the hero on
+            mobile (above synopsis/owner/details), md:order-none restores the
+            right-column position on desktop. */}
+        <aside className="order-first md:order-none md:sticky md:top-20 md:self-start">
           <div className="p-5 rounded-card-lg border border-hairline bg-paper shadow-card flex flex-col gap-3">
             {primary ? (
               <>
