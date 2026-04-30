@@ -92,34 +92,35 @@ scripts/                    seed-nikolas, seed-novels-id, verify-seed
 
 Migrations applied (0001-0004) and pending (0005-0007):
 
-| # | Name | Status | Description |
-|---|---|---|---|
-| 0001 | init | ✅ run | All core tables, RLS, storage, JP community seed |
-| 0002 | profiles_public | ✅ run | View masks WhatsApp unless public/self |
-| 0003 | trust_profile | ✅ run | linkedin_url, website_url, profession, interests[], view recreated |
-| 0004 | activity_log | ✅ run | activity_log table + 4 triggers (book_added, status_changed, wtb_posted, user_joined) + backfill |
-| 0005 | profile_extras | ✅ run | currently_reading_book_id + show_on_map + map_lat + map_lng (for /peta). View recreated |
-| 0006 | fts_search | ✅ run | books.search_text tsvector + GIN index. Forward-compat (query stays ilike) |
-| 0007 | audit_log | ✅ run | audit_log table + triggers on books/wanted/profiles UPDATE+DELETE |
-| 0008 | fix_audit_triggers | ✅ run | Splits 0007's generic write_audit() into 3 table-specific functions. Fixes `record "old" has no field "owner_id"` (PL/pgSQL plan-time bug in CASE branches). |
-| 0009 | interest_layers | ⏳ pending | Adds `sub_interests text[]` (Layer 2) + `intents text[]` (Layer 3) + GIN index on intents. View recreated. |
-| 0010 | consolidate_5_9 | ✅ run | Remediation block — re-applied 0005 + 0009 columns idempotently. |
-| 0011 | postal_code | ⏳ pending | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit. |
+| #    | Name               | Status     | Description                                                                                                                                                  |
+| ---- | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0001 | init               | ✅ run     | All core tables, RLS, storage, JP community seed                                                                                                             |
+| 0002 | profiles_public    | ✅ run     | View masks WhatsApp unless public/self                                                                                                                       |
+| 0003 | trust_profile      | ✅ run     | linkedin_url, website_url, profession, interests[], view recreated                                                                                           |
+| 0004 | activity_log       | ✅ run     | activity_log table + 4 triggers (book_added, status_changed, wtb_posted, user_joined) + backfill                                                             |
+| 0005 | profile_extras     | ✅ run     | currently_reading_book_id + show_on_map + map_lat + map_lng (for /peta). View recreated                                                                      |
+| 0006 | fts_search         | ✅ run     | books.search_text tsvector + GIN index. Forward-compat (query stays ilike)                                                                                   |
+| 0007 | audit_log          | ✅ run     | audit_log table + triggers on books/wanted/profiles UPDATE+DELETE                                                                                            |
+| 0008 | fix_audit_triggers | ✅ run     | Splits 0007's generic write_audit() into 3 table-specific functions. Fixes `record "old" has no field "owner_id"` (PL/pgSQL plan-time bug in CASE branches). |
+| 0009 | interest_layers    | ⏳ pending | Adds `sub_interests text[]` (Layer 2) + `intents text[]` (Layer 3) + GIN index on intents. View recreated.                                                   |
+| 0010 | consolidate_5_9    | ✅ run     | Remediation block — re-applied 0005 + 0009 columns idempotently.                                                                                             |
+| 0011 | postal_code        | ⏳ pending | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit.                                   |
 
 SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migration files in `supabase/migrations/`).
 
 ## Outstanding user-action items
 
-| # | Action | Where | Blocking? |
-|---|---|---|---|
-| 1 | Wire Discord channel webhook | Discord channel + Vercel env + Supabase webhook | No — degrades gracefully when unset |
-| 2 | Custom domain SMTP (Path B) | Resend domain verify + Supabase SMTP | Yes for inviting JP — currently only journey.perintis@gmail.com receives |
-| 3 | Optional: Vercel `NEXT_PUBLIC_APP_URL=https://collectivelibrary.vercel.app` | Vercel env vars | Soft-blocking — falls back to VERCEL_URL otherwise |
-| 4 | Rotate API keys/secrets shared during chat | Resend, hCaptcha, Sentry, Discord, Supabase | Recommended pre-launch |
+| #   | Action                                                                      | Where                                           | Blocking?                                                                |
+| --- | --------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
+| 1   | Wire Discord channel webhook                                                | Discord channel + Vercel env + Supabase webhook | No — degrades gracefully when unset                                      |
+| 2   | Custom domain SMTP (Path B)                                                 | Resend domain verify + Supabase SMTP            | Yes for inviting JP — currently only journey.perintis@gmail.com receives |
+| 3   | Optional: Vercel `NEXT_PUBLIC_APP_URL=https://collectivelibrary.vercel.app` | Vercel env vars                                 | Soft-blocking — falls back to VERCEL_URL otherwise                       |
+| 4   | Rotate API keys/secrets shared during chat                                  | Resend, hCaptcha, Sentry, Discord, Supabase     | Recommended pre-launch                                                   |
 
 ## Strategic guardrails (from product philosophy doc)
 
 Every feature passes 4 tests before being built:
+
 1. Reduces friction? (Naval)
 2. Compounds over time? (Naval)
 3. Protects the secret — community-first not generic? (Thiel)
@@ -128,6 +129,14 @@ Every feature passes 4 tests before being built:
 If all four are no, we don't build it.
 
 ## Active backlog (post-1b8e9f9)
+
+---
+
+---
+
+**Development note:**
+
+When building a new (big/medium) feature, _always_ create a new branch from main first. Do not code directly on the main branch. After finishing the feature, open a pull request (PR) to main for review and merge.
 
 - **~~Map view~~** ✅ shipped — `/peta` with Leaflet + Carto Positron tiles. Snapchat-style avatar markers (photo bubble + book-count badge), deterministic jitter so same-kecamatan members don't perfectly overlap. Opt-in via `show_on_map` toggle on profile edit. Coords stored at kecamatan-level only via Nominatim save-time geocoding (`/api/geocode`, auth-gated, 30-day CDN cache). Works for any Indonesian kecamatan (not Semarang-only).
 - **Per-user Discord DM** — needs proper Discord bot infra. Current channel webhook is community-level only.
