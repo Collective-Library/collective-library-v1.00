@@ -173,3 +173,97 @@ export function isProfileComplete(p: Profile | null): p is Profile {
     p.instagram || p.whatsapp || p.discord || p.goodreads_url || p.storygraph_url,
   );
 }
+
+// =============================================================================
+// Mastermind dashboard types (mirrors migrations 0015–0017)
+// =============================================================================
+
+export type OkrCategory =
+  | "people"
+  | "data"
+  | "system"
+  | "integration"
+  | "foundation"
+  | "activation";
+export type OkrStatus = "on_track" | "at_risk" | "behind" | "done";
+export type TaskStatus = "todo" | "in_progress" | "blocked" | "done" | "canceled";
+export type TaskPriority = "low" | "med" | "high" | "urgent";
+export type AdminNoteEntity =
+  | "user"
+  | "book"
+  | "wanted"
+  | "feedback"
+  | "okr_objective"
+  | "okr_key_result"
+  | "team_task";
+
+export interface OkrObjective {
+  id: string;
+  code: string;
+  title: string;
+  detail: string | null;
+  category: OkrCategory;
+  quarter: string;
+  status: OkrStatus;
+  progress_pct: number;
+  owner_id: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OkrKeyResult {
+  id: string;
+  objective_id: string;
+  code: string;
+  title: string;
+  detail: string | null;
+  target_value: number;
+  target_unit: string;
+  current_value: number;
+  auto_compute_key: string | null;
+  status: OkrStatus;
+  owner_id: string | null;
+  notes: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OkrObjectiveWithKRs extends OkrObjective {
+  key_results: OkrKeyResult[];
+}
+
+export interface TeamTask {
+  id: string;
+  code: string | null;
+  title: string;
+  detail: string | null;
+  related_objective_id: string | null;
+  related_kr_id: string | null;
+  owner_id: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  progress_pct: number;
+  start_date: string | null;
+  end_date: string | null;
+  milestone: string | null;
+  deliverable: string | null;
+  output_link: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminNote {
+  id: string;
+  entity_type: AdminNoteEntity;
+  entity_id: string;
+  note: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface AdminNoteWithAuthor extends AdminNote {
+  author: Pick<Profile, "id" | "full_name" | "username" | "photo_url"> | null;
+}

@@ -16,10 +16,12 @@ export function FeedbackChip() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Hide on /admin (admins triage there, don't want their own chip noise) +
-  // hide on auth pages (less noise during a moment we want them focused).
+  // Hide on /admin and /mastermind (admins triage there, don't want their
+  // own chip noise) + hide on auth pages (less noise during a moment we
+  // want them focused).
   const hidden =
     pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/mastermind") ||
     pathname?.startsWith("/auth/callback") ||
     pathname === "/auth/logout";
 

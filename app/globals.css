@@ -41,6 +41,18 @@
   --color-error: #B91C1C;
   --color-success: #166534;
 
+  /* --- Mastermind dashboard pills (OKR & task health) ---
+     Same parchment grammar — green for "good", amber for "watch",
+     red for "behind", muted ink for "done/closed". */
+  --color-okr-on-track: #166534;
+  --color-okr-on-track-bg: #DCEFE0;
+  --color-okr-at-risk: #B45309;
+  --color-okr-at-risk-bg: #FCEFD3;
+  --color-okr-behind: #B91C1C;
+  --color-okr-behind-bg: #FBE3E1;
+  --color-okr-done: #5A4632;
+  --color-okr-done-bg: #EFE8DA;
+
   /* --- Typography --- */
   --font-display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
