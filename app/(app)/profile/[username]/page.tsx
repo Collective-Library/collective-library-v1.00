@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { getProfileByUsername, getProfileCommunities } from "@/lib/profile";
 import { getBooksByOwnerUsername } from "@/lib/books";
+import { getCurrentUser } from "@/lib/auth";
 import { getContactLinks } from "@/lib/contact";
 import { Avatar } from "@/components/ui/avatar";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { CommunityBadge } from "@/components/ui/community-badge";
 import { SecondaryContactRow } from "@/components/books/contact-pills";
+import { MyShelfManager } from "@/components/books/my-shelf-manager";
 import type { BookStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +20,12 @@ export default async function ProfilePage({
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
 
-  const [books, communities] = await Promise.all([
+  const [books, communities, currentUser] = await Promise.all([
     getBooksByOwnerUsername(username),
     getProfileCommunities(profile.id),
+    getCurrentUser(),
   ]);
+  const isOwner = currentUser?.id === profile.id;
   const links = getContactLinks(profile);
   const counts = books.reduce<Record<BookStatus, number>>(
     (acc, b) => {
@@ -73,39 +75,8 @@ export default async function ProfilePage({
         <Stat label="Ditukar" value={counts.trade} />
       </div>
 
-      {/* Books grid (full set; tabs come in Phase 7+) */}
-      <h2 className="font-display text-display-md text-ink mb-4">Rak buku</h2>
-      {books.length === 0 ? (
-        <div className="rounded-card-lg border border-hairline bg-paper p-10 text-center">
-          <p className="text-body text-muted">Belum ada buku di rak.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-7">
-          {books.map((book) => (
-            <Link
-              key={book.id}
-              href={`/book/${book.id}`}
-              className="group flex flex-col gap-2"
-            >
-              <div className="relative aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline group-hover:shadow-card-hover transition-shadow">
-                {book.cover_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center p-3">
-                    <p className="font-display text-title-sm text-ink line-clamp-3 text-center">{book.title}</p>
-                  </div>
-                )}
-                <div className="absolute top-2 left-2">
-                  <StatusBadge status={book.status} />
-                </div>
-              </div>
-              <p className="text-caption font-medium text-ink line-clamp-2 leading-snug">{book.title}</p>
-              <p className="text-caption text-muted line-clamp-1">{book.author}</p>
-            </Link>
-          ))}
-        </div>
-      )}
+      {/* Books grid — owner gets bulk-management toggle, visitors see read-only */}
+      <MyShelfManager books={books} isOwner={isOwner} />
     </div>
   );
 }
