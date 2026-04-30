@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { searchGoogleBooks, type BookSearchResult } from "@/lib/openlibrary";
 import { LottieLoading } from "@/components/ui/lottie-loading";
 
@@ -166,10 +167,12 @@ export function BookPicker({
                 >
                   <div className="w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline flex items-center justify-center">
                     {b.cover_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={b.cover_url}
                         alt=""
+                        width={40}
+                        height={56}
+                        sizes="40px"
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />

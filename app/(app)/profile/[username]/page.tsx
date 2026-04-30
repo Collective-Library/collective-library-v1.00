@@ -99,7 +99,7 @@ export default async function ProfilePage({
             src={profile.cover_url}
             alt=""
             fill
-            priority
+            preload
             sizes="(max-width: 768px) 100vw, 896px"
             className="object-cover"
           />
