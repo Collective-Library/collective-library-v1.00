@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans, DM_Serif_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "sonner";
+import { FeedbackChip } from "@/components/feedback/feedback-chip";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -87,6 +88,7 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-parchment text-ink">
         {children}
+        <FeedbackChip />
         <Toaster
           position="top-center"
           duration={3500}

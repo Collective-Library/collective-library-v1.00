@@ -10,6 +10,22 @@ export type BookSource = "manual" | "goodreads_import";
 export type WantedStatus = "open" | "fulfilled" | "closed";
 export type CommunityRole = "member" | "moderator" | "admin";
 export type ReportTargetType = "book" | "user" | "wanted";
+export type FeedbackCategory = "idea" | "bug" | "friction" | "appreciation" | "other";
+export type FeedbackStatus = "new" | "triaged" | "planned" | "shipped" | "wontfix";
+
+export interface FeedbackItem {
+  id: string;
+  user_id: string | null;
+  category: FeedbackCategory;
+  message: string;
+  email: string | null;
+  page_url: string | null;
+  user_agent: string | null;
+  status: FeedbackStatus;
+  internal_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Profile {
   id: string;

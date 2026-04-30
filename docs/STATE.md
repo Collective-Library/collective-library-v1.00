@@ -106,7 +106,8 @@ Migrations applied (0001-0004) and pending (0005-0007):
 | 0010 | consolidate_5_9 | ✅ run | Remediation block — re-applied 0005 + 0009 columns idempotently. |
 | 0011 | postal_code | ✅ run | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit. |
 | 0012 | fix_oauth_avatar | ⏳ pending | Updates `handle_new_user` to coalesce `avatar_url` + `picture` (Google uses `picture`, Discord uses `avatar_url`). Backfills existing profiles where `photo_url` is null but OAuth metadata has it. Same backfill for `full_name`. |
-| 0013 | wanted_cover_url | ⏳ pending | Adds `cover_url text` to wanted_requests. Auto-populated at submit-time via Open Library / Google Books search. Lets WTB cards show book cover thumbnail instead of just typed title. |
+| 0013 | wanted_cover_url | ✅ run | Adds `cover_url text` to wanted_requests. Auto-populated at submit-time via Open Library / Google Books search. Lets WTB cards show book cover thumbnail instead of just typed title. |
+| 0014 | feedback | ⏳ pending | `feedback` table + RLS (anyone INSERTs, only `is_admin` SELECTs/UPDATEs). Powers the `<FeedbackChip>` floating button + `/admin/feedback` dashboard. |
 
 SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migration files in `supabase/migrations/`).
 
@@ -167,6 +168,12 @@ When building a new (big/medium) feature, _always_ create a new branch from main
 - **~~/wanted card redesign~~** ✅ shipped — cover thumbnail (auto-fetched from Open Library at submit time, stored on `wanted_requests.cover_url`), tighter title/meta layout, notes always shown as italic blockquote so user-uploaded vibes/jokes/lucu-lucuan don't get hidden.
 - **~~Instagram direct DM~~** ✅ shipped — IG contact pills now use `ig.me/m/USERNAME` (opens IG Direct chat) + copy the message template to clipboard before opening (IG doesn't support URL prefill like WhatsApp does, so this is the closest "literally direct" UX). New `InstagramDMChip` component handles copy-on-click with toast.
 - **~~ShareProfileButton polish~~** ✅ shipped — compact icon-only pill (~40×40), positioned absolute top-right of the profile content area (IG-style). URL now resolved client-side via `window.location.origin` so it always reflects the live origin (no more stale `NEXT_PUBLIC_APP_URL` issues).
+- **~~Feedback / ticketing system~~** ✅ shipped — two-layer architecture:
+  - **Source of truth**: `public.feedback` table (5 categories: idea / bug / friction / appreciation / other; 5 statuses: new / triaged / planned / shipped / wontfix; admin-only SELECT/UPDATE via RLS).
+  - **Notification fan-out**: `/api/feedback` POSTs a color-coded Discord embed to `DISCORD_FEEDBACK_WEBHOOK_URL` env (color per category, fields for user/page/email/UA, deep-link to admin triage). Fire-and-forget — never blocks user response.
+  - **UI**: `<FeedbackChip>` floating bottom-right, mounted in root layout (visible everywhere except /admin and auth callback/logout). Modal form with category radio chips + message + optional email + auto-captured page_url + user_agent. Anon submissions allowed.
+  - **Admin**: `/admin/feedback` page (gated by `is_admin`) with status filter / category filter / inline status control + internal note. Layout `app/admin/layout.tsx` redirects non-admins to /shelf.
+- **~~Discord invite distribution~~** ✅ shipped — Seth-Godin-aligned (permission > interruption): footer pill, register-page subtitle ("gabung Discord dulu — ngintip vibe-nya"), about-page CTA, onboarding step 3 bonus card. Single source of truth in `lib/socials.ts`.
 - **Visibility consolidation** — `show_on_map` toggle now gates BOTH /peta pin AND landing member card. Toggle copy renamed to "Tampilin gue publik (peta + landing)" so consent intent is explicit. One flag, two surfaces.
 - **Founder attribution** — Both `/` and `/about` updated: now reads "Cole, Initiator Journey Perintis & Collective Library" with linked IG `@nikolaswidad_` (consolidating from prior "Cole & Nikolas" 2-name framing).
 - **FTS query swap** — flip lib/books.ts:searchBooks from ilike to `.textSearch('search_text', q, { type: 'websearch' })` once 0006 is run and we have enough books to feel ranking.

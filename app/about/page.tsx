@@ -99,6 +99,19 @@ export default function AboutPage() {
               Lihat rak komunitas
             </ButtonLink>
           </div>
+
+          <p className="mt-6 text-body-sm text-muted">
+            Mau ngobrol langsung sebelum daftar?{" "}
+            <a
+              href="https://discord.gg/2nCu5p9Hsd"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ink-soft font-medium underline underline-offset-4 hover:text-ink"
+            >
+              Gabung Discord komunitas
+            </a>
+            {" "}— udah ada banyak pembaca di sana.
+          </p>
         </article>
       </main>
 

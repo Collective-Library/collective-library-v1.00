@@ -3,6 +3,7 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { RegisterForm } from "@/components/auth/register-form";
 import { GoogleButton } from "@/components/auth/google-button";
 import { DiscordButton } from "@/components/auth/discord-button";
+import { SOCIAL_LINKS } from "@/lib/socials";
 
 export default function RegisterPage() {
   return (
@@ -15,6 +16,19 @@ export default function RegisterPage() {
           <Link href="/auth/login" className="text-ink font-medium underline underline-offset-4">
             Masuk
           </Link>
+          <br />
+          <span className="text-muted">
+            Atau{" "}
+            <a
+              href={SOCIAL_LINKS.discord}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ink-soft font-medium underline underline-offset-4 hover:text-ink"
+            >
+              gabung Discord komunitas
+            </a>{" "}
+            dulu — ngintip vibe-nya.
+          </span>
         </>
       }
     >

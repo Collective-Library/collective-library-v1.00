@@ -206,6 +206,25 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
             placeholder="filsafat, fiksi sejarah, sains populer"
             hint="Pisah pakai koma."
           />
+
+          {/* Permission-style Discord invite — ngajak, gak maksa */}
+          <div className="rounded-card-lg border border-hairline bg-cream/40 p-4">
+            <p className="text-caption font-semibold text-ink uppercase tracking-wide">
+              💬 Bonus
+            </p>
+            <p className="mt-1.5 text-body-sm text-ink-soft leading-relaxed">
+              Diskusi buku lebih hidup di Discord. Gabung kapan aja —{" "}
+              <a
+                href="https://discord.gg/2nCu5p9Hsd"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ink font-medium underline underline-offset-4"
+              >
+                discord.gg/2nCu5p9Hsd
+              </a>
+              . Skip dulu juga gapapa.
+            </p>
+          </div>
         </div>
       )}
 
