@@ -27,6 +27,10 @@ export interface Profile {
   goodreads_url: string | null;
   storygraph_url: string | null;
   campus_or_workplace: string | null;
+  linkedin_url: string | null;
+  website_url: string | null;
+  profession: string | null;
+  interests: string[] | null;
   favorite_genres: string[] | null;
   open_for_discussion: boolean;
   open_for_lending: boolean;

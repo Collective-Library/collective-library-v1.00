@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { InterestChips } from "@/components/profile/interest-chips";
 import { slugify } from "@/lib/format";
 import type { Profile } from "@/types";
 
@@ -18,8 +19,16 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
   const [fullName, setFullName] = useState(initial.full_name ?? "");
   const [username, setUsername] = useState(initial.username ?? "");
   const [city, setCity] = useState(initial.city ?? "Semarang");
+  const [addressArea, setAddressArea] = useState(initial.address_area ?? "");
   const [bio, setBio] = useState(initial.bio ?? "");
   const [genres, setGenres] = useState((initial.favorite_genres ?? []).join(", "));
+
+  // Trust profile (V2.2)
+  const [linkedin, setLinkedin] = useState(initial.linkedin_url ?? "");
+  const [website, setWebsite] = useState(initial.website_url ?? "");
+  const [profession, setProfession] = useState(initial.profession ?? "");
+  const [campus, setCampus] = useState(initial.campus_or_workplace ?? "");
+  const [interests, setInterests] = useState<string[]>(initial.interests ?? []);
 
   // Photo
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -98,6 +107,7 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
         full_name: fullName.trim(),
         username: usernameSlug,
         city: city.trim() || "Semarang",
+        address_area: addressArea.trim() || null,
         bio: bio.trim() || null,
         favorite_genres: genres
           ? genres.split(",").map((g) => g.trim()).filter(Boolean)
@@ -109,6 +119,12 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
         discord: discord.trim() || null,
         goodreads_url: goodreads.trim() || null,
         storygraph_url: storygraph.trim() || null,
+        // Trust profile
+        linkedin_url: linkedin.trim() || null,
+        website_url: website.trim() || null,
+        profession: profession.trim() || null,
+        campus_or_workplace: campus.trim() || null,
+        interests: interests.length ? interests : null,
         open_for_lending: openLending,
         open_for_selling: openSelling,
         open_for_trade: openTrade,
@@ -177,12 +193,21 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
         />
       </div>
 
-      <Input
-        label="Kota"
-        value={city}
-        onChange={(e) => setCity(e.target.value)}
-        placeholder="Semarang"
-      />
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Input
+          label="Kota"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          placeholder="Semarang"
+        />
+        <Input
+          label="Area / kecamatan"
+          value={addressArea}
+          onChange={(e) => setAddressArea(e.target.value)}
+          placeholder="Tembalang, Pleburan, dst"
+          hint="Bantu orang tau lo dimana buat pinjam-meminjam."
+        />
+      </div>
 
       <Textarea
         label="Bio singkat"
@@ -256,6 +281,51 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
         placeholder="https://thestorygraph.com/profile/cole"
         type="url"
       />
+
+      <hr className="border-hairline" />
+
+      {/* Trust Profile (V2.2) — personal branding fields */}
+      <div>
+        <p className="text-caption font-semibold text-ink uppercase tracking-wide">
+          Identity & branding
+        </p>
+        <p className="mt-1 text-body-sm text-muted">
+          Bantu anggota lain kenal lo. Semua opsional.
+        </p>
+      </div>
+
+      <Input
+        label="Profesi / industri"
+        value={profession}
+        onChange={(e) => setProfession(e.target.value)}
+        placeholder="Software Engineer di Tokopedia, Desainer freelance, Mahasiswa Filsafat…"
+      />
+
+      <Input
+        label="Kampus atau tempat kerja"
+        value={campus}
+        onChange={(e) => setCampus(e.target.value)}
+        placeholder="Universitas Diponegoro / GoTo / Komunitas X"
+      />
+
+      <Input
+        label="LinkedIn"
+        value={linkedin}
+        onChange={(e) => setLinkedin(e.target.value)}
+        placeholder="https://linkedin.com/in/colehardiyanto"
+        type="url"
+      />
+
+      <Input
+        label="Website / Medium"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+        placeholder="https://colehardiyanto.com atau https://medium.com/@cole"
+        hint="Buat orang lebih kenal lo dari tulisan."
+        type="url"
+      />
+
+      <InterestChips value={interests} onChange={setInterests} min={3} />
 
       <hr className="border-hairline" />
 
