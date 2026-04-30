@@ -122,18 +122,27 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Fire-and-forget Discord webhook. Don't block the user response on this —
-  // worst case the row is in Supabase and we missed the notification.
-  postToDiscord({
-    webhookUrl: process.env.DISCORD_FEEDBACK_WEBHOOK_URL,
-    category,
-    message,
-    userDisplay,
-    email,
-    pageUrl,
-    userAgent,
-    feedbackId: inserted.id as string,
-  }).catch((err) => console.warn("[feedback] discord fan-out failed", err));
+  // Discord fan-out — AWAIT it before returning. Vercel serverless terminates
+  // post-response background work, so fire-and-forget loses messages. Failure
+  // here is swallowed so the user still sees success (the row is in Supabase
+  // either way), but we log loudly for triage in Vercel function logs.
+  try {
+    await postToDiscord({
+      webhookUrl: process.env.DISCORD_FEEDBACK_WEBHOOK_URL,
+      category,
+      message,
+      userDisplay,
+      email,
+      pageUrl,
+      userAgent,
+      feedbackId: inserted.id as string,
+    });
+  } catch (err) {
+    console.warn(
+      "[feedback] discord fan-out failed",
+      err instanceof Error ? err.message : err,
+    );
+  }
 
   return NextResponse.json({ ok: true, id: inserted.id }, { status: 201 });
 }
@@ -151,9 +160,16 @@ interface DiscordPayload {
 
 async function postToDiscord(p: DiscordPayload) {
   if (!p.webhookUrl) {
-    console.info("[feedback] DISCORD_FEEDBACK_WEBHOOK_URL not set; skip fan-out");
+    console.warn(
+      "[feedback] DISCORD_FEEDBACK_WEBHOOK_URL not set; skipping fan-out",
+    );
     return;
   }
+  console.info("[feedback] posting to Discord", {
+    category: p.category,
+    feedbackId: p.feedbackId,
+    hasUser: Boolean(p.userDisplay),
+  });
 
   const adminLink = `${getAppUrl()}/admin/feedback?id=${p.feedbackId}`;
 
@@ -194,6 +210,8 @@ async function postToDiscord(p: DiscordPayload) {
     body: JSON.stringify({ embeds: [embed] }),
   });
   if (!res.ok) {
-    throw new Error(`discord webhook ${res.status}`);
+    const text = await res.text().catch(() => "");
+    throw new Error(`discord webhook ${res.status}: ${text.slice(0, 200)}`);
   }
+  console.info("[feedback] Discord delivered", { feedbackId: p.feedbackId });
 }

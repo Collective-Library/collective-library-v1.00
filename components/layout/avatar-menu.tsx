@@ -41,7 +41,12 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
         onClick={() => setOpen((v) => !v)}
         className="rounded-pill focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
       >
-        <Avatar src={profile.photo_url} name={profile.full_name} size={36} />
+        <Avatar
+          src={profile.photo_url}
+          name={profile.full_name}
+          size={36}
+          isAdmin={profile.is_admin}
+        />
       </button>
 
       {open && (
@@ -52,7 +57,15 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
           )}
         >
           <div className="px-4 py-3 border-b border-hairline-soft">
-            <p className="text-body-sm font-semibold text-ink truncate">{profile.full_name ?? profile.username}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-body-sm font-semibold text-ink truncate">{profile.full_name ?? profile.username}</p>
+              {profile.is_admin && (
+                <span className="inline-flex items-center gap-0.5 h-5 px-1.5 rounded-pill bg-ink text-parchment text-[10px] font-semibold tracking-wide">
+                  <span aria-hidden>✦</span>
+                  ADMIN
+                </span>
+              )}
+            </div>
             {profile.username && (
               <p className="text-caption text-muted truncate">@{profile.username}</p>
             )}
@@ -80,6 +93,16 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
               Import dari Goodreads
             </MenuItem>
           </ul>
+          {profile.is_admin && (
+            <div className="border-t border-hairline-soft py-1">
+              <MenuItem href="/admin/feedback" onClick={() => setOpen(false)}>
+                <span className="inline-flex items-center gap-1.5">
+                  <span aria-hidden>✦</span>
+                  <span>Admin · Feedback inbox</span>
+                </span>
+              </MenuItem>
+            </div>
+          )}
           <div className="border-t border-hairline-soft py-1">
             <form action="/auth/logout" method="POST">
               <button

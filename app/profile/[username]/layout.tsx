@@ -2,16 +2,16 @@ import Link from "next/link";
 import { Logo } from "@/components/layout/logo";
 import { Footer } from "@/components/layout/footer";
 import { AvatarMenu } from "@/components/layout/avatar-menu";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentProfile } from "@/lib/auth";
 
 /**
- * Public-facing layout for /profile/[username]. No BottomNav (this is a
- * public-readable surface), but we DO show the user's AvatarMenu when
- * they're logged in so navigation back to their own app stays one click.
- *
- * Anon visitors see a "Masuk" CTA — encourages signup after they finish
- * peeking at someone's rak.
+ * Public-facing layout for /profile/[username]. Authed users get the same
+ * BottomNav they have on other (app) routes so they don't lose navigation
+ * when bouncing through profile pages. Anon visitors get a "Masuk / Daftar"
+ * CTA in the header instead — no BottomNav (those tabs would just nudge
+ * them to login anyway).
  */
 export default async function PublicProfileLayout({
   children,
@@ -59,9 +59,18 @@ export default async function PublicProfileLayout({
         </div>
       </header>
 
-      <main className="flex-1 mx-auto max-w-6xl w-full px-4 md:px-6 py-6 md:py-8">
+      <main
+        className="flex-1 mx-auto max-w-6xl w-full px-4 md:px-6 py-6 md:py-8"
+        // Authed users get BottomNav — pad the bottom so the nav doesn't
+        // overlap content when they scroll to the end.
+        style={profile ? { paddingBottom: "calc(4rem + var(--safe-bottom))" } : undefined}
+      >
         {children}
       </main>
+
+      {/* Anon visitors don't see BottomNav (gak ada gunanya — tab-nya semua
+          auth-gated; better: AvatarMenu in header keeps the few CTAs they need). */}
+      {profile && <BottomNav profile={profile} />}
 
       <Footer />
     </div>

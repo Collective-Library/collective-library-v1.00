@@ -60,7 +60,7 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-2 sm:gap-3">
         <StatCell label="Dijual" value={counts.sell} />
-        <StatCell label="Dipinjamkan" value={counts.lend} />
+        <StatCell label="Dipinjam" value={counts.lend} />
         <StatCell label="Ditukar" value={counts.trade} />
         <StatCell label="Koleksi" value={counts.unavailable} />
       </div>
@@ -218,7 +218,7 @@ function StatCell({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-paper border border-hairline rounded-card px-3 py-3 sm:px-4 sm:py-4">
       <p className="font-display text-display-md text-ink leading-none">{value}</p>
-      <p className="mt-1 text-caption text-muted">{label}</p>
+      <p className="mt-1 text-caption text-muted leading-tight truncate">{label}</p>
     </div>
   );
 }

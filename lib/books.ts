@@ -3,6 +3,11 @@ import type { Book, BookStatus, BookWithOwner } from "@/types";
 
 const OWNER_SELECT = `id, full_name, username, photo_url, city, whatsapp, whatsapp_public, instagram, discord, goodreads_url, storygraph_url`;
 
+// Explicit columns for LIST views (BookCard renders only these). Avoids
+// `select("*")` overfetch — saves payload + cuts JSON parse time. Detail
+// views (book/[id]/page.tsx) keep `*` because they show every field.
+const BOOK_LIST_COLUMNS = `id, title, author, cover_url, status, condition, price, negotiable, isbn, language, owner_id, community_id, lending_duration_days, contact_method, is_hidden, visibility, created_at, updated_at`;
+
 /**
  * List public books for the Collective Shelf, optionally filtered + paginated.
  * Returns books + total count so the caller can render page links.
@@ -25,7 +30,7 @@ export async function listShelfBooks(opts?: {
   let query = supabase
     .from("books")
     .select(
-      `*, owner:profiles_public!books_owner_id_fkey(${OWNER_SELECT}), community:communities(id, name, slug)`,
+      `${BOOK_LIST_COLUMNS}, owner:profiles_public!books_owner_id_fkey(${OWNER_SELECT}), community:communities(id, name, slug)`,
       { count: "exact" },
     )
     .eq("is_hidden", false)
@@ -66,7 +71,7 @@ export async function searchBooks(query: string, limit = 60): Promise<BookWithOw
   const supabase = await createClient();
   const safe = query.trim().replace(/[%_]/g, "");
 
-  const baseSelect = `*, owner:profiles_public!books_owner_id_fkey(${OWNER_SELECT}), community:communities(id, name, slug)`;
+  const baseSelect = `${BOOK_LIST_COLUMNS}, owner:profiles_public!books_owner_id_fkey(${OWNER_SELECT}), community:communities(id, name, slug)`;
 
   // 1. Try FTS via websearch query type (handles "harari sapiens" as AND,
   //    "exact phrase" as quoted, OR / NOT operators)
@@ -153,18 +158,30 @@ export async function getRecentBookActivity(limit = 5): Promise<RecentBookActivi
   }));
 }
 
-/** Counts books per status — for the shelf stats bar. */
+/**
+ * Counts books per status for the shelf stats bar. Uses 4 parallel
+ * `head: true` count queries — each returns just the integer count, no
+ * row payload. This replaces the previous "fetch all status rows then
+ * count in JS" pattern, which scaled linearly with the book catalog.
+ */
 export async function getShelfCounts(): Promise<Record<BookStatus, number>> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("books")
-    .select("status")
-    .eq("is_hidden", false)
-    .eq("visibility", "public");
+  const statuses: BookStatus[] = ["sell", "lend", "trade", "unavailable"];
+
+  const results = await Promise.all(
+    statuses.map((status) =>
+      supabase
+        .from("books")
+        .select("*", { count: "exact", head: true })
+        .eq("is_hidden", false)
+        .eq("visibility", "public")
+        .eq("status", status),
+    ),
+  );
 
   const counts: Record<BookStatus, number> = { sell: 0, lend: 0, trade: 0, unavailable: 0 };
-  (data ?? []).forEach((b: { status: BookStatus }) => {
-    counts[b.status] = (counts[b.status] ?? 0) + 1;
+  results.forEach((res, i) => {
+    counts[statuses[i]] = res.count ?? 0;
   });
   return counts;
 }
@@ -198,12 +215,13 @@ export async function getBooksByOwnerUsername(username: string): Promise<Book[]>
 
   if (!profile) return [];
 
+  // Owner's shelf grid uses BookCard so only LIST columns are needed.
   const { data } = await supabase
     .from("books")
-    .select("*")
+    .select(BOOK_LIST_COLUMNS)
     .eq("owner_id", profile.id)
     .eq("is_hidden", false)
     .order("created_at", { ascending: false });
 
-  return (data ?? []) as Book[];
+  return (data ?? []) as unknown as Book[];
 }

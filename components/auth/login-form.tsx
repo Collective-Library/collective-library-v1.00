@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 
 export function LoginForm({ next }: { next?: string }) {
@@ -55,9 +56,8 @@ export function LoginForm({ next }: { next?: string }) {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="kamu@contoh.com"
       />
-      <Input
+      <PasswordInput
         label="Password"
-        type="password"
         autoComplete="current-password"
         required
         minLength={6}
