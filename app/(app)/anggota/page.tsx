@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { listMembers, listAreas, type AreaOption } from "@/lib/profile";
-import { BROAD_INTERESTS } from "@/lib/interests";
+import { BROAD_INTERESTS, INTENTS } from "@/lib/interests";
 import { MemberCard } from "@/components/profile/member-card";
 import { cn } from "@/lib/cn";
 
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 type SP = {
   interest?: string;
+  intent?: string;
   city?: string;
   area?: string;
   open?: "lending" | "selling" | "trade";
@@ -18,9 +19,9 @@ export default async function AnggotaPage({
 }: {
   searchParams: Promise<SP>;
 }) {
-  const { interest, city, area, open } = await searchParams;
+  const { interest, intent, city, area, open } = await searchParams;
   const [members, areas] = await Promise.all([
-    listMembers({ interest, city, area, openFor: open }),
+    listMembers({ interest, intent, city, area, openFor: open }),
     listAreas(),
   ]);
 
@@ -38,20 +39,29 @@ export default async function AnggotaPage({
     ? areas.filter((a) => a.city.toLowerCase() === city.toLowerCase() && a.area)
     : areas.filter((a) => a.area);
 
-  const hasAnyFilter = Boolean(interest || city || area || open);
+  const hasAnyFilter = Boolean(interest || intent || city || area || open);
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <p className="text-caption text-muted uppercase tracking-wide font-semibold">
-          Anggota
-        </p>
-        <h1 className="mt-1 font-display text-display-xl text-ink leading-tight">
-          Anggota komunitas
-        </h1>
-        <p className="mt-2 text-body text-ink-soft max-w-xl">
-          {members.length} anggota cocok. Filter buat nemu temen di area lo, atau yang baca-buku-mirip.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-caption text-muted uppercase tracking-wide font-semibold">
+            Anggota
+          </p>
+          <h1 className="mt-1 font-display text-display-xl text-ink leading-tight">
+            Anggota komunitas
+          </h1>
+          <p className="mt-2 text-body text-ink-soft max-w-xl">
+            {members.length} anggota cocok. Filter buat nemu temen di area lo, atau yang baca-buku-mirip.
+          </p>
+        </div>
+        <Link
+          href="/peta"
+          className="shrink-0 inline-flex items-center gap-1.5 h-9 px-4 rounded-pill text-body-sm font-medium bg-paper border border-hairline-strong text-ink-soft hover:bg-cream"
+        >
+          <MapPinIcon />
+          Peta
+        </Link>
       </div>
 
       {/* Filters */}
@@ -119,15 +129,32 @@ export default async function AnggotaPage({
         {/* Interest row */}
         <FilterRow label="Interest">
           <FilterPill
-            href={buildHref({ city, area, open })}
+            href={buildHref({ intent, city, area, open })}
             active={!interest}
             label="Semua interest"
           />
           {BROAD_INTERESTS.map((i) => (
             <FilterPill
               key={i.slug}
-              href={buildHref({ interest: i.slug, city, area, open })}
+              href={buildHref({ interest: i.slug, intent, city, area, open })}
               active={interest === i.slug}
+              label={`${i.emoji} ${i.label}`}
+            />
+          ))}
+        </FilterRow>
+
+        {/* Intent row — what they're available for */}
+        <FilterRow label="Available untuk">
+          <FilterPill
+            href={buildHref({ interest, city, area, open })}
+            active={!intent}
+            label="Apa aja"
+          />
+          {INTENTS.map((i) => (
+            <FilterPill
+              key={i.slug}
+              href={buildHref({ interest, intent: i.slug, city, area, open })}
+              active={intent === i.slug}
               label={`${i.emoji} ${i.label}`}
             />
           ))}
@@ -136,22 +163,22 @@ export default async function AnggotaPage({
         {/* Mode row */}
         <FilterRow label="Mode">
           <FilterPill
-            href={buildHref({ interest, city, area })}
+            href={buildHref({ interest, intent, city, area })}
             active={!open}
             label="Semua mode"
           />
           <FilterPill
-            href={buildHref({ interest, city, area, open: "lending" })}
+            href={buildHref({ interest, intent, city, area, open: "lending" })}
             active={open === "lending"}
             label="Buka pinjam"
           />
           <FilterPill
-            href={buildHref({ interest, city, area, open: "selling" })}
+            href={buildHref({ interest, intent, city, area, open: "selling" })}
             active={open === "selling"}
             label="Buka jual"
           />
           <FilterPill
-            href={buildHref({ interest, city, area, open: "trade" })}
+            href={buildHref({ interest, intent, city, area, open: "trade" })}
             active={open === "trade"}
             label="Buka tukar"
           />
@@ -193,11 +220,21 @@ function FilterRow({ label, children }: { label: string; children: React.ReactNo
 function buildHref(opts: SP): string {
   const params = new URLSearchParams();
   if (opts.interest) params.set("interest", opts.interest);
+  if (opts.intent) params.set("intent", opts.intent);
   if (opts.city) params.set("city", opts.city);
   if (opts.area) params.set("area", opts.area);
   if (opts.open) params.set("open", opts.open);
   const qs = params.toString();
   return qs ? `/anggota?${qs}` : "/anggota";
+}
+
+function MapPinIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
 }
 
 function FilterPill({

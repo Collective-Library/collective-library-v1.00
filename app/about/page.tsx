@@ -58,10 +58,19 @@ export default function AboutPage() {
               Siapa di balik ini?
             </h2>
             <p>
-              Dibangun oleh <strong>Cole Hardiyanto</strong> dan{" "}
-              <strong>Nikolas Widad</strong> bersama anggota komunitas Journey
-              Perintis. Open-source dalam semangat — fokus untuk komunitas
-              setempat sebelum scale.
+              Dibangun oleh <strong>Cole</strong>, Initiator Journey Perintis
+              &amp; Collective Library, bersama anggota komunitas Journey
+              Perintis. Reach out di Instagram{" "}
+              <a
+                href="https://instagram.com/nikolaswidad_"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ink underline underline-offset-4 hover:text-ink-soft"
+              >
+                @nikolaswidad_
+              </a>
+              . Open-source dalam semangat — fokus untuk komunitas setempat
+              sebelum scale.
             </p>
 
             <h2 className="mt-4 font-display text-display-md text-ink">

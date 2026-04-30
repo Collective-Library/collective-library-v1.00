@@ -7,7 +7,12 @@ import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
-import { InterestChips } from "@/components/profile/interest-chips";
+import {
+  InterestChips,
+  SubInterestChips,
+  IntentChips,
+} from "@/components/profile/interest-chips";
+import { pruneOrphanSubs } from "@/lib/interests";
 import { slugify } from "@/lib/format";
 import type { Profile } from "@/types";
 
@@ -43,6 +48,8 @@ export function ProfileEditForm({
   const [profession, setProfession] = useState(initial.profession ?? "");
   const [campus, setCampus] = useState(initial.campus_or_workplace ?? "");
   const [interests, setInterests] = useState<string[]>(initial.interests ?? []);
+  const [subInterests, setSubInterests] = useState<string[]>(initial.sub_interests ?? []);
+  const [intents, setIntents] = useState<string[]>(initial.intents ?? []);
 
   // Currently reading (W2)
   const [currentlyReading, setCurrentlyReading] = useState<string>(
@@ -70,6 +77,9 @@ export function ProfileEditForm({
   const [openLending, setOpenLending] = useState(initial.open_for_lending);
   const [openSelling, setOpenSelling] = useState(initial.open_for_selling);
   const [openTrade, setOpenTrade] = useState(initial.open_for_trade);
+
+  // Privacy: show on community map (opt-in, kecamatan-level only)
+  const [showOnMap, setShowOnMap] = useState(initial.show_on_map);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -155,13 +165,57 @@ export function ProfileEditForm({
       cover_url = `${pub.publicUrl}?t=${Date.now()}`;
     }
 
+    // Geocode resolution — only when opted-in. We always recompute when
+    // address/city changed; otherwise reuse what's stored. If geocode fails,
+    // we still save show_on_map=true but warn the user (they won't appear).
+    let map_lat: number | null = initial.map_lat;
+    let map_lng: number | null = initial.map_lng;
+    let geocodeWarning: string | null = null;
+    const cityTrim = city.trim() || "Semarang";
+    const areaTrim = addressArea.trim();
+    const locationChanged =
+      cityTrim !== (initial.city ?? "") || areaTrim !== (initial.address_area ?? "");
+
+    if (showOnMap) {
+      if (locationChanged || initial.map_lat == null || initial.map_lng == null) {
+        try {
+          const q = areaTrim
+            ? `Kecamatan ${areaTrim}, ${cityTrim}, Indonesia`
+            : `${cityTrim}, Indonesia`;
+          const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+          if (res.ok) {
+            const data = (await res.json()) as
+              | { found: true; lat: number; lng: number }
+              | { found: false };
+            if (data.found) {
+              map_lat = data.lat;
+              map_lng = data.lng;
+            } else {
+              map_lat = null;
+              map_lng = null;
+              geocodeWarning =
+                "Lokasi gak ketemu — pastiin nama kecamatan resmi (e.g. Tembalang). Lo gak bakal nongol di peta sampai ini benar.";
+            }
+          } else {
+            geocodeWarning = "Geocoding sementara gagal. Coba simpan lagi nanti.";
+          }
+        } catch {
+          geocodeWarning = "Geocoding sementara gagal. Coba simpan lagi nanti.";
+        }
+      }
+    } else {
+      // Opt-out → clear stored coords so we don't keep stale data
+      map_lat = null;
+      map_lng = null;
+    }
+
     const { error: updErr } = await supabase
       .from("profiles")
       .update({
         full_name: fullName.trim(),
         username: usernameSlug,
-        city: city.trim() || "Semarang",
-        address_area: addressArea.trim() || null,
+        city: cityTrim,
+        address_area: areaTrim || null,
         bio: bio.trim() || null,
         favorite_genres: genres
           ? genres.split(",").map((g) => g.trim()).filter(Boolean)
@@ -181,9 +235,17 @@ export function ProfileEditForm({
         profession: profession.trim() || null,
         campus_or_workplace: campus.trim() || null,
         interests: interests.length ? interests : null,
+        sub_interests: (() => {
+          const pruned = pruneOrphanSubs(subInterests, interests);
+          return pruned.length ? pruned : null;
+        })(),
+        intents: intents.length ? intents : null,
         open_for_lending: openLending,
         open_for_selling: openSelling,
         open_for_trade: openTrade,
+        show_on_map: showOnMap,
+        map_lat,
+        map_lng,
       })
       .eq("id", initial.id);
 
@@ -197,7 +259,11 @@ export function ProfileEditForm({
       return setError(updErr.message);
     }
 
-    toast.success("Profil tersimpan ✓");
+    if (geocodeWarning) {
+      toast.warning(geocodeWarning, { duration: 6000 });
+    } else {
+      toast.success("Profil tersimpan ✓");
+    }
     setInfo("Tersimpan ✓");
     router.replace(`/profile/${usernameSlug}`);
     router.refresh();
@@ -303,8 +369,8 @@ export function ProfileEditForm({
           label="Area / kecamatan"
           value={addressArea}
           onChange={(e) => setAddressArea(e.target.value)}
-          placeholder="Tembalang, Pleburan, dst"
-          hint="Bantu orang tau lo dimana buat pinjam-meminjam."
+          placeholder="Tembalang, Banyumanik, Gajahmungkur, dst"
+          hint="Buat muncul di peta, pakai nama kecamatan resmi (16 di Kota Semarang)."
         />
       </div>
 
@@ -425,6 +491,8 @@ export function ProfileEditForm({
       />
 
       <InterestChips value={interests} onChange={setInterests} min={3} />
+      <SubInterestChips broad={interests} value={subInterests} onChange={setSubInterests} />
+      <IntentChips value={intents} onChange={setIntents} />
 
       {/* Currently reading — pick one of your own books */}
       <div className="flex flex-col gap-2">
@@ -465,6 +533,30 @@ export function ProfileEditForm({
         <Toggle label="Available untuk pinjam-meminjam" checked={openLending} onChange={setOpenLending} />
         <Toggle label="Available untuk jual-beli" checked={openSelling} onChange={setOpenSelling} />
         <Toggle label="Available untuk tukar buku" checked={openTrade} onChange={setOpenTrade} />
+      </div>
+
+      <hr className="border-hairline" />
+
+      <div>
+        <p className="text-caption font-semibold text-ink uppercase tracking-wide">Visibilitas publik</p>
+        <p className="mt-1 text-body-sm text-muted">
+          Default mati. Sekali on, lo muncul di 2 tempat publik: peta + landing. Lokasi yang tampil cuma kecamatan, bukan alamat lengkap.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Toggle
+          label="Tampilin gue publik (peta + landing)"
+          checked={showOnMap}
+          onChange={setShowOnMap}
+        />
+        {showOnMap && (
+          <p className="text-caption text-muted -mt-1">
+            Lo bakal muncul: (1) sebagai bubble di{" "}
+            <span className="font-medium text-ink-soft">/peta</span> dengan foto + buku-buku lo, dan (2) sebagai member card di landing publik{" "}
+            <span className="font-medium text-ink-soft">collectivelibrary.vercel.app</span>. Pin/lokasi ditaro di tengah kecamatan, bukan alamat persis.
+          </p>
+        )}
       </div>
 
       {error && <p className="text-caption text-(--color-error)">{error}</p>}

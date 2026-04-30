@@ -33,6 +33,7 @@ export interface MemberSummary {
   profession: string | null;
   campus_or_workplace: string | null;
   interests: string[] | null;
+  intents: string[] | null;
   open_for_lending: boolean;
   open_for_selling: boolean;
   open_for_trade: boolean;
@@ -87,6 +88,7 @@ export async function listAreas(): Promise<AreaOption[]> {
 
 export async function listMembers(opts?: {
   interest?: string;
+  intent?: string;
   city?: string;
   area?: string;
   openFor?: "lending" | "selling" | "trade";
@@ -96,7 +98,7 @@ export async function listMembers(opts?: {
   let query = supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, bio, profession, campus_or_workplace, interests, open_for_lending, open_for_selling, open_for_trade, created_at",
+      "id, full_name, username, photo_url, city, address_area, bio, profession, campus_or_workplace, interests, intents, open_for_lending, open_for_selling, open_for_trade, created_at",
     )
     .not("username", "is", null)
     .order("created_at", { ascending: false })
@@ -104,6 +106,9 @@ export async function listMembers(opts?: {
 
   if (opts?.interest) {
     query = query.contains("interests", [opts.interest]);
+  }
+  if (opts?.intent) {
+    query = query.contains("intents", [opts.intent]);
   }
   if (opts?.city) {
     query = query.ilike("city", opts.city);
@@ -140,6 +145,161 @@ export async function listMembers(opts?: {
   return (profiles ?? []).map((p) => ({
     ...(p as Omit<MemberSummary, "book_count">),
     book_count: countMap[p.id as string] ?? 0,
+  }));
+}
+
+/**
+ * Member shape for the community map (/peta). Includes coords + a few book
+ * cover URLs for the popup preview. Only members with show_on_map=true AND
+ * resolved coordinates are returned.
+ */
+export interface MapMember {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  photo_url: string | null;
+  city: string | null;
+  address_area: string | null;
+  bio: string | null;
+  profession: string | null;
+  interests: string[] | null;
+  open_for_lending: boolean;
+  open_for_selling: boolean;
+  open_for_trade: boolean;
+  map_lat: number;
+  map_lng: number;
+  book_count: number;
+  book_covers: string[];
+}
+
+export async function listMembersForMap(): Promise<MapMember[]> {
+  const supabase = await createClient();
+  const { data: profiles, error } = await supabase
+    .from("profiles_public")
+    .select(
+      "id, full_name, username, photo_url, city, address_area, bio, profession, interests, open_for_lending, open_for_selling, open_for_trade, map_lat, map_lng",
+    )
+    .eq("show_on_map", true)
+    .not("map_lat", "is", null)
+    .not("map_lng", "is", null)
+    .not("username", "is", null);
+
+  if (error || !profiles) {
+    if (error) console.error("listMembersForMap", error);
+    return [];
+  }
+
+  const ids = profiles.map((p) => p.id as string);
+  if (ids.length === 0) return [];
+
+  // Fetch up to 4 covers per owner in a single query, then bucket client-side.
+  const { data: books } = await supabase
+    .from("books")
+    .select("owner_id, cover_url, created_at")
+    .in("owner_id", ids)
+    .eq("is_hidden", false)
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false })
+    .limit(ids.length * 8); // headroom; we'll cap to 4 per owner below
+
+  const coversByOwner = new Map<string, string[]>();
+  const countByOwner = new Map<string, number>();
+  for (const b of books ?? []) {
+    const owner = b.owner_id as string;
+    countByOwner.set(owner, (countByOwner.get(owner) ?? 0) + 1);
+    const arr = coversByOwner.get(owner) ?? [];
+    if (arr.length < 4 && b.cover_url) arr.push(b.cover_url as string);
+    coversByOwner.set(owner, arr);
+  }
+
+  return profiles.map((p) => ({
+    id: p.id as string,
+    full_name: (p.full_name as string | null) ?? null,
+    username: (p.username as string | null) ?? null,
+    photo_url: (p.photo_url as string | null) ?? null,
+    city: (p.city as string | null) ?? null,
+    address_area: (p.address_area as string | null) ?? null,
+    bio: (p.bio as string | null) ?? null,
+    profession: (p.profession as string | null) ?? null,
+    interests: (p.interests as string[] | null) ?? null,
+    open_for_lending: Boolean(p.open_for_lending),
+    open_for_selling: Boolean(p.open_for_selling),
+    open_for_trade: Boolean(p.open_for_trade),
+    map_lat: p.map_lat as number,
+    map_lng: p.map_lng as number,
+    book_count: countByOwner.get(p.id as string) ?? 0,
+    book_covers: coversByOwner.get(p.id as string) ?? [],
+  }));
+}
+
+/**
+ * Members visible on the public landing page. Uses the same opt-in flag as
+ * /peta (`show_on_map`), so the toggle gates BOTH surfaces — one consent
+ * line covers both. Unlike `listMembersForMap`, we don't require coords:
+ * a member can be on the landing strip even if geocoding hasn't resolved.
+ */
+export interface LandingMember {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  photo_url: string | null;
+  city: string | null;
+  address_area: string | null;
+  profession: string | null;
+  book_count: number;
+  book_covers: string[];
+}
+
+export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
+  const supabase = await createClient();
+  const { data: profiles, error } = await supabase
+    .from("profiles_public")
+    .select(
+      "id, full_name, username, photo_url, city, address_area, profession, updated_at",
+    )
+    .eq("show_on_map", true)
+    .not("username", "is", null)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !profiles) {
+    if (error) console.error("listLandingMembers", error);
+    return [];
+  }
+
+  const ids = profiles.map((p) => p.id as string);
+  if (ids.length === 0) return [];
+
+  // Fetch covers — one trip, bucket client-side (cap 3 per owner)
+  const { data: books } = await supabase
+    .from("books")
+    .select("owner_id, cover_url, created_at")
+    .in("owner_id", ids)
+    .eq("is_hidden", false)
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false })
+    .limit(ids.length * 6);
+
+  const coversByOwner = new Map<string, string[]>();
+  const countByOwner = new Map<string, number>();
+  for (const b of books ?? []) {
+    const owner = b.owner_id as string;
+    countByOwner.set(owner, (countByOwner.get(owner) ?? 0) + 1);
+    const arr = coversByOwner.get(owner) ?? [];
+    if (arr.length < 3 && b.cover_url) arr.push(b.cover_url as string);
+    coversByOwner.set(owner, arr);
+  }
+
+  return profiles.map((p) => ({
+    id: p.id as string,
+    full_name: (p.full_name as string | null) ?? null,
+    username: (p.username as string | null) ?? null,
+    photo_url: (p.photo_url as string | null) ?? null,
+    city: (p.city as string | null) ?? null,
+    address_area: (p.address_area as string | null) ?? null,
+    profession: (p.profession as string | null) ?? null,
+    book_count: countByOwner.get(p.id as string) ?? 0,
+    book_covers: coversByOwner.get(p.id as string) ?? [],
   }));
 }
 

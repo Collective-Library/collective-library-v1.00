@@ -31,6 +31,8 @@ export interface Profile {
   website_url: string | null;
   profession: string | null;
   interests: string[] | null;
+  sub_interests: string[] | null;
+  intents: string[] | null;
   favorite_genres: string[] | null;
   open_for_discussion: boolean;
   open_for_lending: boolean;
@@ -38,6 +40,9 @@ export interface Profile {
   open_for_trade: boolean;
   is_admin: boolean;
   currently_reading_book_id: string | null;
+  show_on_map: boolean;
+  map_lat: number | null;
+  map_lng: number | null;
   created_at: string;
   updated_at: string;
 }

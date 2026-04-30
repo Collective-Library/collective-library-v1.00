@@ -10,7 +10,11 @@ import { Avatar } from "@/components/ui/avatar";
 import { CommunityBadge } from "@/components/ui/community-badge";
 import { SecondaryContactRow } from "@/components/books/contact-pills";
 import { MyShelfManager } from "@/components/books/my-shelf-manager";
-import { InterestList } from "@/components/profile/interest-chips";
+import {
+  InterestList,
+  SubInterestList,
+  IntentList,
+} from "@/components/profile/interest-chips";
 import { ShareProfileButton } from "@/components/profile/share-profile-button";
 import type { BookStatus } from "@/types";
 
@@ -110,6 +114,19 @@ export default async function ProfilePage({
           {profile.interests && profile.interests.length > 0 && (
             <div className="mt-3">
               <InterestList slugs={profile.interests} />
+            </div>
+          )}
+          {profile.sub_interests && profile.sub_interests.length > 0 && (
+            <div className="mt-1.5">
+              <SubInterestList slugs={profile.sub_interests} />
+            </div>
+          )}
+          {profile.intents && profile.intents.length > 0 && (
+            <div className="mt-2.5">
+              <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-1">
+                Available untuk
+              </p>
+              <IntentList slugs={profile.intents} />
             </div>
           )}
         </div>

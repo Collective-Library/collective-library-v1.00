@@ -2,15 +2,25 @@ import Link from "next/link";
 import { Logo } from "@/components/layout/logo";
 import { Footer } from "@/components/layout/footer";
 import { ButtonLink } from "@/components/ui/button";
+import { ActivityFeed } from "@/components/activity/activity-feed";
+import { RecentBooksStrip } from "@/components/landing/recent-books-strip";
+import { RecentMembersStrip } from "@/components/landing/recent-members-strip";
+import { LoginNudgeProvider } from "@/components/landing/login-nudge";
 import { getCurrentUser } from "@/lib/auth";
 import { getCommunityStats } from "@/lib/stats";
+import { listActivity } from "@/lib/activity";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [user, stats] = await Promise.all([getCurrentUser(), getCommunityStats()]);
+  const [user, stats, activity] = await Promise.all([
+    getCurrentUser(),
+    getCommunityStats(),
+    listActivity(4),
+  ]);
 
   return (
+    <LoginNudgeProvider isAnon={!user}>
     <div className="min-h-screen bg-parchment text-ink flex flex-col">
       {/* Skip to content for keyboard users */}
       <a
@@ -84,6 +94,21 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Recent books — horizontal scroll strip */}
+        <RecentBooksStrip />
+
+        {/* Recent activity — peek at what's happening */}
+        {activity.length > 0 && (
+          <section className="px-6 md:px-10 pb-12" aria-label="Aktivitas terbaru">
+            <div className="max-w-3xl mx-auto">
+              <ActivityFeed items={activity} />
+            </div>
+          </section>
+        )}
+
+        {/* Members strip — opt-in public via show_on_map */}
+        <RecentMembersStrip />
+
         {/* Why this exists — founder voice */}
         <section className="px-6 md:px-10 py-16 bg-cream">
           <div className="max-w-2xl mx-auto">
@@ -112,7 +137,15 @@ export default async function HomePage() {
               </p>
             </div>
             <p className="mt-6 text-body-sm text-muted text-center italic">
-              — Cole &amp; Nikolas, JP Semarang
+              — Cole, Initiator Journey Perintis &amp; Collective Library ·{" "}
+              <a
+                href="https://instagram.com/nikolaswidad_"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ink-soft underline underline-offset-4 hover:text-ink not-italic"
+              >
+                @nikolaswidad_
+              </a>
             </p>
           </div>
         </section>
@@ -170,6 +203,7 @@ export default async function HomePage() {
 
       <Footer />
     </div>
+    </LoginNudgeProvider>
   );
 }
 

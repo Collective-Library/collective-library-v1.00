@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { InterestList } from "@/components/profile/interest-chips";
+import { InterestList, IntentList } from "@/components/profile/interest-chips";
 import type { MemberSummary } from "@/lib/profile";
 
 /**
@@ -45,6 +45,10 @@ export function MemberCard({ member }: { member: MemberSummary }) {
 
       {member.interests && member.interests.length > 0 && (
         <InterestList slugs={member.interests.slice(0, 4)} />
+      )}
+
+      {member.intents && member.intents.length > 0 && (
+        <IntentList slugs={member.intents.slice(0, 3)} />
       )}
 
       <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-hairline-soft">

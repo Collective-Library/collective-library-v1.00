@@ -1,20 +1,13 @@
 -- =============================================================================
--- Migration 0005 — profile extras: currently_reading + show_on_map + geocode
+-- Migration 0010 — consolidate 0005 + 0009 (remediation)
 --
--- 1. currently_reading_book_id — single-book pointer for the profile widget.
---    profile.cover_url already exists; no migration needed for the banner upload.
--- 2. show_on_map — opt-in flag for the community map (/peta). Default FALSE
---    (privacy-first; user must turn it on explicitly).
--- 3. map_lat / map_lng — kecamatan-level coordinates set at save-time via
---    Nominatim geocoding. Null when geocoding fails or user is opt-out.
---
--- Recreates profiles_public to expose the new columns (whatsapp masking from
--- migration 0002 preserved). Note: WhatsApp masking is the only privacy
--- transform; show_on_map / map_lat / map_lng are intentionally exposed because
--- the map only renders profiles where show_on_map = true (and only kecamatan-
--- level coords are stored, not exact addresses).
+-- Some columns from 0005 didn't get applied in prod (likely a stale paste of
+-- the earlier 0005 that only had currently_reading_book_id). This block is
+-- idempotent and ensures the schema matches what 0005 + 0009 promised.
+-- Safe to re-run.
 -- =============================================================================
 
+-- 0005 columns
 alter table public.profiles
   add column if not exists currently_reading_book_id uuid
     references public.books(id) on delete set null;
@@ -28,6 +21,17 @@ alter table public.profiles
 alter table public.profiles
   add column if not exists map_lng double precision;
 
+-- 0009 columns
+alter table public.profiles
+  add column if not exists sub_interests text[];
+
+alter table public.profiles
+  add column if not exists intents text[];
+
+create index if not exists idx_profiles_intents
+  on public.profiles using gin(intents);
+
+-- Recreate view with the full set of columns
 drop view if exists public.profiles_public;
 
 create view public.profiles_public as
@@ -49,6 +53,8 @@ select
   profession,
   campus_or_workplace,
   interests,
+  sub_interests,
+  intents,
   favorite_genres,
   open_for_discussion,
   open_for_lending,
