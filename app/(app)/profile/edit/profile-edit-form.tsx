@@ -19,6 +19,7 @@ import {
 } from "@/components/profile/location-picker";
 import { pruneOrphanSubs } from "@/lib/interests";
 import { slugify } from "@/lib/format";
+import { compressImage, compressionPercent } from "@/lib/compress-image";
 import type { Profile } from "@/types";
 
 interface MyBook {
@@ -99,8 +100,11 @@ export function ProfileEditForm({
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 3 * 1024 * 1024) {
-      setError("Ukuran foto maks 3MB.");
+    // Sanity ceiling — anything past this is almost certainly a video / weird
+    // file. We'll compress aggressively at upload time, so 20MB headroom is
+    // generous for raw phone photos.
+    if (file.size > 20 * 1024 * 1024) {
+      setError("File terlalu besar (>20MB). Coba foto yang lain.");
       return;
     }
     setPhotoFile(file);
@@ -110,8 +114,8 @@ export function ProfileEditForm({
   function onBannerFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Ukuran banner maks 5MB.");
+    if (file.size > 25 * 1024 * 1024) {
+      setError("File terlalu besar (>25MB). Coba banner yang lain.");
       return;
     }
     setBannerFile(file);
@@ -141,14 +145,26 @@ export function ProfileEditForm({
       return setError("Minimal satu cara kontak harus tetap diisi.");
     }
 
-    // Upload new photo if selected
+    // Upload new photo if selected — compress to WebP first
     let photo_url: string | null = initial.photo_url;
     if (photoFile) {
-      const ext = photoFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${initial.id}/avatar.${ext}`;
+      let toUpload = photoFile;
+      try {
+        toUpload = await compressImage(photoFile, "avatar");
+        const saved = compressionPercent(photoFile.size, toUpload.size);
+        if (saved > 0) {
+          toast.message(`Foto profil dikompres ${saved}% (${Math.round(toUpload.size / 1024)}KB)`);
+        }
+      } catch (compressErr) {
+        // Compression failure → fall back to original. Better to upload heavy
+        // than fail the whole save.
+        console.warn("[avatar compress]", compressErr);
+      }
+      // Always store as .webp to keep paths consistent + storage tiny.
+      const path = `${initial.id}/avatar.webp`;
       const { error: upErr } = await supabase.storage
         .from("book-covers") // reuse the bucket; path-prefixed by user id
-        .upload(path, photoFile, { upsert: true, contentType: photoFile.type });
+        .upload(path, toUpload, { upsert: true, contentType: toUpload.type });
       if (upErr) {
         setSaving(false);
         return setError(`Upload foto gagal: ${upErr.message}`);
@@ -158,16 +174,25 @@ export function ProfileEditForm({
       photo_url = `${pub.publicUrl}?t=${Date.now()}`;
     }
 
-    // Banner resolution: remove → null, new file → upload, else keep existing
+    // Banner resolution: remove → null, new file → compress + upload, else keep existing
     let cover_url: string | null = initial.cover_url;
     if (removeBanner) {
       cover_url = null;
     } else if (bannerFile) {
-      const ext = bannerFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${initial.id}/banner.${ext}`;
+      let toUpload = bannerFile;
+      try {
+        toUpload = await compressImage(bannerFile, "banner");
+        const saved = compressionPercent(bannerFile.size, toUpload.size);
+        if (saved > 0) {
+          toast.message(`Banner dikompres ${saved}% (${Math.round(toUpload.size / 1024)}KB)`);
+        }
+      } catch (compressErr) {
+        console.warn("[banner compress]", compressErr);
+      }
+      const path = `${initial.id}/banner.webp`;
       const { error: upErr } = await supabase.storage
         .from("book-covers")
-        .upload(path, bannerFile, { upsert: true, contentType: bannerFile.type });
+        .upload(path, toUpload, { upsert: true, contentType: toUpload.type });
       if (upErr) {
         setSaving(false);
         return setError(`Upload banner gagal: ${upErr.message}`);
@@ -320,7 +345,7 @@ export function ProfileEditForm({
           className="hidden"
         />
         <div className="flex items-center justify-between gap-2">
-          <p className="text-caption text-muted">Klik banner buat ganti. Maks 5MB.</p>
+          <p className="text-caption text-muted">Klik banner buat ganti. Auto-compress ke WebP saat simpan.</p>
           {(bannerPreview || initial.cover_url) && !removeBanner && (
             <button
               type="button"
@@ -361,7 +386,7 @@ export function ProfileEditForm({
         />
         <div>
           <p className="text-body-sm font-medium text-ink">Foto profil</p>
-          <p className="text-caption text-muted mt-0.5">Klik foto buat ganti. Maks 3MB.</p>
+          <p className="text-caption text-muted mt-0.5">Klik foto buat ganti. Auto-compress ke WebP saat simpan.</p>
         </div>
       </div>
 

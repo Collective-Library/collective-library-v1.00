@@ -145,6 +145,8 @@ If all four are no, we don't build it.
   - `app/robots.ts` — disallows /auth, /onboarding, /api, /book/add, /book/import, /wanted/add. Allows everything else.
   - `app/sitemap.ts` — landing + about + privacy + RSS/JSON feeds + opt-in member profiles (up to 500 latest)
   - `app/error.tsx`, `app/(app)/error.tsx`, `app/global-error.tsx` — 3-tier error boundaries with Sentry capture + retry button
+- **~~Image compression on upload~~** ✅ shipped — `lib/compress-image.ts` (browser-side, via `browser-image-compression`). Avatar / banner / cover / general presets resize + convert to WebP before Supabase upload. User can throw 20MB+ photos in; we ship ~80-300KB WebP. Storage saving 70-90%. Toast confirms percentage saved.
+- **~~Footer socials~~** ✅ shipped — Linktree (`linktr.ee/collectivelibrary.id`) + Instagram (`@collectivelibrary.id`) pills in footer.
 - **Visibility consolidation** — `show_on_map` toggle now gates BOTH /peta pin AND landing member card. Toggle copy renamed to "Tampilin gue publik (peta + landing)" so consent intent is explicit. One flag, two surfaces.
 - **Founder attribution** — Both `/` and `/about` updated: now reads "Cole, Initiator Journey Perintis & Collective Library" with linked IG `@nikolaswidad_` (consolidating from prior "Cole & Nikolas" 2-name framing).
 - **FTS query swap** — flip lib/books.ts:searchBooks from ilike to `.textSearch('search_text', q, { type: 'websearch' })` once 0006 is run and we have enough books to feel ranking.
