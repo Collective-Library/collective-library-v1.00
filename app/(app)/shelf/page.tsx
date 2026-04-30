@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { listShelfBooks, getShelfCounts } from "@/lib/books";
+import { listShelfBooks, getShelfCounts, getRecentBookActivity } from "@/lib/books";
 import { BookGrid } from "@/components/books/book-grid";
+import { ActivityFeed } from "@/components/activity/activity-feed";
 import { ButtonLink } from "@/components/ui/button";
 import { STATUS_FILTER_OPTIONS } from "@/lib/status";
 import { cn } from "@/lib/cn";
@@ -14,9 +15,12 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
   const { status, q } = await searchParams;
   const filter = (STATUS_FILTER_OPTIONS.find((o) => o.value === status)?.value ?? "all") as BookStatus | "all";
 
-  const [books, counts] = await Promise.all([
+  const [books, counts, activity] = await Promise.all([
     listShelfBooks({ status: filter, search: q }),
     getShelfCounts(),
+    // Activity widget only on the unfiltered "all" view — keeps the filtered
+    // browsing experience clean.
+    filter === "all" && !q ? getRecentBookActivity(4) : Promise.resolve([]),
   ]);
 
   return (
@@ -36,6 +40,9 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
           <ButtonLink href="/book/add">+ Tambah Buku</ButtonLink>
         </div>
       </div>
+
+      {/* Activity feed — only on the default unfiltered view */}
+      {activity.length > 0 && <ActivityFeed items={activity} />}
 
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-2 sm:gap-3">

@@ -53,6 +53,63 @@ export async function searchBooks(query: string, limit = 60): Promise<BookWithOw
   return (data ?? []) as unknown as BookWithOwner[];
 }
 
+/** Lightweight recent-activity rows for the /shelf "Aktivitas terbaru" widget. */
+export interface RecentBookActivity {
+  book_id: string;
+  title: string;
+  cover_url: string | null;
+  status: BookStatus;
+  created_at: string;
+  owner_id: string;
+  owner_name: string | null;
+  owner_username: string | null;
+  owner_photo: string | null;
+}
+
+/**
+ * Returns the most recent book additions for the activity feed widget.
+ * Lightweight version — no event table; just `books.created_at desc` joined
+ * with public profile. Upgrade to a real activity_log when traffic demands.
+ */
+export async function getRecentBookActivity(limit = 5): Promise<RecentBookActivity[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("books")
+    .select(`
+      id, title, cover_url, status, created_at, owner_id,
+      owner:profiles_public!books_owner_id_fkey(full_name, username, photo_url)
+    `)
+    .eq("is_hidden", false)
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("getRecentBookActivity", error);
+    return [];
+  }
+  type Row = {
+    id: string;
+    title: string;
+    cover_url: string | null;
+    status: BookStatus;
+    created_at: string;
+    owner_id: string;
+    owner: { full_name: string | null; username: string | null; photo_url: string | null } | null;
+  };
+  return ((data ?? []) as unknown as Row[]).map((b) => ({
+    book_id: b.id,
+    title: b.title,
+    cover_url: b.cover_url,
+    status: b.status,
+    created_at: b.created_at,
+    owner_id: b.owner_id,
+    owner_name: b.owner?.full_name ?? null,
+    owner_username: b.owner?.username ?? null,
+    owner_photo: b.owner?.photo_url ?? null,
+  }));
+}
+
 /** Counts books per status — for the shelf stats bar. */
 export async function getShelfCounts(): Promise<Record<BookStatus, number>> {
   const supabase = await createClient();
