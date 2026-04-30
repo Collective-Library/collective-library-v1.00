@@ -60,7 +60,7 @@ export async function RecentMembersStrip() {
                 className="group shrink-0 snap-start w-[180px] flex flex-col gap-3 p-4 rounded-card-lg bg-paper border border-hairline shadow-card hover:shadow-card-hover transition-shadow"
               >
                 <div className="flex items-center gap-3">
-                  <Avatar src={m.photo_url} name={m.full_name} size={48} />
+                  <Avatar src={m.photo_url} name={m.full_name} size={48} isAdmin={m.is_admin} />
                   <div className="min-w-0 flex-1">
                     <p className="text-body-sm font-semibold text-ink truncate leading-tight">
                       {m.full_name ?? m.username}

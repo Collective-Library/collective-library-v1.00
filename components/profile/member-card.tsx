@@ -22,7 +22,7 @@ export function MemberCard({ member }: { member: MemberSummary }) {
       className="group bg-paper border border-hairline rounded-card-lg p-4 md:p-5 shadow-card hover:shadow-card-hover transition-shadow flex flex-col gap-3"
     >
       <div className="flex items-start gap-3">
-        <Avatar src={member.photo_url} name={member.full_name} size={48} />
+        <Avatar src={member.photo_url} name={member.full_name} size={48} isAdmin={member.is_admin} />
         <div className="min-w-0 flex-1">
           <p className="text-body-sm font-semibold text-ink leading-tight truncate">
             {member.full_name ?? member.username}

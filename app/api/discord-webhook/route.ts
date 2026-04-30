@@ -168,37 +168,48 @@ function buildEmbed(
   let url = `${base}/aktivitas`;
   let thumbnail: string | null = null;
 
+  // Voice: Seth-Godin-flavored. Specific, anticipatory, invitational. Each
+  // event becomes a tiny community moment, not a bot log.
   switch (row.type) {
     case "USER_JOINED":
-      title = `${actorName} bergabung di Collective Library`;
-      description = profileUrl ? `[Lihat profil →](${profileUrl})` : "";
+      title = `${actorName} baru gabung.`;
+      description = profileUrl
+        ? `Kasih sambutan, kenalan dulu sebelum mereka tenggelam di scroll.\n\n[Lihat profil →](${profileUrl})`
+        : "Kasih sambutan, kenalan dulu sebelum mereka tenggelam di scroll.";
       url = profileUrl ?? url;
       break;
     case "BOOK_ADDED": {
-      const verb = book ? STATUS_LABEL[book.status] ?? "Koleksi" : "rak";
-      title = `${actorName} nambahin buku`;
+      const verb = book ? STATUS_LABEL[book.status]?.toLowerCase() ?? "koleksi" : "rak";
+      title = book
+        ? `${actorName} taro buku baru di rak komunitas.`
+        : `${actorName} taro buku baru.`;
       description = book
-        ? `**${book.title}** — ${book.author}\nStatus: ${verb}`
-        : "Buku baru ditambahkan.";
+        ? `**${book.title}** — ${book.author}\n→ Status: ${verb}\n\nKalau lo penasaran, mampir.`
+        : "Buku baru naik. Mampir liat.";
       thumbnail = book?.cover_url ?? null;
       url = row.book_id ? `${base}/book/${row.book_id}` : url;
       break;
     }
     case "BOOK_STATUS_CHANGED": {
       const newStatus = row.metadata?.new_status ?? book?.status ?? "unavailable";
-      title = `${actorName} buka buku untuk ${STATUS_LABEL[newStatus] ?? newStatus}`;
+      const verb = STATUS_LABEL[newStatus]?.toLowerCase() ?? newStatus;
+      title = book
+        ? `${actorName} buka **${book.title}** buat ${verb}.`
+        : `${actorName} update status buku.`;
       description = book
-        ? `**${book.title}** — ${book.author}`
+        ? `Author: ${book.author}\n\nYang punya minat, tap sebelum keduluan.`
         : "Status buku berubah.";
       thumbnail = book?.cover_url ?? null;
       url = row.book_id ? `${base}/book/${row.book_id}` : url;
       break;
     }
     case "WTB_POSTED": {
-      title = `${actorName} cari buku`;
+      title = wanted
+        ? `${actorName} lagi cari **${wanted.title}**.`
+        : `${actorName} cari buku.`;
       description = wanted
-        ? `**${wanted.title}**${wanted.author ? ` — ${wanted.author}` : ""}\n[Klik kalau lo punya →](${base}/wanted)`
-        : "WTB request baru.";
+        ? `${wanted.author ? `oleh ${wanted.author}\n\n` : ""}Ada yang punya, atau tau di mana ada? Tap kasih tau.\n\n[Lihat WTB →](${base}/wanted)`
+        : `Ada permintaan buku baru.\n\n[Lihat WTB →](${base}/wanted)`;
       url = `${base}/wanted`;
       break;
     }

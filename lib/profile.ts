@@ -37,6 +37,7 @@ export interface MemberSummary {
   open_for_lending: boolean;
   open_for_selling: boolean;
   open_for_trade: boolean;
+  is_admin: boolean;
   created_at: string;
   book_count: number;
 }
@@ -98,7 +99,7 @@ export async function listMembers(opts?: {
   let query = supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, bio, profession, campus_or_workplace, interests, intents, open_for_lending, open_for_selling, open_for_trade, created_at",
+      "id, full_name, username, photo_url, city, address_area, bio, profession, campus_or_workplace, interests, intents, open_for_lending, open_for_selling, open_for_trade, is_admin, created_at",
     )
     .not("username", "is", null)
     .order("created_at", { ascending: false })
@@ -248,6 +249,7 @@ export interface LandingMember {
   city: string | null;
   address_area: string | null;
   profession: string | null;
+  is_admin: boolean;
   book_count: number;
   book_covers: string[];
 }
@@ -257,7 +259,7 @@ export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
   const { data: profiles, error } = await supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, profession, updated_at",
+      "id, full_name, username, photo_url, city, address_area, profession, is_admin, updated_at",
     )
     .eq("show_on_map", true)
     .not("username", "is", null)
@@ -300,6 +302,7 @@ export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
     city: (p.city as string | null) ?? null,
     address_area: (p.address_area as string | null) ?? null,
     profession: (p.profession as string | null) ?? null,
+    is_admin: Boolean(p.is_admin),
     book_count: countByOwner.get(p.id as string) ?? 0,
     book_covers: coversByOwner.get(p.id as string) ?? [],
   }));

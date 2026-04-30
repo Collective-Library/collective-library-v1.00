@@ -120,12 +120,28 @@ export default async function ProfilePage({
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start gap-5 mb-7">
-        <Avatar src={profile.photo_url} name={profile.full_name} size={88} />
+        <Avatar
+          src={profile.photo_url}
+          name={profile.full_name}
+          size={88}
+          isAdmin={profile.is_admin}
+        />
         <div className="flex-1 min-w-0">
           <div>
-            <h1 className="font-display text-display-xl text-ink leading-tight pr-12">
-              {profile.full_name ?? profile.username}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap pr-12">
+              <h1 className="font-display text-display-xl text-ink leading-tight">
+                {profile.full_name ?? profile.username}
+              </h1>
+              {profile.is_admin && (
+                <span
+                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-pill bg-ink text-parchment text-[11px] font-semibold tracking-wide"
+                  title="Admin Collective Library"
+                >
+                  <span aria-hidden>✦</span>
+                  ADMIN
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-body text-muted">
               @{profile.username} · {cityLine || "Semarang"}
             </p>
