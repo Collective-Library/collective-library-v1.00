@@ -93,7 +93,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
   return (
     <article className="max-w-4xl mx-auto">
       {/* Hero with blurred backdrop */}
-      <div className="relative -mx-4 md:-mx-6 mb-8 overflow-hidden rounded-none md:rounded-card-lg">
+      <div className="relative -mx-4 md:-mx-6 mb-3 md:mb-8 overflow-hidden rounded-none md:rounded-card-lg">
         <div className="relative h-56 md:h-72">
           {book.cover_url && (
             <Image
@@ -108,8 +108,8 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-parchment/40 to-parchment" />
         </div>
-        <div className="relative -mt-32 md:-mt-40 px-4 md:px-6 flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-end">
-          <div className="relative w-32 md:w-48 aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline shadow-card-hover shrink-0">
+        <div className="relative -mt-32 md:-mt-40 px-4 md:px-6 flex flex-row gap-4 md:gap-6 items-end">
+          <div className="relative w-24 md:w-48 aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline shadow-card-hover shrink-0">
             {book.cover_url ? (
               <Image
                 src={book.cover_url}
@@ -140,8 +140,8 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
                 </Link>
               )}
             </div>
-            <h1 className="font-display text-display-lg md:text-display-xl text-ink leading-tight">{book.title}</h1>
-            <p className="mt-1 text-body-lg text-ink-soft">{book.author}</p>
+            <h1 className="font-display text-display-md md:text-display-xl text-ink leading-tight">{book.title}</h1>
+            <p className="mt-1 text-body text-ink-soft">{book.author}</p>
           </div>
         </div>
       </div>
