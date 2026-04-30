@@ -106,6 +106,7 @@ export interface WantedRequest {
   requester_id: string;
   title: string;
   author: string | null;
+  cover_url: string | null;
   max_budget: number | null;
   desired_condition: string | null;
   city: string | null;

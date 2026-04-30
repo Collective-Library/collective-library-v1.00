@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getRequesterContactLinks, type Viewer } from "@/lib/contact";
@@ -43,41 +44,62 @@ export function WantedCard({
         <Badge tone="muted" className="ml-auto">DICARI</Badge>
       </Link>
 
-      {/* Body — title + author */}
-      <div>
-        <h3 className="font-display text-title-lg text-ink leading-tight">{wanted.title}</h3>
-        {wanted.author && (
-          <p className="mt-1 text-body text-ink-soft">oleh {wanted.author}</p>
-        )}
+      {/* Body — cover thumb + title + meta */}
+      <div className="flex gap-4">
+        <div className="relative w-[72px] h-[100px] shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
+          {wanted.cover_url ? (
+            <Image
+              src={wanted.cover_url}
+              alt=""
+              fill
+              sizes="72px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-[10px] text-muted px-1.5 text-center leading-tight">
+              {wanted.title.slice(0, 24)}
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+          <h3 className="font-display text-title-md text-ink leading-tight line-clamp-2">
+            {wanted.title}
+          </h3>
+          {wanted.author && (
+            <p className="text-body-sm text-ink-soft line-clamp-1">oleh {wanted.author}</p>
+          )}
+
+          {/* Inline meta — budget + condition */}
+          {(wanted.max_budget != null || conditionLabel) && (
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-caption">
+              {wanted.max_budget != null && (
+                <span className="text-ink-soft">
+                  <span className="text-muted">Budget maks · </span>
+                  <span className="font-semibold">{formatIDR(wanted.max_budget)}</span>
+                </span>
+              )}
+              {conditionLabel && (
+                <span className="text-ink-soft">
+                  <span className="text-muted">Kondisi · </span>
+                  <span className="font-medium">{conditionLabel}</span>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Meta */}
-      {(wanted.max_budget != null || conditionLabel || wanted.notes) && (
-        <dl className="grid grid-cols-2 gap-y-2 gap-x-4 text-caption">
-          {wanted.max_budget != null && (
-            <Meta label="Budget maks">{formatIDR(wanted.max_budget)}</Meta>
-          )}
-          {conditionLabel && <Meta label="Kondisi diinginkan">{conditionLabel}</Meta>}
-        </dl>
-      )}
-
+      {/* Notes — always shown if present. Could be requirements, vibes, jokes,
+          atau cari jodoh sambil cari buku 🤷‍♀️ */}
       {wanted.notes && (
-        <p className="text-body-sm text-ink-soft whitespace-pre-wrap border-l-2 border-hairline-strong pl-3">
-          {wanted.notes}
-        </p>
+        <blockquote className="text-body-sm text-ink-soft whitespace-pre-wrap rounded-card bg-cream/60 border-l-2 border-hairline-strong px-3 py-2.5 italic">
+          &ldquo;{wanted.notes}&rdquo;
+        </blockquote>
       )}
 
       {/* CTA — Gue punya! */}
       <WantedCTA links={links} wantedId={wanted.id} requesterId={wanted.requester.id} />
     </article>
-  );
-}
-
-function Meta({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-muted uppercase tracking-wide font-semibold text-[11px]">{label}</dt>
-      <dd className="mt-0.5 text-ink">{children}</dd>
-    </div>
   );
 }

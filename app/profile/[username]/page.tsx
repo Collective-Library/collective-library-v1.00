@@ -91,7 +91,19 @@ export default async function ProfilePage({
   const cityLine = [profile.city, profile.address_area].filter(Boolean).join(" · ");
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto relative">
+      {/* Share — absolute top-right pojok, IG-style. Sits above banner so
+          it stays reachable; icon-only pill keeps the layout compact. */}
+      <div className="absolute top-2 right-2 md:top-3 md:right-3 z-20">
+        <ShareProfileButton
+          url={url}
+          username={profile.username}
+          fullName={profile.full_name ?? profile.username ?? "Anggota"}
+          bookCount={books.length}
+          city={profile.city ?? "Semarang"}
+        />
+      </div>
+
       {/* Banner — only when present */}
       {profile.cover_url && (
         <div className="relative -mx-4 md:-mx-6 mb-6 overflow-hidden md:rounded-card-lg h-32 md:h-48">
@@ -110,21 +122,13 @@ export default async function ProfilePage({
       <div className="flex flex-col md:flex-row md:items-start gap-5 mb-7">
         <Avatar src={profile.photo_url} name={profile.full_name} size={88} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h1 className="font-display text-display-xl text-ink leading-tight">
-                {profile.full_name ?? profile.username}
-              </h1>
-              <p className="mt-1 text-body text-muted">
-                @{profile.username} · {cityLine || "Semarang"}
-              </p>
-            </div>
-            <ShareProfileButton
-              url={url}
-              fullName={profile.full_name ?? profile.username ?? "Anggota"}
-              bookCount={books.length}
-              city={profile.city ?? "Semarang"}
-            />
+          <div>
+            <h1 className="font-display text-display-xl text-ink leading-tight pr-12">
+              {profile.full_name ?? profile.username}
+            </h1>
+            <p className="mt-1 text-body text-muted">
+              @{profile.username} · {cityLine || "Semarang"}
+            </p>
           </div>
           {profile.profession && (
             <p className="mt-2 text-body-sm text-ink-soft">{profile.profession}</p>

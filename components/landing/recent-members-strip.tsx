@@ -52,8 +52,8 @@ export async function RecentMembersStrip() {
           {members.map((m) => {
             const place =
               [m.address_area, m.city].filter(Boolean).join(" · ") || "Semarang";
+            // /profile/[username] is public — plain Link, no nudge.
             return (
-              {/* /profile/[username] is public — plain Link, no nudge. */}
               <Link
                 key={m.id}
                 href={`/profile/${m.username}`}

@@ -6,7 +6,17 @@ const cleanPhone = (n: string) => n.replace(/\D/g, "");
 
 export type ContactLink =
   | { type: "whatsapp"; label: string; icon: string; href: string; primary: true }
-  | { type: "instagram"; label: string; icon: string; href: string; primary: false }
+  | {
+      // IG doesn't support URL-based message prefill (unlike WhatsApp), so we
+      // open the DM via ig.me/m/USERNAME and copy the template to clipboard
+      // first. Caller pastes the message manually.
+      type: "instagram";
+      label: string;
+      icon: string;
+      href: string;
+      copyText: string;
+      primary: false;
+    }
   | { type: "goodreads"; label: string; icon: string; href: string; primary: false }
   | { type: "storygraph"; label: string; icon: string; href: string; primary: false }
   | { type: "discord"; label: string; icon: string; copy: string; primary: false };
@@ -36,8 +46,9 @@ export function intentForStatus(status: BookStatus): {
   }
 }
 
-/** Builds a pre-filled WhatsApp message about a specific book, signed by the viewer. */
-function buildBookMessage(
+/** Plain-text book DM template (not URL-encoded). Used for WhatsApp prefill
+ *  AND for IG copy-to-clipboard (since IG doesn't support URL prefill). */
+function buildBookMessageText(
   ownerName: string,
   viewer: Viewer,
   title: string,
@@ -50,9 +61,7 @@ function buildBookMessage(
   const profileLine = viewer?.username
     ? `\n\nIni profil gue: ${profileUrl(viewer.username)}`
     : "";
-  return encodeURIComponent(
-    `Halo ${ownerName}, ${viewerLine} Gue lihat buku *${title}* di Collective Library — ${messageVerb}?${profileLine}`,
-  );
+  return `Halo ${ownerName}, ${viewerLine} Gue lihat buku *${title}* di Collective Library — ${messageVerb}?${profileLine}`;
 }
 
 /**
@@ -71,23 +80,29 @@ export function getContactLinks(
   const links: ContactLink[] = [];
   const name = owner.full_name ?? "kak";
 
+  const bookText = book ? buildBookMessageText(name, viewer, book.title, book.status) : "";
+
   if (owner.whatsapp_public && owner.whatsapp) {
-    const text = book ? `?text=${buildBookMessage(name, viewer, book.title, book.status)}` : "";
+    const qs = book ? `?text=${encodeURIComponent(bookText)}` : "";
     links.push({
       type: "whatsapp",
       label: "WhatsApp",
       icon: "💬",
-      href: `https://wa.me/${cleanPhone(owner.whatsapp)}${text}`,
+      href: `https://wa.me/${cleanPhone(owner.whatsapp)}${qs}`,
       primary: true,
     });
   }
 
   if (owner.instagram) {
+    const handle = owner.instagram.replace(/^@/, "");
     links.push({
       type: "instagram",
-      label: "Instagram",
+      label: "Instagram DM",
       icon: "📸",
-      href: `https://instagram.com/${owner.instagram.replace(/^@/, "")}`,
+      // ig.me/m/HANDLE opens IG Direct chat (mobile app or web).
+      // Doesn't support URL prefill — UI copies the template first.
+      href: `https://ig.me/m/${handle}`,
+      copyText: bookText || `Halo ${name}, kenalin gue${viewer?.full_name ? ` ${viewer.full_name}` : ""} dari Collective Library.${viewer?.username ? `\n\nIni profil gue: ${profileUrl(viewer.username)}` : ""}`,
       primary: false,
     });
   }
@@ -144,25 +159,25 @@ export function getRequesterContactLinks(
   const profileLine = viewer?.username
     ? `\n\nIni profil gue: ${profileUrl(viewer.username)}`
     : "";
-  const text = encodeURIComponent(
-    `Halo ${name}, ${viewerLine} Gue lihat lo lagi cari ${titleLine} di Collective Library — gue punya nih, mau ngobrol?${profileLine}`,
-  );
+  const messageText = `Halo ${name}, ${viewerLine} Gue lihat lo lagi cari ${titleLine} di Collective Library — gue punya nih, mau ngobrol?${profileLine}`;
 
   if (requester.whatsapp_public && requester.whatsapp) {
     links.push({
       type: "whatsapp",
       label: "WhatsApp",
       icon: "💬",
-      href: `https://wa.me/${cleanPhone(requester.whatsapp)}?text=${text}`,
+      href: `https://wa.me/${cleanPhone(requester.whatsapp)}?text=${encodeURIComponent(messageText)}`,
       primary: true,
     });
   }
   if (requester.instagram) {
+    const handle = requester.instagram.replace(/^@/, "");
     links.push({
       type: "instagram",
-      label: "Instagram",
+      label: "Instagram DM",
       icon: "📸",
-      href: `https://instagram.com/${requester.instagram.replace(/^@/, "")}`,
+      href: `https://ig.me/m/${handle}`,
+      copyText: messageText,
       primary: false,
     });
   }

@@ -106,6 +106,7 @@ Migrations applied (0001-0004) and pending (0005-0007):
 | 0010 | consolidate_5_9 | ✅ run | Remediation block — re-applied 0005 + 0009 columns idempotently. |
 | 0011 | postal_code | ✅ run | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit. |
 | 0012 | fix_oauth_avatar | ⏳ pending | Updates `handle_new_user` to coalesce `avatar_url` + `picture` (Google uses `picture`, Discord uses `avatar_url`). Backfills existing profiles where `photo_url` is null but OAuth metadata has it. Same backfill for `full_name`. |
+| 0013 | wanted_cover_url | ⏳ pending | Adds `cover_url text` to wanted_requests. Auto-populated at submit-time via Open Library / Google Books search. Lets WTB cards show book cover thumbnail instead of just typed title. |
 
 SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migration files in `supabase/migrations/`).
 
@@ -154,6 +155,9 @@ If all four are no, we don't build it.
 - **~~Hero CTA gated~~** ✅ shipped — landing's "Lihat X buku komunitas" CTA wraps `<GatedLink>` so anon click → invitation modal (consistent with card clicks).
 - **~~Map filter pills~~** ✅ shipped — `/peta` now has 2 filter rows ("Available untuk" intent + "Mode" lending/selling/trade). Filter applied client-side over the already-fetched member set.
 - **~~Public profile detail~~** ✅ shipped — `/profile/[username]` moved out of `(app)` group → no auth wall, no BottomNav. Custom slim layout (Logo + AvatarMenu when authed, Login/Daftar when anon). `/profile/edit` stays auth-gated. `proxy.ts` narrowed: only `/profile/edit` is gated, not `/profile/[username]`. Anon click on a member card from landing now navigates straight in (no modal).
+- **~~/wanted card redesign~~** ✅ shipped — cover thumbnail (auto-fetched from Open Library at submit time, stored on `wanted_requests.cover_url`), tighter title/meta layout, notes always shown as italic blockquote so user-uploaded vibes/jokes/lucu-lucuan don't get hidden.
+- **~~Instagram direct DM~~** ✅ shipped — IG contact pills now use `ig.me/m/USERNAME` (opens IG Direct chat) + copy the message template to clipboard before opening (IG doesn't support URL prefill like WhatsApp does, so this is the closest "literally direct" UX). New `InstagramDMChip` component handles copy-on-click with toast.
+- **~~ShareProfileButton polish~~** ✅ shipped — compact icon-only pill (~40×40), positioned absolute top-right of the profile content area (IG-style). URL now resolved client-side via `window.location.origin` so it always reflects the live origin (no more stale `NEXT_PUBLIC_APP_URL` issues).
 - **Visibility consolidation** — `show_on_map` toggle now gates BOTH /peta pin AND landing member card. Toggle copy renamed to "Tampilin gue publik (peta + landing)" so consent intent is explicit. One flag, two surfaces.
 - **Founder attribution** — Both `/` and `/about` updated: now reads "Cole, Initiator Journey Perintis & Collective Library" with linked IG `@nikolaswidad_` (consolidating from prior "Cole & Nikolas" 2-name framing).
 - **FTS query swap** — flip lib/books.ts:searchBooks from ilike to `.textSearch('search_text', q, { type: 'websearch' })` once 0006 is run and we have enough books to feel ranking.

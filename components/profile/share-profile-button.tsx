@@ -1,24 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 /**
- * Share Profile button — uses Web Share API on mobile (native sheet),
- * falls back to copy-to-clipboard + WhatsApp deep-link on desktop.
+ * Compact share button — icon-only pill, parchment-themed. Web Share API
+ * on mobile (native sheet), copy + WhatsApp menu fallback on desktop.
+ *
+ * URL resolution: server-side prop is a fallback; we override with
+ * `window.location.origin` at hydration so the button always reflects the
+ * deployment the user is actually on (avoids stale NEXT_PUBLIC_APP_URL).
  */
 export function ShareProfileButton({
-  url,
+  url: serverUrl,
+  username,
   fullName,
   bookCount,
   city,
 }: {
   url: string;
+  username: string | null;
   fullName: string;
   bookCount: number;
   city: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState(serverUrl);
+
+  // Client-side override — guarantees the share URL matches the live origin.
+  useEffect(() => {
+    if (typeof window !== "undefined" && username) {
+      setUrl(`${window.location.origin}/profile/${username}`);
+    }
+  }, [username]);
 
   const shareText = `Cek rak buku ${fullName} di Collective Library — ${bookCount} buku, ${city}.\n\n${url}`;
 
@@ -58,11 +72,11 @@ export function ShareProfileButton({
       <button
         type="button"
         onClick={handleClick}
-        className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-pill bg-paper text-ink-soft border border-hairline-strong text-body-sm font-medium hover:bg-cream hover:text-ink transition-colors"
         aria-label="Share profile"
+        title="Share profile"
+        className="inline-flex items-center justify-center w-10 h-10 rounded-pill bg-paper text-ink-soft border border-hairline-strong hover:bg-cream hover:text-ink transition-colors"
       >
-        <ShareIcon size={16} />
-        <span>Share</span>
+        <ShareIcon size={18} />
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-56 rounded-card-lg bg-paper border border-hairline shadow-modal overflow-hidden z-50">

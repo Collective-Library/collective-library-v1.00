@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CONDITION_LABELS } from "@/lib/status";
+import { searchGoogleBooks } from "@/lib/openlibrary";
 import type { BookCondition } from "@/types";
 
 export function WantedForm({
@@ -37,11 +38,24 @@ export function WantedForm({
     if (!title.trim()) return setError("Judul wajib diisi.");
 
     setSaving(true);
+
+    // Best-effort cover lookup so the WTB card has a visual. Always passes
+    // through even if lookup fails — we don't block the post on cover.
+    let cover_url: string | null = null;
+    try {
+      const q = author.trim() ? `${title.trim()} ${author.trim()}` : title.trim();
+      const hits = await searchGoogleBooks(q, 1);
+      cover_url = hits[0]?.cover_url ?? null;
+    } catch {
+      // Silent — empty cover is fine
+    }
+
     const supabase = createClient();
     const { error: err } = await supabase.from("wanted_requests").insert({
       requester_id: userId,
       title: title.trim(),
       author: author.trim() || null,
+      cover_url,
       max_budget: budget ? Number(budget) : null,
       desired_condition: condition || null,
       city: city.trim() || "Semarang",
