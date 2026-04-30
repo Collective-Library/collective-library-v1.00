@@ -94,13 +94,29 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
             </MenuItem>
           </ul>
           {profile.is_admin && (
-            <div className="border-t border-hairline-soft py-1">
-              <MenuItem href="/admin/feedback" onClick={() => setOpen(false)}>
-                <span className="inline-flex items-center gap-1.5">
-                  <span aria-hidden>✦</span>
-                  <span>Admin · Feedback inbox</span>
+            <div className="border-t border-hairline-soft py-1.5 px-1.5 flex flex-col gap-1">
+              <Link
+                href="/mastermind"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-button bg-ink text-parchment hover:bg-ink-soft transition-colors"
+              >
+                <span aria-hidden className="text-base leading-none">✦</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-body-sm font-semibold leading-tight">Mastermind cockpit</span>
+                  <span className="block text-[11px] leading-tight opacity-70 mt-0.5">Live OKRs · founder pulse</span>
                 </span>
-              </MenuItem>
+                <span className="text-parchment/60 group-hover:text-parchment transition-colors" aria-hidden>→</span>
+              </Link>
+              <Link
+                href="/admin/feedback"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-button text-body-sm text-ink-soft hover:bg-cream transition-colors"
+              >
+                <span aria-hidden className="text-base leading-none">📥</span>
+                <span>Feedback inbox</span>
+              </Link>
             </div>
           )}
           <div className="border-t border-hairline-soft py-1">

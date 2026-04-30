@@ -45,7 +45,9 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/book") ||
     pathname.startsWith("/wanted") ||
     pathname.startsWith("/profile/edit") ||
-    pathname.startsWith("/onboarding");
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/mastermind") ||
+    pathname.startsWith("/admin");
 
   // Not signed in & trying to access an authed route → login
   if (!user && isAppRoute) {
