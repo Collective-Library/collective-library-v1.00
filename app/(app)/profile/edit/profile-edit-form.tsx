@@ -12,6 +12,10 @@ import {
   SubInterestChips,
   IntentChips,
 } from "@/components/profile/interest-chips";
+import {
+  PostalCodePicker,
+  type PostalCodeResult,
+} from "@/components/profile/postal-code-picker";
 import { pruneOrphanSubs } from "@/lib/interests";
 import { slugify } from "@/lib/format";
 import type { Profile } from "@/types";
@@ -37,10 +41,16 @@ export function ProfileEditForm({
   // Identity
   const [fullName, setFullName] = useState(initial.full_name ?? "");
   const [username, setUsername] = useState(initial.username ?? "");
-  const [city, setCity] = useState(initial.city ?? "Semarang");
-  const [addressArea, setAddressArea] = useState(initial.address_area ?? "");
   const [bio, setBio] = useState(initial.bio ?? "");
   const [genres, setGenres] = useState((initial.favorite_genres ?? []).join(", "));
+
+  // Location — driven by kode pos picker. City + address_area + lat/lng are
+  // all set together when the user picks a postal code. Free-text fallback
+  // is removed on purpose: the geocoder gets garbage when input is "Pleburan
+  // dst" instead of a canonical kecamatan name.
+  const [postalPick, setPostalPick] = useState<PostalCodeResult | null>(null);
+  const [city, setCity] = useState(initial.city ?? "Semarang");
+  const [addressArea, setAddressArea] = useState(initial.address_area ?? "");
 
   // Trust profile (V2.2)
   const [linkedin, setLinkedin] = useState(initial.linkedin_url ?? "");
@@ -165,19 +175,30 @@ export function ProfileEditForm({
       cover_url = `${pub.publicUrl}?t=${Date.now()}`;
     }
 
-    // Geocode resolution — only when opted-in. We always recompute when
-    // address/city changed; otherwise reuse what's stored. If geocode fails,
-    // we still save show_on_map=true but warn the user (they won't appear).
+    // Coord resolution — three paths in priority order:
+    //   1. Fresh kode pos pick this session → use its lat/lng directly.
+    //   2. Existing stored coords → keep them.
+    //   3. Fallback: call Nominatim with city + area (legacy free-text users).
+    //
+    // We only care when show_on_map is true; opt-out clears coords.
     let map_lat: number | null = initial.map_lat;
     let map_lng: number | null = initial.map_lng;
     let geocodeWarning: string | null = null;
     const cityTrim = city.trim() || "Semarang";
     const areaTrim = addressArea.trim();
-    const locationChanged =
-      cityTrim !== (initial.city ?? "") || areaTrim !== (initial.address_area ?? "");
+    const postalCode = postalPick?.postal_code ?? initial.postal_code ?? null;
 
     if (showOnMap) {
-      if (locationChanged || initial.map_lat == null || initial.map_lng == null) {
+      if (postalPick && postalPick.lat != null && postalPick.lng != null) {
+        // Fresh pick this session — most accurate, no network round-trip
+        map_lat = postalPick.lat;
+        map_lng = postalPick.lng;
+      } else if (initial.map_lat != null && initial.map_lng != null && !postalPick) {
+        // Reuse stored — user didn't change kode pos this session
+        map_lat = initial.map_lat;
+        map_lng = initial.map_lng;
+      } else {
+        // Fallback Nominatim path — only when postal data isn't available
         try {
           const q = areaTrim
             ? `Kecamatan ${areaTrim}, ${cityTrim}, Indonesia`
@@ -194,7 +215,7 @@ export function ProfileEditForm({
               map_lat = null;
               map_lng = null;
               geocodeWarning =
-                "Lokasi gak ketemu — pastiin nama kecamatan resmi (e.g. Tembalang). Lo gak bakal nongol di peta sampai ini benar.";
+                "Lokasi gak ketemu — pakai kode pos di atas biar pasti.";
             }
           } else {
             geocodeWarning = "Geocoding sementara gagal. Coba simpan lagi nanti.";
@@ -216,6 +237,7 @@ export function ProfileEditForm({
         username: usernameSlug,
         city: cityTrim,
         address_area: areaTrim || null,
+        postal_code: postalCode,
         bio: bio.trim() || null,
         favorite_genres: genres
           ? genres.split(",").map((g) => g.trim()).filter(Boolean)
@@ -358,21 +380,16 @@ export function ProfileEditForm({
         />
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Input
-          label="Kota"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          placeholder="Semarang"
-        />
-        <Input
-          label="Area / kecamatan"
-          value={addressArea}
-          onChange={(e) => setAddressArea(e.target.value)}
-          placeholder="Tembalang, Banyumanik, Gajahmungkur, dst"
-          hint="Buat muncul di peta, pakai nama kecamatan resmi (16 di Kota Semarang)."
-        />
-      </div>
+      <PostalCodePicker
+        initialPostalCode={initial.postal_code}
+        initialDistrict={initial.address_area}
+        initialRegency={initial.city}
+        onPick={(r) => {
+          setPostalPick(r);
+          setAddressArea(r.district);
+          setCity(r.regency);
+        }}
+      />
 
       <Textarea
         label="Bio singkat"

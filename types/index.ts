@@ -19,6 +19,7 @@ export interface Profile {
   cover_url: string | null;
   city: string | null;
   address_area: string | null;
+  postal_code: string | null;
   bio: string | null;
   instagram: string | null;
   whatsapp: string | null;

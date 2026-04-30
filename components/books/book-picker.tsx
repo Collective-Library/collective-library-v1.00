@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { searchGoogleBooks, type BookSearchResult } from "@/lib/openlibrary";
+import { LottieLoading } from "@/components/ui/lottie-loading";
 
 /**
  * Search-as-you-type book picker. Hits Google Books, shows a dropdown of
@@ -124,10 +125,10 @@ export function BookPicker({
         />
         {loading && (
           <span
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-caption text-muted"
+            className="absolute right-3 top-1/2 -translate-y-1/2"
             aria-live="polite"
           >
-            Cari…
+            <LottieLoading size={48} ariaLabel="Mencari buku" />
           </span>
         )}
       </div>
@@ -141,7 +142,11 @@ export function BookPicker({
         >
           {results.length === 0 ? (
             <li className="px-4 py-5 text-body-sm text-muted text-center">
-              {loading ? "Cari…" : "Gak ketemu. Isi manual aja di bawah."}
+              {loading ? (
+                <LottieLoading size={60} ariaLabel="Mencari buku" />
+              ) : (
+                "Gak ketemu. Isi manual aja di bawah."
+              )}
             </li>
           ) : (
             results.map((b, i) => (

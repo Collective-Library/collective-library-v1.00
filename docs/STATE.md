@@ -103,7 +103,8 @@ Migrations applied (0001-0004) and pending (0005-0007):
 | 0007 | audit_log | ✅ run | audit_log table + triggers on books/wanted/profiles UPDATE+DELETE |
 | 0008 | fix_audit_triggers | ✅ run | Splits 0007's generic write_audit() into 3 table-specific functions. Fixes `record "old" has no field "owner_id"` (PL/pgSQL plan-time bug in CASE branches). |
 | 0009 | interest_layers | ⏳ pending | Adds `sub_interests text[]` (Layer 2) + `intents text[]` (Layer 3) + GIN index on intents. View recreated. |
-| 0010 | consolidate_5_9 | ⏳ pending | Remediation block — re-applies 0005 + 0009 columns idempotently in case earlier paste was stale. Run this **instead** of 0005/0009 if the columns aren't in `profiles` yet. |
+| 0010 | consolidate_5_9 | ✅ run | Remediation block — re-applied 0005 + 0009 columns idempotently. |
+| 0011 | postal_code | ⏳ pending | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit. |
 
 SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migration files in `supabase/migrations/`).
 
@@ -133,6 +134,8 @@ If all four are no, we don't build it.
 - **~~3-layer interest~~** ✅ shipped — Layer 1 (broad), Layer 2 (sub-interest, gated by L1), Layer 3 (intent — what they want to DO). Stored as 3 separate `text[]` columns. /anggota gets a new "Available untuk" filter row driven by intent. Profile page displays all 3 layers with distinct visual weights (dark / light / accent-green).
 - **~~Public landing intro strips~~** ✅ shipped — `RecentBooksStrip` (12 newest books, horizontal scroll), `ActivityFeed` (6 recent events, vertical), `RecentMembersStrip` (12 opt-in members, horizontal). All sit above "Kenapa ini ada" on `/`.
 - **~~Login-nudge modal~~** ✅ shipped — anon visitors clicking a book card / member card / "Lihat semua" don't bounce to `/auth/login` anymore. Instead `<GatedLink>` (drop-in for `<Link>`) intercepts and opens a Seth-Godin-flavored invitation modal: "Komunitas ini hidup dari dalam." Three CTAs: Daftar / Masuk / Lanjut ngintip. `<LoginNudgeProvider>` wraps `app/page.tsx` and reads `isAnon = !user` from the server. ActivityFeed rows still bounce (intentionally untouched — used on /shelf too).
+- **~~Kode pos picker~~** ✅ shipped — replaces free-text city/area inputs on `/profile/edit`. Type 5 digits → `/api/postal-code/lookup` (kodepos.vercel.app + 30d CDN cache) returns village/district/regency/province/lat/lng. Pick → auto-fills city + address_area + map_lat/map_lng. Skips Nominatim entirely when postal data exists; Nominatim stays as fallback for legacy free-text users.
+- **~~Lottie loading~~** ✅ shipped — `<LottieLoading>` (parchment-toned 3-dot pulse) replaces "Cari…" text in BookPicker + PostalCodePicker. Animation hand-crafted in `lib/lottie/loading-dots.json` (~3KB). Lazy-loaded via `next/dynamic` ssr:false so it doesn't bloat first paint.
 - **Visibility consolidation** — `show_on_map` toggle now gates BOTH /peta pin AND landing member card. Toggle copy renamed to "Tampilin gue publik (peta + landing)" so consent intent is explicit. One flag, two surfaces.
 - **Founder attribution** — Both `/` and `/about` updated: now reads "Cole, Initiator Journey Perintis & Collective Library" with linked IG `@nikolaswidad_` (consolidating from prior "Cole & Nikolas" 2-name framing).
 - **FTS query swap** — flip lib/books.ts:searchBooks from ilike to `.textSearch('search_text', q, { type: 'websearch' })` once 0006 is run and we have enough books to feel ranking.
