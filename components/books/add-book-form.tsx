@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -150,6 +151,7 @@ export function AddBookForm({ userId }: { userId: string }) {
     if (insertErr || !book) {
       setSaving(false);
       setError(insertErr?.message ?? "Gagal menyimpan buku.");
+      toast.error("Gagal nyimpen buku — coba lagi ya.");
       return;
     }
 
@@ -168,6 +170,7 @@ export function AddBookForm({ userId }: { userId: string }) {
     }
 
     setSaving(false);
+    toast.success(`"${title.trim()}" masuk ke rak ✓`);
     router.replace(`/book/${book.id}`);
     router.refresh();
   }
@@ -277,7 +280,7 @@ export function AddBookForm({ userId }: { userId: string }) {
 
           <div className="flex flex-col gap-2 mt-2">
             <Button onClick={() => publish(true)} disabled={saving} type="button" variant="secondary">
-              {saving ? "Menyimpan…" : "Simpan cepat (3 field)"}
+              {saving ? "Sebentar, lagi nyusun rak kamu…" : "Simpan cepat (3 field)"}
             </Button>
             <Button onClick={next} disabled={saving} type="button">
               Lanjut isi detail →
@@ -400,7 +403,7 @@ export function AddBookForm({ userId }: { userId: string }) {
               ← Kembali
             </Button>
             <Button onClick={() => publish(false)} disabled={saving} type="button" className="flex-1">
-              {saving ? "Mempublikasikan…" : "Publikasikan buku"}
+              {saving ? "Lagi publikasikan ke rak…" : "Publikasikan buku"}
             </Button>
           </div>
         </div>

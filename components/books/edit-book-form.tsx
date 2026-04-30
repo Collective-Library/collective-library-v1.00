@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -127,7 +128,11 @@ export function EditBookForm({ book }: { book: BookWithOwner }) {
       .eq("id", book.id);
 
     setSaving(false);
-    if (updErr) return setError(updErr.message);
+    if (updErr) {
+      toast.error("Gagal nyimpen — coba lagi.");
+      return setError(updErr.message);
+    }
+    toast.success("Buku tersimpan ✓");
     router.replace(`/book/${book.id}`);
     router.refresh();
   }
@@ -139,8 +144,10 @@ export function EditBookForm({ book }: { book: BookWithOwner }) {
     const { error: delErr } = await supabase.from("books").delete().eq("id", book.id);
     setDeleting(false);
     if (delErr) {
+      toast.error("Gagal hapus buku — coba lagi.");
       return setError(`Gagal hapus: ${delErr.message}`);
     }
+    toast.success("Buku dihapus dari rak.");
     router.replace("/shelf");
     router.refresh();
   }
@@ -319,7 +326,7 @@ export function EditBookForm({ book }: { book: BookWithOwner }) {
           Batal
         </Button>
         <Button type="submit" disabled={saving} className="flex-1">
-          {saving ? "Menyimpan…" : "Simpan perubahan"}
+          {saving ? "Lagi simpan perubahan…" : "Simpan perubahan"}
         </Button>
       </div>
 

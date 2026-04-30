@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, DM_Serif_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -60,6 +61,21 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-parchment text-ink">
         {children}
+        <Toaster
+          position="top-center"
+          duration={3500}
+          toastOptions={{
+            style: {
+              background: "var(--color-paper)",
+              color: "var(--color-ink)",
+              border: "1px solid var(--color-hairline-strong)",
+              borderRadius: "var(--radius-card)",
+              fontFamily: "var(--font-sans)",
+              fontSize: "14px",
+              boxShadow: "var(--shadow-card)",
+            },
+          }}
+        />
         <Analytics />
       </body>
     </html>

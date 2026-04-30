@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -117,11 +118,14 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
     setSaving(false);
     if (updErr) {
       if (updErr.code === "23505") {
+        toast.error("Username udah dipake orang lain.");
         return setError("Username udah dipake orang lain. Coba yang lain.");
       }
+      toast.error("Gagal nyimpen profil.");
       return setError(updErr.message);
     }
 
+    toast.success("Profil tersimpan ✓");
     setInfo("Tersimpan ✓");
     router.replace(`/profile/${usernameSlug}`);
     router.refresh();
@@ -278,7 +282,7 @@ export function ProfileEditForm({ initial }: { initial: Profile }) {
           Batal
         </Button>
         <Button type="submit" disabled={saving} className="flex-1">
-          {saving ? "Menyimpan…" : "Simpan perubahan"}
+          {saving ? "Profil kamu lagi dirapihin…" : "Simpan perubahan"}
         </Button>
       </div>
     </form>

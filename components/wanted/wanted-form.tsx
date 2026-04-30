@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,7 +50,11 @@ export function WantedForm({
     });
 
     setSaving(false);
-    if (err) return setError(err.message);
+    if (err) {
+      toast.error("Gagal posting WTB — coba lagi.");
+      return setError(err.message);
+    }
+    toast.success("WTB request masuk ke komunitas ✓");
     router.replace("/wanted");
     router.refresh();
   }
@@ -118,7 +123,7 @@ export function WantedForm({
           Batal
         </Button>
         <Button type="submit" disabled={saving} className="flex-1">
-          {saving ? "Mengirim…" : "Posting WTB request"}
+          {saving ? "Lagi kirim ke komunitas…" : "Posting WTB request"}
         </Button>
       </div>
     </form>

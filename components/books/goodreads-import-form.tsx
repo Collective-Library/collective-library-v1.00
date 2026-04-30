@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { parseGoodreadsCsv, type GoodreadsBook } from "@/lib/goodreads-csv";
 import { openLibraryCoverUrl } from "@/lib/openlibrary";
@@ -114,7 +115,11 @@ export function GoodreadsImportForm({ userId }: { userId: string }) {
     }
 
     setPhase("done");
-    if (ok > 0) router.refresh();
+    if (ok > 0) {
+      toast.success(`${ok} buku masuk ke rak ✓`);
+      router.refresh();
+    }
+    if (fail > 0) toast.error(`${fail} buku gagal di-import.`);
   }
 
   // Filter visible

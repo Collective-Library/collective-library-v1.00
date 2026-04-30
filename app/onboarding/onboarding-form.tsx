@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
 
     if (error) {
       setSaving(false);
+      toast.error("Gagal nyimpen profil. Coba lagi.");
       setError(error.message);
       return;
     }
@@ -93,6 +95,7 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
     }
 
     setSaving(false);
+    toast.success("Selamat datang di Collective Library 👋");
     router.replace("/shelf");
     router.refresh();
   }
@@ -218,7 +221,7 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
           <Button onClick={next} type="button">Lanjut</Button>
         ) : (
           <Button onClick={submit} disabled={saving} type="button">
-            {saving ? "Menyimpan…" : "Selesai & masuk"}
+            {saving ? "Sebentar, lagi nyiapin rak kamu…" : "Selesai & masuk"}
           </Button>
         )}
       </div>
