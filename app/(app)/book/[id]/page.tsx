@@ -6,8 +6,8 @@ import { getContactLinks, intentForStatus } from "@/lib/contact";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CommunityBadge } from "@/components/ui/community-badge";
-import { ButtonLink } from "@/components/ui/button";
 import { SecondaryContactRow } from "@/components/books/contact-pills";
+import { TrackedContactCTA } from "@/components/books/tracked-contact-cta";
 import { CONDITION_LABELS } from "@/lib/status";
 import { formatIDR, formatRelativeID } from "@/lib/format";
 
@@ -131,10 +131,16 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
         <aside className="md:sticky md:top-20 md:self-start">
           <div className="p-5 rounded-card-lg border border-hairline bg-paper shadow-card flex flex-col gap-3">
             {primary ? (
-              <ButtonLink href={primary.href} pill fullWidth>
-                <span>{primary.icon}</span>
-                <span>{ctaLabel}</span>
-              </ButtonLink>
+              <TrackedContactCTA
+                href={primary.href}
+                icon={primary.icon}
+                label={ctaLabel}
+                channel={primary.type}
+                bookId={book.id}
+                ownerId={book.owner_id}
+                status={book.status}
+                className="inline-flex items-center justify-center gap-2 h-12 w-full rounded-pill bg-ink text-parchment font-medium hover:bg-ink-soft active:scale-[0.98] transition-all"
+              />
             ) : (
               <p className="text-body-sm text-muted text-center py-2">
                 Owner belum publikasikan WhatsApp. Coba hubungi via channel lain.

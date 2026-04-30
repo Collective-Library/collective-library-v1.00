@@ -36,9 +36,12 @@ export default async function WantedPage() {
       {/* Feed */}
       {wanted.length === 0 ? (
         <div className="rounded-card-lg border border-hairline bg-paper p-10 text-center">
-          <p className="font-display text-title-lg text-ink">Belum ada permintaan buku.</p>
+          <p className="font-display text-title-lg text-ink">
+            Belum ada yang nyari buku.
+          </p>
           <p className="mt-2 text-body text-muted max-w-md mx-auto">
-            Lagi nyari buku yang gak ada di rak komunitas? Posting WTB request — siapa tau ada anggota yang punya.
+            Kalau lo punya wishlist yang belum kebeli, mungkin sekarang waktunya
+            bilang ke komunitas — siapa tau ada yang lagi mau lepas.
           </p>
           <div className="mt-5">
             <ButtonLink href="/wanted/add">+ Buat WTB Pertama</ButtonLink>

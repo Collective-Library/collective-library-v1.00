@@ -5,8 +5,12 @@ export function BookGrid({ books }: { books: BookWithOwner[] }) {
   if (books.length === 0) {
     return (
       <div className="rounded-card-lg border border-hairline bg-paper p-10 text-center">
-        <p className="font-display text-title-lg text-ink">Belum ada buku di sini.</p>
-        <p className="mt-2 text-body text-muted">Jadi yang pertama!</p>
+        <p className="font-display text-title-lg text-ink">
+          Rak ini lagi nunggu buku pertama.
+        </p>
+        <p className="mt-2 text-body text-muted max-w-md mx-auto">
+          Buku yang lo selesai baca tahun ini, gimana?
+        </p>
       </div>
     );
   }

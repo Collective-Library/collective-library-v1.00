@@ -68,7 +68,7 @@ export function WantedCard({
       )}
 
       {/* CTA — Gue punya! */}
-      <WantedCTA links={links} />
+      <WantedCTA links={links} wantedId={wanted.id} requesterId={wanted.requester.id} />
     </article>
   );
 }

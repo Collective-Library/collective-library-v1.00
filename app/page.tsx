@@ -1,20 +1,32 @@
 import Link from "next/link";
 import { Logo } from "@/components/layout/logo";
+import { Footer } from "@/components/layout/footer";
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth";
+import { getCommunityStats } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const user = await getCurrentUser();
+  const [user, stats] = await Promise.all([getCurrentUser(), getCommunityStats()]);
 
   return (
     <div className="min-h-screen bg-parchment text-ink flex flex-col">
+      {/* Skip to content for keyboard users */}
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-ink focus:text-parchment focus:px-4 focus:py-2 focus:rounded-button"
+      >
+        Skip ke konten utama
+      </a>
+
       {/* Top bar */}
       <header className="px-6 md:px-10 py-5 flex items-center justify-between">
         <Link href="/" aria-label="Beranda" className="flex items-center gap-2.5">
           <Logo size={32} />
-          <span className="font-display text-title-md text-ink leading-none">Collective Library</span>
+          <span className="font-display text-title-md text-ink leading-none">
+            Collective Library
+          </span>
         </Link>
         <nav className="flex items-center gap-3">
           {user ? (
@@ -34,55 +46,140 @@ export default async function HomePage() {
         </nav>
       </header>
 
-      {/* Hero */}
-      <main className="flex-1 px-6 md:px-10 py-12 md:py-24">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-caption text-muted uppercase tracking-wide font-semibold">
-            Berbasis di Semarang · Untuk komunitas Journey Perintis
-          </p>
-          <h1 className="mt-4 font-display text-ink leading-[1.05] text-[44px] md:text-[68px]" style={{ letterSpacing: "-1.2px" }}>
-            Where books connect people, and ideas turn into movement.
-          </h1>
-          <p className="mt-6 text-body-lg md:text-[20px] text-ink-soft max-w-2xl mx-auto leading-relaxed">
-            Sebuah katalog buku kolektif + jaringan pembaca yang saling berbagi, berdiskusi, dan berkembang bareng.
-          </p>
+      <main id="main" className="flex-1">
+        {/* Hero */}
+        <section className="px-6 md:px-10 pt-12 md:pt-20 pb-16">
+          <div className="max-w-3xl mx-auto text-center">
+            <p className="text-caption text-muted uppercase tracking-wide font-semibold">
+              Berbasis di Semarang · Untuk Journey Perintis & sekitar
+            </p>
+            <h1
+              className="mt-4 font-display text-ink leading-[1.05] text-[44px] md:text-[68px]"
+              style={{ letterSpacing: "-1.2px" }}
+            >
+              Where books connect people, and ideas turn into movement.
+            </h1>
+            <p className="mt-6 text-body-lg md:text-[20px] text-ink-soft max-w-2xl mx-auto leading-relaxed">
+              Bukan platform jual-beli buku. Ini infra untuk komunitas pembaca
+              yang udah saling kenal — biar rak kolektif kita keliatan, dan ide
+              berpindah tangan tanpa hilang di chat.
+            </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <ButtonLink href="/shelf" size="md">
-              Explore Rak Kolektif →
-            </ButtonLink>
-            <ButtonLink href="/auth/register" size="md" variant="secondary">
-              Daftarkan Rak Bukumu
-            </ButtonLink>
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <ButtonLink href="/shelf" size="md">
+                Lihat {stats.total_books} buku komunitas →
+              </ButtonLink>
+              <ButtonLink href="/auth/register" size="md" variant="secondary">
+                Daftarkan Rak Bukumu
+              </ButtonLink>
+            </div>
+
+            {/* Live social proof stats */}
+            <dl className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+              <Stat number={stats.total_books} label="buku di rak" />
+              <Stat number={stats.total_members} label="anggota" />
+              <Stat number={stats.active_wanted} label="lagi dicari" />
+              <Stat number={stats.joined_this_week} label="join minggu ini" />
+            </dl>
           </div>
-        </div>
+        </section>
+
+        {/* Why this exists — founder voice */}
+        <section className="px-6 md:px-10 py-16 bg-cream">
+          <div className="max-w-2xl mx-auto">
+            <p className="text-caption text-muted uppercase tracking-wide font-semibold text-center">
+              Kenapa ini ada
+            </p>
+            <h2 className="mt-3 font-display text-display-lg md:text-display-xl text-ink leading-tight text-center">
+              Awalnya kita capek scroll WhatsApp grup pembaca.
+            </h2>
+            <div className="mt-8 flex flex-col gap-4 text-body-lg text-ink-soft leading-relaxed">
+              <p>
+                &ldquo;Bro, ada yang punya Sapiens? Mau pinjem.&rdquo; Pesan begitu
+                lewat di grup WA, terus ke-bury sama 200 chat lain dalam sehari.
+                Reset chat. Mulai dari nol lagi bulan depan.
+              </p>
+              <p>
+                Padahal buku-bukunya <em>ada</em> — tersebar di rak personal kita
+                masing-masing. Trust antar anggota juga udah ada — kita udah
+                saling kenal di Journey Perintis. Tapi gak ada satu tempat yang
+                bikin itu semua kelihatan dan bisa dicari.
+              </p>
+              <p>
+                Collective Library bikin yang gak keliatan jadi keliatan.
+                Bukan&nbsp;Goodreads versi Indo. Bukan Tokopedia buat buku. Ini
+                infra untuk komunitas yang sudah ada.
+              </p>
+            </div>
+            <p className="mt-6 text-body-sm text-muted text-center italic">
+              — Cole &amp; Nikolas, JP Semarang
+            </p>
+          </div>
+        </section>
 
         {/* Feature strip */}
-        <section className="mt-24 max-w-5xl mx-auto grid md:grid-cols-3 gap-4">
-          <Feature
-            label="Dijual"
-            title="Lepas buku yang udah dibaca"
-            body="List buku-buku lo dengan harga, kondisi, dan area pickup. Pembeli langsung chat WhatsApp."
-          />
-          <Feature
-            label="Dipinjamkan"
-            title="Bagi buku ke anggota terpercaya"
-            body="Available to lend ke anggota komunitas — atur durasi pinjam dan area kopdar."
-          />
-          <Feature
-            label="Dicari"
-            title="Cari judul yang gak ada di rak"
-            body="Posting WTB request — biar yang punya buku bisa langsung nawarin ke lo."
-          />
+        <section className="px-6 md:px-10 py-16">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-caption text-muted uppercase tracking-wide font-semibold text-center">
+              Cara kerja
+            </p>
+            <h2 className="mt-3 font-display text-display-lg text-ink leading-tight text-center">
+              Tiga gerakan, satu loop.
+            </h2>
+            <div className="mt-10 grid md:grid-cols-3 gap-4">
+              <Feature
+                label="Dijual"
+                title="Lepas buku yang udah dibaca"
+                body="List buku-buku lo dengan harga, kondisi, dan area pickup. Pembeli langsung tap chat — gak perlu register lagi."
+              />
+              <Feature
+                label="Dipinjamkan"
+                title="Bagi buku ke anggota terpercaya"
+                body="Available to lend ke anggota komunitas. Atur durasi pinjam, area kopdar, dan ajak diskusi setelah selesai."
+              />
+              <Feature
+                label="Dicari"
+                title="Cari judul yang gak ada di rak"
+                body="Posting WTB request — anggota lain yang punya buku itu langsung dapat notif, tinggal nawarin."
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* CTA strip */}
+        <section className="px-6 md:px-10 py-16 bg-cream">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="font-display text-display-lg text-ink leading-tight">
+              Rak buku lo sebagian dari rak komunitas.
+            </h2>
+            <p className="mt-3 text-body-lg text-ink-soft">
+              Daftar gratis, list 5 buku dalam ~2 menit, dan jadi bagian dari
+              jaringan pembaca yang lagi tumbuh.
+            </p>
+            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <ButtonLink href="/auth/register" size="md" pill>
+                Mulai daftar →
+              </ButtonLink>
+              <ButtonLink href="/shelf" size="md" variant="secondary">
+                Lihat rak dulu
+              </ButtonLink>
+            </div>
+          </div>
         </section>
       </main>
 
-      <footer className="px-6 md:px-10 py-8 border-t border-hairline">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-caption text-muted">
-          <p>© 2026 Collective Library · Semarang</p>
-          <p>Dibangun bareng komunitas Journey Perintis.</p>
-        </div>
-      </footer>
+      <Footer />
+    </div>
+  );
+}
+
+function Stat({ number, label }: { number: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="font-display text-display-md text-ink leading-none">
+        {number}
+      </span>
+      <span className="mt-1 text-caption text-muted text-center">{label}</span>
     </div>
   );
 }
