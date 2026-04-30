@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 import { listShelfBooks, getShelfCounts } from "@/lib/books";
 import { listActivity } from "@/lib/activity";
 import { BookGrid } from "@/components/books/book-grid";
+import { ShelfClientWrapper } from "@/components/books/shelf-client-wrapper";
 import { ActivityFeed } from "@/components/activity/activity-feed";
 import { ButtonLink } from "@/components/ui/button";
 import { STATUS_FILTER_OPTIONS } from "@/lib/status";
-import { cn } from "@/lib/cn";
 import type { BookStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -65,46 +65,22 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
         <StatCell label="Koleksi" value={counts.unavailable} />
       </div>
 
-      {/* Filter pills */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
-        {STATUS_FILTER_OPTIONS.map((opt) => {
-          const active = filter === opt.value;
-          const params = new URLSearchParams();
-          if (opt.value !== "all") params.set("status", opt.value);
-          if (q) params.set("q", q);
-          const href = "/shelf" + (params.toString() ? `?${params}` : "");
-          return (
-            <Link
-              key={opt.value}
-              href={href}
-              className={cn(
-                "shrink-0 inline-flex items-center h-9 px-4 rounded-pill text-body-sm font-medium transition-colors",
-                active
-                  ? "bg-ink text-parchment"
-                  : "bg-paper text-ink-soft border border-hairline hover:bg-cream",
-              )}
-            >
-              {opt.label}
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Grid */}
-      <BookGrid books={books} />
-
-      {/* Pagination — only when there's actually a 2nd page */}
-      {totalPages > 1 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          status={filter}
-          q={q}
-          totalBooks={total}
-          rangeStart={(page - 1) * PAGE_SIZE + 1}
-          rangeEnd={Math.min(page * PAGE_SIZE, total)}
-        />
-      )}
+      {/* Filter pills + grid — client wrapper gives instant optimistic feedback
+          and fades the grid while the server re-renders on filter change. */}
+      <ShelfClientWrapper filter={filter} q={q}>
+        <BookGrid books={books} />
+        {totalPages > 1 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            status={filter}
+            q={q}
+            totalBooks={total}
+            rangeStart={(page - 1) * PAGE_SIZE + 1}
+            rangeEnd={Math.min(page * PAGE_SIZE, total)}
+          />
+        )}
+      </ShelfClientWrapper>
 
       {/* Mobile add CTA fallback */}
       <div className="md:hidden mt-2">

@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { TopBar } from "./top-bar";
 import { BottomNav } from "./bottom-nav";
+import { NavigationProgress } from "./navigation-progress";
 import type { Profile } from "@/types";
 
 /** Wraps app pages with the TopBar + BottomNav and the parchment canvas. */
@@ -12,6 +14,10 @@ export function PageShell({
 }) {
   return (
     <div className="min-h-screen bg-parchment text-ink">
+      {/* Global navigation progress bar — fires on every same-origin link click */}
+      <Suspense fallback={null}>
+        <NavigationProgress />
+      </Suspense>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-ink focus:text-parchment focus:px-4 focus:py-2 focus:rounded-button"
