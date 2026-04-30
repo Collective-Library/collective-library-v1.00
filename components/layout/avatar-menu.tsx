@@ -70,6 +70,9 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
             <MenuItem href="/book/add" onClick={() => setOpen(false)}>
               Tambah buku
             </MenuItem>
+            <MenuItem href="/book/add/bulk" onClick={() => setOpen(false)}>
+              Tambah cepat (banyak)
+            </MenuItem>
             <MenuItem href="/book/import" onClick={() => setOpen(false)}>
               Import dari Goodreads
             </MenuItem>

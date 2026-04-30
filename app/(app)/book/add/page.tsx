@@ -11,19 +11,27 @@ export default async function AddBookPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
+      <div className="mb-6 flex flex-col gap-3">
         <div>
           <p className="text-caption text-muted uppercase tracking-wide font-semibold">Tambah buku</p>
           <h1 className="mt-1 font-display text-display-xl text-ink leading-tight">
             Tambah buku ke rak komunitas
           </h1>
         </div>
-        <Link
-          href="/book/import"
-          className="text-body-sm font-medium text-ink underline underline-offset-4 hover:text-ink-soft"
-        >
-          Atau import banyak sekaligus →
-        </Link>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-body-sm">
+          <Link
+            href="/book/add/bulk"
+            className="font-medium text-ink underline underline-offset-4 hover:text-ink-soft"
+          >
+            Tambah cepat 5–10 buku via search →
+          </Link>
+          <Link
+            href="/book/import"
+            className="font-medium text-ink underline underline-offset-4 hover:text-ink-soft"
+          >
+            Import dari Goodreads CSV →
+          </Link>
+        </div>
       </div>
       <AddBookForm userId={user.id} />
     </div>
