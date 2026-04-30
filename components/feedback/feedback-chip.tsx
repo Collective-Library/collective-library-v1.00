@@ -34,11 +34,10 @@ export function FeedbackChip() {
         onClick={() => setOpen(true)}
         aria-label="Kasih masukan"
         title="Cerita ke kita"
-        className="fixed bottom-20 md:bottom-5 right-4 md:right-5 z-30 inline-flex items-center gap-2 h-11 px-4 rounded-pill bg-ink text-parchment text-body-sm font-semibold shadow-card-hover hover:bg-ink-soft transition-colors"
+        className="fixed bottom-20 md:bottom-5 right-4 md:right-5 z-30 inline-flex items-center justify-center w-11 h-11 sm:w-auto sm:px-4 sm:gap-2 rounded-pill bg-ink text-parchment text-body-sm font-semibold shadow-card-hover hover:bg-ink-soft transition-colors"
       >
         <ChatIcon />
         <span className="hidden sm:inline">Cerita ke kita</span>
-        <span className="sm:hidden">Masukan</span>
       </button>
       {open && <FeedbackModal onClose={() => setOpen(false)} />}
     </>

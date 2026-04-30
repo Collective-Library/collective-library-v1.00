@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "./logo";
 import { AvatarMenu } from "./avatar-menu";
 import { DesktopNav } from "./desktop-nav";
+import { TopBarSearch } from "./topbar-search";
 import type { Profile } from "@/types";
 
 export function TopBar({ profile }: { profile: Profile | null }) {
@@ -19,14 +20,9 @@ export function TopBar({ profile }: { profile: Profile | null }) {
             BottomNav still owns mobile. */}
         <DesktopNav />
 
-        {/* Search trigger — pill that opens /search */}
-        <Link
-          href="/search"
-          className="hidden md:flex flex-1 max-w-md mx-2 items-center gap-3 h-11 px-5 rounded-pill bg-paper border border-hairline-strong text-muted hover:shadow-card transition-shadow"
-        >
-          <SearchIcon />
-          <span className="text-body-sm">Cari judul, author, atau owner…</span>
-        </Link>
+        {/* Inline search with autocomplete dropdown — md+ only.
+            Mobile uses the icon below which goes to /search full page. */}
+        <TopBarSearch />
 
         <div className="flex items-center gap-2">
           <Link
