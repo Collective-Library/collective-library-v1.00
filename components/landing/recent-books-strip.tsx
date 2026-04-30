@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { listShelfBooks } from "@/lib/books";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { GatedLink } from "./gated-link";
@@ -11,7 +12,7 @@ import { GatedLink } from "./gated-link";
  * modal via <GatedLink> (Seth-Godin-flavored invitation, not a hard wall).
  */
 export async function RecentBooksStrip() {
-  const books = await listShelfBooks({ limit: 12 });
+  const { books } = await listShelfBooks({ pageSize: 12 });
   if (books.length === 0) return null;
 
   return (
@@ -49,12 +50,12 @@ export async function RecentBooksStrip() {
             >
               <div className="relative w-[160px] h-[224px] rounded-card overflow-hidden bg-cream border border-hairline shadow-card group-hover:shadow-card-hover transition-shadow">
                 {b.cover_url ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
+                  <Image
                     src={b.cover_url}
                     alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
+                    fill
+                    sizes="160px"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-caption text-muted px-3 text-center">

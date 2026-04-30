@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getProfileByUsername, getProfileCommunities } from "@/lib/profile";
 import { getBooksByOwnerUsername } from "@/lib/books";
@@ -64,13 +65,14 @@ export default async function ProfilePage({
     <div className="max-w-4xl mx-auto">
       {/* Banner — only when present */}
       {profile.cover_url && (
-        <div className="-mx-4 md:-mx-6 mb-6 overflow-hidden md:rounded-card-lg">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="relative -mx-4 md:-mx-6 mb-6 overflow-hidden md:rounded-card-lg h-32 md:h-48">
+          <Image
             src={profile.cover_url}
             alt=""
-            className="w-full h-32 md:h-48 object-cover"
-            loading="eager"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 896px"
+            className="object-cover"
           />
         </div>
       )}
@@ -139,14 +141,14 @@ export default async function ProfilePage({
           className="mb-7 flex items-center gap-3 p-3 -ml-1 -mr-1 rounded-card bg-paper border border-hairline hover:bg-cream transition-colors"
         >
           <span className="text-[20px]" aria-hidden>📖</span>
-          <div className="w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline">
+          <div className="relative w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline">
             {currentlyReading.cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={currentlyReading.cover_url}
                 alt=""
-                className="w-full h-full object-cover"
-                loading="lazy"
+                fill
+                sizes="40px"
+                className="object-cover"
               />
             ) : null}
           </div>

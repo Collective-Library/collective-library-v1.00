@@ -3,20 +3,35 @@ import type { Book, BookStatus, BookWithOwner } from "@/types";
 
 const OWNER_SELECT = `id, full_name, username, photo_url, city, whatsapp, whatsapp_public, instagram, discord, goodreads_url, storygraph_url`;
 
-/** List public books for the Collective Shelf, optionally filtered by status. */
+/**
+ * List public books for the Collective Shelf, optionally filtered + paginated.
+ * Returns books + total count so the caller can render page links.
+ *
+ * Pagination uses Supabase's `range(from, to)` (inclusive). Page is 1-based;
+ * page=1 returns rows 0..limit-1, page=2 returns rows limit..2*limit-1, etc.
+ */
 export async function listShelfBooks(opts?: {
   status?: BookStatus | "all";
   search?: string;
-  limit?: number;
-}): Promise<BookWithOwner[]> {
+  page?: number;
+  pageSize?: number;
+}): Promise<{ books: BookWithOwner[]; total: number }> {
   const supabase = await createClient();
+  const pageSize = Math.max(1, Math.min(opts?.pageSize ?? 24, 60));
+  const page = Math.max(1, opts?.page ?? 1);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
   let query = supabase
     .from("books")
-    .select(`*, owner:profiles_public!books_owner_id_fkey(${OWNER_SELECT}), community:communities(id, name, slug)`)
+    .select(
+      `*, owner:profiles_public!books_owner_id_fkey(${OWNER_SELECT}), community:communities(id, name, slug)`,
+      { count: "exact" },
+    )
     .eq("is_hidden", false)
     .eq("visibility", "public")
     .order("created_at", { ascending: false })
-    .limit(opts?.limit ?? 60);
+    .range(from, to);
 
   if (opts?.status && opts.status !== "all") {
     query = query.eq("status", opts.status);
@@ -26,12 +41,15 @@ export async function listShelfBooks(opts?: {
     query = query.or(`title.ilike.%${s}%,author.ilike.%${s}%`);
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) {
     console.error("listShelfBooks", error);
-    return [];
+    return { books: [], total: 0 };
   }
-  return (data ?? []) as unknown as BookWithOwner[];
+  return {
+    books: (data ?? []) as unknown as BookWithOwner[],
+    total: count ?? 0,
+  };
 }
 
 /**

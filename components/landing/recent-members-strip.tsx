@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { listLandingMembers } from "@/lib/profile";
 import { Avatar } from "@/components/ui/avatar";
 import { GatedLink } from "./gated-link";
@@ -78,13 +79,13 @@ export async function RecentMembersStrip() {
                 {m.book_covers.length > 0 ? (
                   <div className="flex gap-1 mt-auto">
                     {m.book_covers.slice(0, 3).map((url, i) => (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
+                      <Image
                         key={i}
                         src={url}
                         alt=""
-                        className="w-9 h-12 object-cover rounded-[4px] border border-hairline"
-                        loading="lazy"
+                        width={36}
+                        height={48}
+                        className="object-cover rounded-[4px] border border-hairline"
                       />
                     ))}
                     {m.book_count > 3 && (

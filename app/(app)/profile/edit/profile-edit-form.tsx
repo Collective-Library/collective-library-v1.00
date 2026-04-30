@@ -12,10 +12,11 @@ import {
   SubInterestChips,
   IntentChips,
 } from "@/components/profile/interest-chips";
+import Link from "next/link";
 import {
-  PostalCodePicker,
-  type PostalCodeResult,
-} from "@/components/profile/postal-code-picker";
+  LocationPicker,
+  type LocationResult,
+} from "@/components/profile/location-picker";
 import { pruneOrphanSubs } from "@/lib/interests";
 import { slugify } from "@/lib/format";
 import type { Profile } from "@/types";
@@ -44,11 +45,11 @@ export function ProfileEditForm({
   const [bio, setBio] = useState(initial.bio ?? "");
   const [genres, setGenres] = useState((initial.favorite_genres ?? []).join(", "));
 
-  // Location — driven by kode pos picker. City + address_area + lat/lng are
-  // all set together when the user picks a postal code. Free-text fallback
-  // is removed on purpose: the geocoder gets garbage when input is "Pleburan
-  // dst" instead of a canonical kecamatan name.
-  const [postalPick, setPostalPick] = useState<PostalCodeResult | null>(null);
+  // Location — driven by the kecamatan picker. City + address_area + lat/lng
+  // all set together when the user picks one. Free-text fallback is gone on
+  // purpose: the geocoder gets garbage when input is "Pleburan dst" instead
+  // of a canonical kecamatan name.
+  const [locationPick, setLocationPick] = useState<LocationResult | null>(null);
   const [city, setCity] = useState(initial.city ?? "Semarang");
   const [addressArea, setAddressArea] = useState(initial.address_area ?? "");
 
@@ -186,14 +187,14 @@ export function ProfileEditForm({
     let geocodeWarning: string | null = null;
     const cityTrim = city.trim() || "Semarang";
     const areaTrim = addressArea.trim();
-    const postalCode = postalPick?.postal_code ?? initial.postal_code ?? null;
+    const postalCode = locationPick?.postal_code ?? initial.postal_code ?? null;
 
     if (showOnMap) {
-      if (postalPick && postalPick.lat != null && postalPick.lng != null) {
+      if (locationPick && locationPick.lat != null && locationPick.lng != null) {
         // Fresh pick this session — most accurate, no network round-trip
-        map_lat = postalPick.lat;
-        map_lng = postalPick.lng;
-      } else if (initial.map_lat != null && initial.map_lng != null && !postalPick) {
+        map_lat = locationPick.lat;
+        map_lng = locationPick.lng;
+      } else if (initial.map_lat != null && initial.map_lng != null && !locationPick) {
         // Reuse stored — user didn't change kode pos this session
         map_lat = initial.map_lat;
         map_lng = initial.map_lng;
@@ -380,16 +381,30 @@ export function ProfileEditForm({
         />
       </div>
 
-      <PostalCodePicker
-        initialPostalCode={initial.postal_code}
-        initialDistrict={initial.address_area}
-        initialRegency={initial.city}
-        onPick={(r) => {
-          setPostalPick(r);
-          setAddressArea(r.district);
-          setCity(r.regency);
-        }}
-      />
+      <div className="flex flex-col gap-2">
+        <LocationPicker
+          initialPostalCode={initial.postal_code}
+          initialDistrict={initial.address_area}
+          initialRegency={initial.city}
+          onPick={(r) => {
+            setLocationPick(r);
+            setAddressArea(r.district);
+            setCity(r.regency);
+          }}
+        />
+        <p className="text-caption text-muted -mt-1 leading-relaxed">
+          Lokasi yang akurat = lo gampang ditemuin temen sekecamatan.{" "}
+          <span className="text-ink-soft">Kecamatan-level only</span> — gak ada alamat persis. Mau muncul di{" "}
+          <Link
+            href="/peta"
+            target="_blank"
+            className="text-ink-soft underline underline-offset-4 hover:text-ink"
+          >
+            peta komunitas
+          </Link>
+          ? Aktivin toggle &quot;Tampilin gue publik&quot; di bawah.
+        </p>
+      </div>
 
       <Textarea
         label="Bio singkat"
@@ -469,10 +484,10 @@ export function ProfileEditForm({
       {/* Trust Profile (V2.2) — personal branding fields */}
       <div>
         <p className="text-caption font-semibold text-ink uppercase tracking-wide">
-          Identity & branding
+          Tentang lo
         </p>
         <p className="mt-1 text-body-sm text-muted">
-          Bantu anggota lain kenal lo. Semua opsional.
+          Bantu anggota lain kenal lo. Semua opsional — tapi makin lengkap, makin gampang nyambung sama yang sefrekuensi.
         </p>
       </div>
 
@@ -514,7 +529,7 @@ export function ProfileEditForm({
       {/* Currently reading — pick one of your own books */}
       <div className="flex flex-col gap-2">
         <p className="text-caption font-medium text-ink-soft">
-          Currently reading (opsional)
+          Lagi baca apa? <span className="text-muted">(opsional)</span>
         </p>
         {myBooks.length === 0 ? (
           <p className="text-caption text-muted">
@@ -557,21 +572,27 @@ export function ProfileEditForm({
       <div>
         <p className="text-caption font-semibold text-ink uppercase tracking-wide">Visibilitas publik</p>
         <p className="mt-1 text-body-sm text-muted">
-          Default mati. Sekali on, lo muncul di 2 tempat publik: peta + landing. Lokasi yang tampil cuma kecamatan, bukan alamat lengkap.
+          Default mati. Aktivin biar anggota lain bisa nemu lo pas nyari pembaca dekat — kecamatan only, gak ada alamat persis.
         </p>
       </div>
 
       <div className="flex flex-col gap-2">
         <Toggle
-          label="Tampilin gue publik (peta + landing)"
+          label="Tampilin gue di /peta + landing publik"
           checked={showOnMap}
           onChange={setShowOnMap}
         />
         {showOnMap && (
-          <p className="text-caption text-muted -mt-1">
-            Lo bakal muncul: (1) sebagai bubble di{" "}
-            <span className="font-medium text-ink-soft">/peta</span> dengan foto + buku-buku lo, dan (2) sebagai member card di landing publik{" "}
-            <span className="font-medium text-ink-soft">collectivelibrary.vercel.app</span>. Pin/lokasi ditaro di tengah kecamatan, bukan alamat persis.
+          <p className="text-caption text-muted -mt-1 leading-relaxed">
+            Lo bakal muncul di 2 tempat:{" "}
+            <Link href="/peta" target="_blank" className="font-medium text-ink-soft underline underline-offset-4 hover:text-ink">
+              /peta
+            </Link>{" "}
+            (bubble dengan foto + jumlah buku lo) dan di{" "}
+            <Link href="/" target="_blank" className="font-medium text-ink-soft underline underline-offset-4 hover:text-ink">
+              landing publik
+            </Link>{" "}
+            (member card pengantar buat visitor baru). Pin di tengah kecamatan, bukan alamat persis.
           </p>
         )}
       </div>
