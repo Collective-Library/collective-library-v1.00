@@ -34,6 +34,12 @@ export const metadata: Metadata = {
     "Collective Library",
     "Journey Perintis",
   ],
+  alternates: {
+    types: {
+      "application/rss+xml": "/feed.xml",
+      "application/feed+json": "/feed.json",
+    },
+  },
 };
 
 export const viewport: Viewport = {
