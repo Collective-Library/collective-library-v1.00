@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import Image from "next/image";
 import { getBookById } from "@/lib/books";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth";
 import { getContactLinks, intentForStatus } from "@/lib/contact";
@@ -69,21 +70,29 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
       <div className="relative -mx-4 md:-mx-6 mb-8 overflow-hidden rounded-none md:rounded-card-lg">
         <div className="relative h-56 md:h-72">
           {book.cover_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={book.cover_url}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-40"
+              fill
+              sizes="100vw"
+              quality={30}
+              className="object-cover blur-2xl scale-110 opacity-40"
               aria-hidden
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-parchment/40 to-parchment" />
         </div>
         <div className="relative -mt-32 md:-mt-40 px-4 md:px-6 flex flex-col md:flex-row gap-6 items-end">
-          <div className="w-32 md:w-48 aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline shadow-card-hover shrink-0">
+          <div className="relative w-32 md:w-48 aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline shadow-card-hover shrink-0">
             {book.cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
+              <Image
+                src={book.cover_url}
+                alt={book.title}
+                fill
+                sizes="(max-width: 768px) 128px, 192px"
+                className="object-cover"
+                preload
+              />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-3 bg-gradient-to-br from-cream to-parchment">
                 <p className="font-display text-title-md text-ink line-clamp-3 text-center leading-tight">
@@ -195,4 +204,3 @@ function Detail({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

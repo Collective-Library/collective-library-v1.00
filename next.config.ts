@@ -6,9 +6,8 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 
 const nextConfig: NextConfig = {
   // Allow remote images from public book metadata APIs and our Supabase
-  // storage. Only effective when migrating to next/image; current code uses
-  // plain <img> which doesn't go through the optimizer, but we set this up
-  // for the eventual migration.
+  // storage. This is enforced by `next/image` (remote URLs must match one of
+  // these patterns, otherwise Next will reject the request).
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "covers.openlibrary.org" },

@@ -112,16 +112,17 @@ SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migr
 
 ## Outstanding user-action items
 
-| # | Action | Where | Blocking? |
-|---|---|---|---|
-| 1 | Wire Discord channel webhook | Discord channel + Vercel env + Supabase webhook | No — degrades gracefully when unset |
-| 2 | Custom domain SMTP (Path B) | Resend domain verify + Supabase SMTP | Yes for inviting JP — currently only journey.perintis@gmail.com receives |
-| 3 | Optional: Vercel `NEXT_PUBLIC_APP_URL=https://collectivelibrary.vercel.app` | Vercel env vars | Soft-blocking — falls back to VERCEL_URL otherwise |
-| 4 | Rotate API keys/secrets shared during chat | Resend, hCaptcha, Sentry, Discord, Supabase | Recommended pre-launch |
+| #   | Action                                                                      | Where                                           | Blocking?                                                                |
+| --- | --------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
+| 1   | Wire Discord channel webhook                                                | Discord channel + Vercel env + Supabase webhook | No — degrades gracefully when unset                                      |
+| 2   | Custom domain SMTP (Path B)                                                 | Resend domain verify + Supabase SMTP            | Yes for inviting JP — currently only journey.perintis@gmail.com receives |
+| 3   | Optional: Vercel `NEXT_PUBLIC_APP_URL=https://collectivelibrary.vercel.app` | Vercel env vars                                 | Soft-blocking — falls back to VERCEL_URL otherwise                       |
+| 4   | Rotate API keys/secrets shared during chat                                  | Resend, hCaptcha, Sentry, Discord, Supabase     | Recommended pre-launch                                                   |
 
 ## Strategic guardrails (from product philosophy doc)
 
 Every feature passes 4 tests before being built:
+
 1. Reduces friction? (Naval)
 2. Compounds over time? (Naval)
 3. Protects the secret — community-first not generic? (Thiel)
@@ -130,6 +131,14 @@ Every feature passes 4 tests before being built:
 If all four are no, we don't build it.
 
 ## Active backlog (post-1b8e9f9)
+
+---
+
+---
+
+**Development note:**
+
+When building a new (big/medium) feature, _always_ create a new branch from main first. Do not code directly on the main branch. After finishing the feature, open a pull request (PR) to main for review and merge.
 
 - **~~Map view~~** ✅ shipped — `/peta` with Leaflet + Carto Positron tiles. Snapchat-style avatar markers (photo bubble + book-count badge), deterministic jitter so same-kecamatan members don't perfectly overlap. Opt-in via `show_on_map` toggle on profile edit. Coords stored at kecamatan-level only via Nominatim save-time geocoding (`/api/geocode`, auth-gated, 30-day CDN cache). Works for any Indonesian kecamatan (not Semarang-only).
 - **Per-user Discord DM** — needs proper Discord bot infra. Current channel webhook is community-level only.

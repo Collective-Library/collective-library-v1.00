@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { GatedLink } from "@/components/landing/gated-link";
 import { formatRelativeID } from "@/lib/format";
@@ -61,10 +62,12 @@ function Row({ item }: { item: ActivityItem }) {
         <p className="text-caption text-muted">{formatRelativeID(item.created_at)}</p>
       </div>
       {item.book?.cover_url && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
+        <Image
           src={item.book.cover_url}
           alt=""
+          width={32}
+          height={44}
+          sizes="32px"
           className="w-8 h-11 rounded-[4px] object-cover border border-hairline shrink-0"
           loading="lazy"
         />

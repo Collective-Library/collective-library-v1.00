@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRelativeID } from "@/lib/format";
@@ -84,13 +85,14 @@ function ActivityRow({ item }: { item: ActivityItem }) {
           href={targetHref ?? `/book/${item.book.id}`}
           className="flex gap-4 -m-1 p-1 rounded-card hover:bg-cream transition-colors"
         >
-          <div className="w-20 h-28 md:w-24 md:h-32 shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
+          <div className="relative w-20 h-28 md:w-24 md:h-32 shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
             {item.book.cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={item.book.cover_url}
                 alt={item.book.title}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 768px) 80px, 96px"
+                className="object-cover"
                 loading="lazy"
               />
             ) : (

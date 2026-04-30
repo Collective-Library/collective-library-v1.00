@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -152,10 +153,12 @@ export function BulkAddForm({ userId }: { userId: string }) {
               >
                 <div className="w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline flex items-center justify-center">
                   {book.cover_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={book.cover_url}
                       alt=""
+                      width={40}
+                      height={56}
+                      sizes="40px"
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
