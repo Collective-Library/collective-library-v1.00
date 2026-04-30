@@ -11,8 +11,9 @@ export function BottomNav({ profile }: { profile: Profile | null }) {
 
   const items = [
     { href: "/shelf", label: "Rak", icon: ShelfIcon, match: (p: string) => p.startsWith("/shelf") || p === "/" },
-    { href: "/wanted", label: "Dicari", icon: WantedIcon, match: (p: string) => p.startsWith("/wanted") },
+    { href: "/aktivitas", label: "Aktivitas", icon: ActivityIcon, match: (p: string) => p.startsWith("/aktivitas") },
     { href: "/book/add", label: "Tambah", icon: AddIcon, match: (p: string) => p.startsWith("/book/add"), prominent: true },
+    { href: "/wanted", label: "Dicari", icon: WantedIcon, match: (p: string) => p.startsWith("/wanted") },
     { href: profileHref, label: "Profil", icon: ProfileIcon, match: (p: string) => p.startsWith("/profile") },
   ];
 
@@ -21,7 +22,7 @@ export function BottomNav({ profile }: { profile: Profile | null }) {
       className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 backdrop-blur border-t border-hairline"
       style={{ paddingBottom: "var(--safe-bottom)" }}
     >
-      <ul className="grid grid-cols-4 max-w-md mx-auto h-16">
+      <ul className="grid grid-cols-5 max-w-md mx-auto h-16">
         {items.map(({ href, label, icon: Icon, match, prominent }) => {
           const active = match(pathname);
           return (
@@ -56,6 +57,13 @@ function ShelfIcon({ size = 22 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M4 4v16M4 8h16M4 16h16M20 4v16" />
       <path d="M8 8v8M11 8v8M14 8v8M17 8v8" />
+    </svg>
+  );
+}
+function ActivityIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
     </svg>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, DM_Serif_Display } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -57,7 +58,10 @@ export default function RootLayout({
         } as React.CSSProperties
       }
     >
-      <body className="min-h-full bg-parchment text-ink">{children}</body>
+      <body className="min-h-full bg-parchment text-ink">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

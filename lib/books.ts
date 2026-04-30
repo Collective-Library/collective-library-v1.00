@@ -53,10 +53,11 @@ export async function searchBooks(query: string, limit = 60): Promise<BookWithOw
   return (data ?? []) as unknown as BookWithOwner[];
 }
 
-/** Lightweight recent-activity rows for the /shelf "Aktivitas terbaru" widget. */
+/** Lightweight recent-activity rows for the activity feed widget + /aktivitas page. */
 export interface RecentBookActivity {
   book_id: string;
   title: string;
+  author: string;
   cover_url: string | null;
   status: BookStatus;
   created_at: string;
@@ -70,13 +71,15 @@ export interface RecentBookActivity {
  * Returns the most recent book additions for the activity feed widget.
  * Lightweight version — no event table; just `books.created_at desc` joined
  * with public profile. Upgrade to a real activity_log when traffic demands.
+ *
+ * Used for both the small widget on /shelf and the full /aktivitas page.
  */
 export async function getRecentBookActivity(limit = 5): Promise<RecentBookActivity[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("books")
     .select(`
-      id, title, cover_url, status, created_at, owner_id,
+      id, title, author, cover_url, status, created_at, owner_id,
       owner:profiles_public!books_owner_id_fkey(full_name, username, photo_url)
     `)
     .eq("is_hidden", false)
@@ -91,6 +94,7 @@ export async function getRecentBookActivity(limit = 5): Promise<RecentBookActivi
   type Row = {
     id: string;
     title: string;
+    author: string;
     cover_url: string | null;
     status: BookStatus;
     created_at: string;
@@ -100,6 +104,7 @@ export async function getRecentBookActivity(limit = 5): Promise<RecentBookActivi
   return ((data ?? []) as unknown as Row[]).map((b) => ({
     book_id: b.id,
     title: b.title,
+    author: b.author,
     cover_url: b.cover_url,
     status: b.status,
     created_at: b.created_at,

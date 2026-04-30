@@ -64,6 +64,9 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
             <MenuItem href="/profile/edit" onClick={() => setOpen(false)}>
               Edit profil
             </MenuItem>
+            <MenuItem href="/aktivitas" onClick={() => setOpen(false)}>
+              Aktivitas komunitas
+            </MenuItem>
             <MenuItem href="/book/add" onClick={() => setOpen(false)}>
               Tambah buku
             </MenuItem>

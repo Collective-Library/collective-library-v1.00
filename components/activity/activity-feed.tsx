@@ -21,6 +21,12 @@ export function ActivityFeed({ items }: { items: RecentBookActivity[] }) {
         <p className="text-caption font-semibold text-ink-soft uppercase tracking-wide">
           Aktivitas terbaru
         </p>
+        <Link
+          href="/aktivitas"
+          className="ml-auto text-caption font-medium text-ink hover:underline underline-offset-4"
+        >
+          Lihat semua →
+        </Link>
       </div>
       <ul className="flex flex-col divide-y divide-hairline-soft">
         {items.map((it) => (
