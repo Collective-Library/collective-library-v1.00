@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { listActivity } from "@/lib/activity";
 import { ActivityFeedList } from "@/components/activity/activity-feed-list";
 import { ButtonLink } from "@/components/ui/button";
@@ -21,6 +22,14 @@ export default async function AktivitasPage() {
           </h1>
           <p className="mt-2 text-body text-ink-soft max-w-xl">
             Buku baru, WTB request, anggota baru — semua di satu feed.
+          </p>
+          <p className="mt-3 text-body-sm">
+            <Link
+              href="/anggota"
+              className="text-ink underline underline-offset-4 font-medium hover:text-ink-soft"
+            >
+              Browse semua anggota →
+            </Link>
           </p>
         </div>
         <a
