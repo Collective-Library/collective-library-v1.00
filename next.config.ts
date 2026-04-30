@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
       // Behold.so CDN for the Instagram feed strip on the landing page
       { protocol: "https", hostname: "behold.pictures" },
       { protocol: "https", hostname: "**.behold.pictures" },
+      // OAuth provider avatars — Google + Discord set photo_url straight to
+      // their CDNs on first signup (handled by handle_new_user trigger).
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "cdn.discordapp.com" },
       ...(supabaseHost ? [{ protocol: "https" as const, hostname: supabaseHost }] : []),
     ],
   },

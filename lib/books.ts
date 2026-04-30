@@ -53,16 +53,41 @@ export async function listShelfBooks(opts?: {
 }
 
 /**
- * Full search across title and author. Owner-based search comes when FTS lands.
- * Returns BookWithOwner[] joined with the owner profile + community.
+ * Full search across title and author using the generated `search_text`
+ * tsvector + GIN index from migration 0006. Uses `websearch` query type so
+ * users can naturally type "harari sapiens", quoted phrases, OR / NOT.
+ *
+ * Falls back to ilike if the tsvector returns 0 hits (helps when user types
+ * partial/short tokens that FTS won't match — e.g. "sap" instead of
+ * "sapiens"). Both queries are GIN-indexed; tsvector ranks matches.
  */
 export async function searchBooks(query: string, limit = 60): Promise<BookWithOwner[]> {
   if (!query || query.trim().length < 2) return [];
   const supabase = await createClient();
   const safe = query.trim().replace(/[%_]/g, "");
+
+  const baseSelect = `*, owner:profiles_public!books_owner_id_fkey(${OWNER_SELECT}), community:communities(id, name, slug)`;
+
+  // 1. Try FTS via websearch query type (handles "harari sapiens" as AND,
+  //    "exact phrase" as quoted, OR / NOT operators)
+  const { data: ftsHits } = await supabase
+    .from("books")
+    .select(baseSelect)
+    .eq("is_hidden", false)
+    .eq("visibility", "public")
+    .textSearch("search_text", safe, { type: "websearch" })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (ftsHits && ftsHits.length > 0) {
+    return ftsHits as unknown as BookWithOwner[];
+  }
+
+  // 2. Fallback to ilike — catches partial / single-token typos that FTS
+  //    misses (e.g. typing "sap" before completing "sapiens")
   const { data } = await supabase
     .from("books")
-    .select(`*, owner:profiles_public!books_owner_id_fkey(${OWNER_SELECT}), community:communities(id, name, slug)`)
+    .select(baseSelect)
     .eq("is_hidden", false)
     .eq("visibility", "public")
     .or(`title.ilike.%${safe}%,author.ilike.%${safe}%`)

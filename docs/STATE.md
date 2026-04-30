@@ -104,7 +104,8 @@ Migrations applied (0001-0004) and pending (0005-0007):
 | 0008 | fix_audit_triggers | ✅ run | Splits 0007's generic write_audit() into 3 table-specific functions. Fixes `record "old" has no field "owner_id"` (PL/pgSQL plan-time bug in CASE branches). |
 | 0009 | interest_layers | ⏳ pending | Adds `sub_interests text[]` (Layer 2) + `intents text[]` (Layer 3) + GIN index on intents. View recreated. |
 | 0010 | consolidate_5_9 | ✅ run | Remediation block — re-applied 0005 + 0009 columns idempotently. |
-| 0011 | postal_code | ⏳ pending | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit. |
+| 0011 | postal_code | ✅ run | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit. |
+| 0012 | fix_oauth_avatar | ⏳ pending | Updates `handle_new_user` to coalesce `avatar_url` + `picture` (Google uses `picture`, Discord uses `avatar_url`). Backfills existing profiles where `photo_url` is null but OAuth metadata has it. Same backfill for `full_name`. |
 
 SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migration files in `supabase/migrations/`).
 
@@ -148,6 +149,11 @@ If all four are no, we don't build it.
 - **~~Image compression on upload~~** ✅ shipped — `lib/compress-image.ts` (browser-side, via `browser-image-compression`). Avatar / banner / cover / general presets resize + convert to WebP before Supabase upload. User can throw 20MB+ photos in; we ship ~80-300KB WebP. Storage saving 70-90%. Toast confirms percentage saved.
 - **~~Footer socials~~** ✅ shipped — Linktree (`linktr.ee/collectivelibrary.id`) + Instagram (`@collectivelibrary.id`) pills in footer.
 - **~~Instagram landing strip~~** ✅ shipped — `RecentInstagramStrip` fetches latest 8 posts from `@collectivelibrary.id` via Behold.so JSON feed (1h revalidate). Horizontal scroll grid, 200×200 square cards, click → opens post in new tab. Hover overlay shows caption. Carousel/video icons. Final card = "Follow @collectivelibrary.id" CTA. Feed ID configurable via `NEXT_PUBLIC_INSTAGRAM_FEED_ID` env (defaults to current production feed).
+- **~~OAuth avatar bug fix~~** ✅ shipped — Google sign-ups now actually carry their picture into `photo_url` (Google uses `picture`, Discord uses `avatar_url`; trigger now coalesces both). Backfill via migration 0012 patches existing affected profiles. `lh3.googleusercontent.com` + `cdn.discordapp.com` added to `next.config` remotePatterns so `next/image` can serve them.
+- **~~FTS query swap~~** ✅ shipped — `searchBooks` now uses Postgres `websearch_to_tsquery` against the GIN-indexed `search_text` (migration 0006), with ilike fallback for short / partial tokens. Typo-tolerant + rank-aware.
+- **~~Hero CTA gated~~** ✅ shipped — landing's "Lihat X buku komunitas" CTA wraps `<GatedLink>` so anon click → invitation modal (consistent with card clicks).
+- **~~Map filter pills~~** ✅ shipped — `/peta` now has 2 filter rows ("Available untuk" intent + "Mode" lending/selling/trade). Filter applied client-side over the already-fetched member set.
+- **~~Public profile detail~~** ✅ shipped — `/profile/[username]` moved out of `(app)` group → no auth wall, no BottomNav. Custom slim layout (Logo + AvatarMenu when authed, Login/Daftar when anon). `/profile/edit` stays auth-gated. `proxy.ts` narrowed: only `/profile/edit` is gated, not `/profile/[username]`. Anon click on a member card from landing now navigates straight in (no modal).
 - **Visibility consolidation** — `show_on_map` toggle now gates BOTH /peta pin AND landing member card. Toggle copy renamed to "Tampilin gue publik (peta + landing)" so consent intent is explicit. One flag, two surfaces.
 - **Founder attribution** — Both `/` and `/about` updated: now reads "Cole, Initiator Journey Perintis & Collective Library" with linked IG `@nikolaswidad_` (consolidating from prior "Cole & Nikolas" 2-name framing).
 - **FTS query swap** — flip lib/books.ts:searchBooks from ilike to `.textSearch('search_text', q, { type: 'websearch' })` once 0006 is run and we have enough books to feel ranking.

@@ -37,11 +37,14 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname.startsWith("/auth");
+  // /profile/[username] is publicly readable; only /profile/edit requires auth.
+  // /book/[id] is also still auth-gated for V1; flip to public if we ever
+  // want SEO-discoverable book detail.
   const isAppRoute =
     pathname.startsWith("/shelf") ||
     pathname.startsWith("/book") ||
     pathname.startsWith("/wanted") ||
-    pathname.startsWith("/profile") ||
+    pathname.startsWith("/profile/edit") ||
     pathname.startsWith("/onboarding");
 
   // Not signed in & trying to access an authed route → login

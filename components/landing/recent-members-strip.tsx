@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { listLandingMembers } from "@/lib/profile";
 import { Avatar } from "@/components/ui/avatar";
 import { GatedLink } from "./gated-link";
@@ -35,6 +36,7 @@ export async function RecentMembersStrip() {
               Yang opt-in publik. Klik buat lihat rak mereka.
             </p>
           </div>
+          {/* /anggota is still auth-gated; route anon clicks through nudge */}
           <GatedLink
             href="/anggota"
             className="shrink-0 text-body-sm font-medium text-ink hover:underline underline-offset-4"
@@ -51,7 +53,8 @@ export async function RecentMembersStrip() {
             const place =
               [m.address_area, m.city].filter(Boolean).join(" · ") || "Semarang";
             return (
-              <GatedLink
+              {/* /profile/[username] is public — plain Link, no nudge. */}
+              <Link
                 key={m.id}
                 href={`/profile/${m.username}`}
                 className="group shrink-0 snap-start w-[180px] flex flex-col gap-3 p-4 rounded-card-lg bg-paper border border-hairline shadow-card hover:shadow-card-hover transition-shadow"
@@ -99,7 +102,7 @@ export async function RecentMembersStrip() {
                     Belum ada buku
                   </p>
                 )}
-              </GatedLink>
+              </Link>
             );
           })}
         </div>
