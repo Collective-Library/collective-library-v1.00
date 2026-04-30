@@ -1,11 +1,18 @@
 import { listWantedRequests } from "@/lib/wanted";
+import { getCurrentProfile } from "@/lib/auth";
 import { WantedCard } from "@/components/wanted/wanted-card";
 import { ButtonLink } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
 export default async function WantedPage() {
-  const wanted = await listWantedRequests();
+  const [wanted, viewerProfile] = await Promise.all([
+    listWantedRequests(),
+    getCurrentProfile(),
+  ]);
+  const viewer = viewerProfile
+    ? { full_name: viewerProfile.full_name, username: viewerProfile.username }
+    : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,7 +47,7 @@ export default async function WantedPage() {
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
           {wanted.map((w) => (
-            <WantedCard key={w.id} wanted={w} />
+            <WantedCard key={w.id} wanted={w} viewer={viewer} />
           ))}
         </div>
       )}

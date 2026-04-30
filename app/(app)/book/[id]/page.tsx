@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getBookById } from "@/lib/books";
-import { getCurrentUser } from "@/lib/auth";
-import { getContactLinks } from "@/lib/contact";
+import { getCurrentProfile, getCurrentUser } from "@/lib/auth";
+import { getContactLinks, intentForStatus } from "@/lib/contact";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CommunityBadge } from "@/components/ui/community-badge";
@@ -15,16 +15,21 @@ export const dynamic = "force-dynamic";
 
 export default async function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [book, currentUser] = await Promise.all([
+  const [book, currentUser, viewerProfile] = await Promise.all([
     getBookById(id),
     getCurrentUser(),
+    getCurrentProfile(),
   ]);
   if (!book) notFound();
 
   const isOwner = currentUser?.id === book.owner_id;
-  const links = getContactLinks(book.owner, { title: book.title, status: book.status });
+  const viewer = viewerProfile
+    ? { full_name: viewerProfile.full_name, username: viewerProfile.username }
+    : null;
+  const links = getContactLinks(book.owner, { title: book.title, status: book.status }, viewer);
   const primary = links.find((l) => l.primary);
   const secondary = links.filter((l) => !l.primary);
+  const { ctaLabel } = intentForStatus(book.status);
 
   return (
     <article className="max-w-4xl mx-auto">
@@ -128,7 +133,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
             {primary ? (
               <ButtonLink href={primary.href} pill fullWidth>
                 <span>{primary.icon}</span>
-                <span>Chat Owner via WhatsApp</span>
+                <span>{ctaLabel}</span>
               </ButtonLink>
             ) : (
               <p className="text-body-sm text-muted text-center py-2">

@@ -1,17 +1,24 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { getRequesterContactLinks } from "@/lib/contact";
+import { getRequesterContactLinks, type Viewer } from "@/lib/contact";
 import { formatIDR, formatRelativeID } from "@/lib/format";
 import { CONDITION_LABELS } from "@/lib/status";
 import type { WantedRequestWithRequester, BookCondition } from "@/types";
 import { WantedCTA } from "./wanted-cta";
 
-export function WantedCard({ wanted }: { wanted: WantedRequestWithRequester }) {
-  const links = getRequesterContactLinks(wanted.requester, {
-    title: wanted.title,
-    author: wanted.author,
-  });
+export function WantedCard({
+  wanted,
+  viewer = null,
+}: {
+  wanted: WantedRequestWithRequester;
+  viewer?: Viewer;
+}) {
+  const links = getRequesterContactLinks(
+    wanted.requester,
+    { title: wanted.title, author: wanted.author },
+    viewer,
+  );
   const conditionLabel =
     wanted.desired_condition && wanted.desired_condition in CONDITION_LABELS
       ? CONDITION_LABELS[wanted.desired_condition as BookCondition]
