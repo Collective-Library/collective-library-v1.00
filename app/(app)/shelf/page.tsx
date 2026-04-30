@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { listShelfBooks, getShelfCounts, getRecentBookActivity } from "@/lib/books";
+import { listShelfBooks, getShelfCounts } from "@/lib/books";
+import { listActivity } from "@/lib/activity";
 import { BookGrid } from "@/components/books/book-grid";
 import { ActivityFeed } from "@/components/activity/activity-feed";
 import { ButtonLink } from "@/components/ui/button";
@@ -20,7 +21,7 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
     getShelfCounts(),
     // Activity widget only on the unfiltered "all" view — keeps the filtered
     // browsing experience clean.
-    filter === "all" && !q ? getRecentBookActivity(4) : Promise.resolve([]),
+    filter === "all" && !q ? listActivity(4) : Promise.resolve([]),
   ]);
 
   return (

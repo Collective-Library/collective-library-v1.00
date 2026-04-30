@@ -53,7 +53,8 @@ export async function searchBooks(query: string, limit = 60): Promise<BookWithOw
   return (data ?? []) as unknown as BookWithOwner[];
 }
 
-/** Lightweight recent-activity rows for the activity feed widget + /aktivitas page. */
+/** @deprecated Use lib/activity.ts:listActivity. Retained as a fallback if the
+ * activity_log migration hasn't been run yet. */
 export interface RecentBookActivity {
   book_id: string;
   title: string;
@@ -67,13 +68,7 @@ export interface RecentBookActivity {
   owner_photo: string | null;
 }
 
-/**
- * Returns the most recent book additions for the activity feed widget.
- * Lightweight version — no event table; just `books.created_at desc` joined
- * with public profile. Upgrade to a real activity_log when traffic demands.
- *
- * Used for both the small widget on /shelf and the full /aktivitas page.
- */
+/** @deprecated Use lib/activity.ts:listActivity instead. */
 export async function getRecentBookActivity(limit = 5): Promise<RecentBookActivity[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

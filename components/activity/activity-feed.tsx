@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeID } from "@/lib/format";
-import type { RecentBookActivity } from "@/lib/books";
+import type { ActivityItem } from "@/lib/activity";
+import { activityVerb, activityTargetUrl } from "./activity-copy";
 
 /**
- * "Aktivitas terbaru" — 3-5 line widget showing recent book additions.
- * Reads from books.created_at; upgrade to a real activity_log table when
- * we need cross-entity events (joins, WTBs, profile updates).
+ * Compact "Aktivitas terbaru" widget — 4 lines, surfaces on /shelf default view.
+ * Renders any event type (USER_JOINED / BOOK_ADDED / BOOK_STATUS_CHANGED / WTB_POSTED).
  */
-export function ActivityFeed({ items }: { items: RecentBookActivity[] }) {
+export function ActivityFeed({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) return null;
 
   return (
@@ -30,37 +30,51 @@ export function ActivityFeed({ items }: { items: RecentBookActivity[] }) {
       </div>
       <ul className="flex flex-col divide-y divide-hairline-soft">
         {items.map((it) => (
-          <li key={it.book_id}>
-            <Link
-              href={`/book/${it.book_id}`}
-              className="flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-card hover:bg-cream transition-colors"
-            >
-              <Avatar src={it.owner_photo} name={it.owner_name} size={28} />
-              <div className="min-w-0 flex-1">
-                <p className="text-body-sm text-ink truncate">
-                  {it.owner_username ? (
-                    <span className="font-semibold">{it.owner_name ?? it.owner_username}</span>
-                  ) : (
-                    <span className="font-semibold">Anggota</span>
-                  )}{" "}
-                  <span className="text-ink-soft">menambahkan</span>{" "}
-                  <span className="font-medium">{it.title}</span>
-                </p>
-                <p className="text-caption text-muted">{formatRelativeID(it.created_at)}</p>
-              </div>
-              {it.cover_url && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={it.cover_url}
-                  alt=""
-                  className="w-8 h-11 rounded-[4px] object-cover border border-hairline shrink-0"
-                  loading="lazy"
-                />
-              )}
-            </Link>
+          <li key={it.id}>
+            <Row item={it} />
           </li>
         ))}
       </ul>
     </section>
   );
+}
+
+function Row({ item }: { item: ActivityItem }) {
+  const href = activityTargetUrl(item);
+  const verb = activityVerb(item);
+  const inner = (
+    <>
+      <Avatar src={item.actor?.photo_url} name={item.actor?.full_name} size={28} />
+      <div className="min-w-0 flex-1">
+        <p className="text-body-sm text-ink truncate">
+          <span className="font-semibold">
+            {item.actor?.full_name ?? item.actor?.username ?? "Anggota"}
+          </span>{" "}
+          <span className="text-ink-soft">{verb.text}</span>
+        </p>
+        <p className="text-caption text-muted">{formatRelativeID(item.created_at)}</p>
+      </div>
+      {item.book?.cover_url && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={item.book.cover_url}
+          alt=""
+          className="w-8 h-11 rounded-[4px] object-cover border border-hairline shrink-0"
+          loading="lazy"
+        />
+      )}
+    </>
+  );
+
+  const className =
+    "flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-card hover:bg-cream transition-colors";
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={className}>{inner}</div>;
 }

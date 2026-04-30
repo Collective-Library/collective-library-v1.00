@@ -1,4 +1,4 @@
-import { getRecentBookActivity } from "@/lib/books";
+import { listActivity } from "@/lib/activity";
 import { ActivityFeedList } from "@/components/activity/activity-feed-list";
 import { ButtonLink } from "@/components/ui/button";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function AktivitasPage() {
   // Pull a generous window — ~50 entries. When traffic grows, paginate via
   // ?offset= and add a "Load more" client component.
-  const items = await getRecentBookActivity(50);
+  const items = await listActivity(50);
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
