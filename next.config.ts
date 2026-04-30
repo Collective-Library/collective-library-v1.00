@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "covers.openlibrary.org" },
       { protocol: "https", hostname: "books.google.com" },
       { protocol: "https", hostname: "books.googleusercontent.com" },
+      // Behold.so CDN for the Instagram feed strip on the landing page
+      { protocol: "https", hostname: "behold.pictures" },
+      { protocol: "https", hostname: "**.behold.pictures" },
       ...(supabaseHost ? [{ protocol: "https" as const, hostname: supabaseHost }] : []),
     ],
   },

@@ -5,6 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { ActivityFeed } from "@/components/activity/activity-feed";
 import { RecentBooksStrip } from "@/components/landing/recent-books-strip";
 import { RecentMembersStrip } from "@/components/landing/recent-members-strip";
+import { RecentInstagramStrip } from "@/components/landing/recent-instagram-strip";
 import { LoginNudgeProvider } from "@/components/landing/login-nudge";
 import { getCurrentUser } from "@/lib/auth";
 import { getCommunityStats } from "@/lib/stats";
@@ -108,6 +109,9 @@ export default async function HomePage() {
 
         {/* Members strip — opt-in public via show_on_map */}
         <RecentMembersStrip />
+
+        {/* Instagram feed — auto-synced via Behold.so */}
+        <RecentInstagramStrip />
 
         {/* Why this exists — founder voice */}
         <section className="px-6 md:px-10 py-16 bg-cream">
