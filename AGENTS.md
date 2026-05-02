@@ -15,3 +15,7 @@ Branching workflow:
    - Single: `feature/feature-name` -> `main`.
 
 Never commit directly to `main` or `develop`.
+
+**Linting rules:**
+
+Always run `npm run lint` after finishing a task and before pushing to ensure there are no errors/warnings.
