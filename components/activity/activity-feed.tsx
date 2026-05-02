@@ -3,6 +3,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { GatedLink } from "@/components/landing/gated-link";
 import { formatRelativeID } from "@/lib/format";
 import type { ActivityItem } from "@/lib/activity";
+import { groupActivities, GroupedActivityItem } from "@/lib/activity-grouping";
 import { activityVerb, activityTargetUrl } from "./activity-copy";
 
 /**
@@ -17,6 +18,9 @@ import { activityVerb, activityTargetUrl } from "./activity-copy";
  */
 export function ActivityFeed({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) return null;
+
+  // Grouping helps keep the widget compact even during bulk imports
+  const groupedItems = groupActivities(items).slice(0, 10);
 
   return (
     <section
@@ -36,7 +40,7 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
         </GatedLink>
       </div>
       <ul className="flex flex-col divide-y divide-hairline-soft">
-        {items.map((it) => (
+        {groupedItems.map((it) => (
           <li key={it.id}>
             <Row item={it} />
           </li>
@@ -46,9 +50,13 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
   );
 }
 
-function Row({ item }: { item: ActivityItem }) {
+function Row({ item }: { item: GroupedActivityItem }) {
   const href = activityTargetUrl(item);
   const verb = activityVerb(item);
+  
+  // For grouped items, show the first book's cover or a generic stack icon
+  const coverUrl = item.book?.cover_url || (item.books?.[0]?.cover_url);
+
   const inner = (
     <>
       <Avatar src={item.actor?.photo_url} name={item.actor?.full_name} size={28} />
@@ -61,17 +69,26 @@ function Row({ item }: { item: ActivityItem }) {
         </p>
         <p className="text-caption text-muted">{formatRelativeID(item.created_at)}</p>
       </div>
-      {item.book?.cover_url && (
-        <Image
-          src={item.book.cover_url}
-          alt=""
-          width={32}
-          height={44}
-          sizes="32px"
-          className="w-8 h-11 rounded-[4px] object-cover border border-hairline shrink-0"
-          loading="lazy"
-        />
-      )}
+      {coverUrl ? (
+        <div className="relative shrink-0">
+          <Image
+            src={coverUrl}
+            alt=""
+            width={32}
+            height={44}
+            sizes="32px"
+            className="w-8 h-11 rounded-[4px] object-cover border border-hairline relative z-10 bg-paper"
+            loading="lazy"
+          />
+          {item.is_grouped && (
+             <div className="absolute top-0.5 -right-1 w-8 h-11 rounded-[4px] border border-hairline bg-cream -z-10" />
+          )}
+        </div>
+      ) : item.is_grouped ? (
+        <div className="w-8 h-11 rounded-[4px] border border-hairline bg-cream flex items-center justify-center shrink-0">
+           <span className="text-[10px] font-bold text-muted">+{item.books?.length}</span>
+        </div>
+      ) : null}
     </>
   );
 

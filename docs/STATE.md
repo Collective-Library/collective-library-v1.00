@@ -140,10 +140,6 @@ If all four are no, we don't build it.
 
 ---
 
-**Development note:**
-
-When building a new (big/medium) feature, _always_ create a new branch from main first. Do not code directly on the main branch. After finishing the feature, open a pull request (PR) to main for review and merge.
-
 - **~~Map view~~** ✅ shipped — `/peta` with Leaflet + Carto Positron tiles. Snapchat-style avatar markers (photo bubble + book-count badge), deterministic jitter so same-kecamatan members don't perfectly overlap. Opt-in via `show_on_map` toggle on profile edit. Coords stored at kecamatan-level only via Nominatim save-time geocoding (`/api/geocode`, auth-gated, 30-day CDN cache). Works for any Indonesian kecamatan (not Semarang-only).
 - **Per-user Discord DM** — needs proper Discord bot infra. Current channel webhook is community-level only.
 - **~~3-layer interest~~** ✅ shipped — Layer 1 (broad), Layer 2 (sub-interest, gated by L1), Layer 3 (intent — what they want to DO). Stored as 3 separate `text[]` columns. /anggota gets a new "Available untuk" filter row driven by intent. Profile page displays all 3 layers with distinct visual weights (dark / light / accent-green).
