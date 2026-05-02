@@ -19,6 +19,7 @@ export interface FeedbackItem {
   category: FeedbackCategory;
   message: string;
   email: string | null;
+  attachments: string | null;
   page_url: string | null;
   user_agent: string | null;
   status: FeedbackStatus;

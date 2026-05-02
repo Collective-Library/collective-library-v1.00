@@ -55,7 +55,7 @@ const CATEGORIES: { slug: FeedbackCategory; label: string; emoji: string; hint: 
 function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [category, setCategory] = useState<FeedbackCategory>("idea");
   const [message, setMessage] = useState("");
-  const [email, setEmail] = useState("");
+  const [attachments, setAttachments] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,7 +92,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           category,
           message: message.trim(),
-          email: email.trim() || null,
+          attachments: attachments.trim() || null,
           page_url: typeof window !== "undefined" ? window.location.pathname + window.location.search : null,
         }),
       });
@@ -192,26 +192,27 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={5}
-              maxLength={4000}
+              maxLength={2000}
               placeholder="Tulis sebebasnya. Spesifik > umum. Cerita pengalaman > kasih solusi."
               className="w-full px-3.5 py-3 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] focus:py-[11px] transition-colors resize-y"
             />
-            <p className="text-caption text-muted text-right">{message.length}/4000</p>
+            <p className="text-caption text-muted text-right">{message.length}/2000</p>
           </div>
 
-          {/* Email (optional) */}
+          {/* Attachments (optional) */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="fb-email" className="text-caption font-medium text-ink-soft">
-              Email <span className="text-muted">(opsional, kalau mau dibales)</span>
+            <label htmlFor="fb-attachments" className="text-caption font-medium text-ink-soft">
+              Link Lampiran <span className="text-muted">(opsional)</span>
             </label>
-            <input
-              id="fb-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="cole@email.com"
-              className="w-full h-12 px-3.5 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] transition-colors"
+            <textarea
+              id="fb-attachments"
+              value={attachments}
+              onChange={(e) => setAttachments(e.target.value)}
+              rows={2}
+              placeholder="https://...&#10;https://..."
+              className="w-full px-3.5 py-2 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink text-body-sm transition-colors resize-none"
             />
+            <p className="text-[10px] text-muted italic">Pisahin pake baris baru kalau lebih dari satu.</p>
           </div>
 
           {error && <p className="text-caption text-(--color-error)">{error}</p>}
