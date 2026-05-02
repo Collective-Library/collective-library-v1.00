@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 /**
  * Compact share button — icon-only pill, parchment-themed. Web Share API
  * on mobile (native sheet), copy + WhatsApp menu fallback on desktop.
  *
- * URL resolution: server-side prop is a fallback; we override with
- * `window.location.origin` at hydration so the button always reflects the
- * deployment the user is actually on (avoids stale NEXT_PUBLIC_APP_URL).
+ * URL resolution: we use window.location.origin directly inside the action
+ * handlers to avoid hydration mismatch and redundant useEffect/state.
  */
 export function ShareProfileButton({
   url: serverUrl,
@@ -25,21 +24,25 @@ export function ShareProfileButton({
   city: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [url, setUrl] = useState(serverUrl);
 
-  // Client-side override — guarantees the share URL matches the live origin.
-  useEffect(() => {
+  // Derived URL helper to ensure we use the current live origin.
+  function getLiveUrl() {
     if (typeof window !== "undefined" && username) {
-      setUrl(`${window.location.origin}/profile/${username}`);
+      return `${window.location.origin}/profile/${username}`;
     }
-  }, [username]);
+    return serverUrl;
+  }
 
-  const shareText = `Cek rak buku ${fullName} di Collective Library — ${bookCount} buku, ${city}.\n\n${url}`;
+  function getShareText(liveUrl: string) {
+    return `Cek rak buku ${fullName} di Collective Library — ${bookCount} buku, ${city}.\n\n${liveUrl}`;
+  }
 
   async function nativeShare() {
     if (typeof navigator !== "undefined" && "share" in navigator) {
+      const url = getLiveUrl();
+      const text = getShareText(url);
       try {
-        await navigator.share({ title: `${fullName} · Collective Library`, text: shareText, url });
+        await navigator.share({ title: `${fullName} · Collective Library`, text, url });
         return true;
       } catch {
         return false;
@@ -49,6 +52,7 @@ export function ShareProfileButton({
   }
 
   async function copyLink() {
+    const url = getLiveUrl();
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Link profil tersalin ✓");
@@ -58,7 +62,9 @@ export function ShareProfileButton({
   }
 
   function shareWhatsapp() {
-    const u = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    const url = getLiveUrl();
+    const text = getShareText(url);
+    const u = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(u, "_blank", "noopener,noreferrer");
   }
 
