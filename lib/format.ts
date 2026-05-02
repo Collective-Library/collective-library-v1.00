@@ -40,3 +40,12 @@ export function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+/** Normalizes a phone number for DB storage (remove non-digits, 0 -> 62). */
+export function normalizePhone(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const cleaned = input.replace(/\D/g, "");
+  if (!cleaned) return null;
+  if (cleaned.startsWith("0")) return "62" + cleaned.slice(1);
+  return cleaned;
+}

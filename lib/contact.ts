@@ -1,8 +1,9 @@
+import { normalizePhone } from "@/lib/format";
 import type { Profile, BookStatus } from "@/types";
 import { profileUrl } from "@/lib/url";
 
 /** Normalize a phone number to digits-only for wa.me URLs. */
-const cleanPhone = (n: string) => n.replace(/\D/g, "");
+
 
 export type ContactLink =
   | { type: "whatsapp"; label: string; icon: string; href: string; primary: true }
@@ -88,7 +89,7 @@ export function getContactLinks(
       type: "whatsapp",
       label: "WhatsApp",
       icon: "💬",
-      href: `https://wa.me/${cleanPhone(owner.whatsapp)}${qs}`,
+      href: `https://wa.me/${normalizePhone(owner.whatsapp)}${qs}`,
       primary: true,
     });
   }
@@ -166,7 +167,7 @@ export function getRequesterContactLinks(
       type: "whatsapp",
       label: "WhatsApp",
       icon: "💬",
-      href: `https://wa.me/${cleanPhone(requester.whatsapp)}?text=${encodeURIComponent(messageText)}`,
+      href: `https://wa.me/${normalizePhone(requester.whatsapp)}?text=${encodeURIComponent(messageText)}`,
       primary: true,
     });
   }

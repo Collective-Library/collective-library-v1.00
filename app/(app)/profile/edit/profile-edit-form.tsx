@@ -18,7 +18,7 @@ import {
   type LocationResult,
 } from "@/components/profile/location-picker";
 import { pruneOrphanSubs } from "@/lib/interests";
-import { slugify } from "@/lib/format";
+import { slugify, normalizePhone } from "@/lib/format";
 import { compressImage, compressionPercent } from "@/lib/compress-image";
 import type { Profile } from "@/types";
 
@@ -272,7 +272,7 @@ export function ProfileEditForm({
         cover_url,
         currently_reading_book_id: currentlyReading || null,
         instagram: instagram.trim() || null,
-        whatsapp: whatsapp.replace(/\D/g, "") || null,
+        whatsapp: normalizePhone(whatsapp),
         whatsapp_public: whatsappPublic && Boolean(whatsapp),
         discord: discord.trim() || null,
         goodreads_url: goodreads.trim() || null,

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { slugify } from "@/lib/format";
+import { slugify, normalizePhone } from "@/lib/format";
 import type { Profile } from "@/types";
 
 type Step = 1 | 2 | 3;
@@ -61,7 +61,7 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
         username: slugify(username),
         city: city.trim() || "Semarang",
         instagram: instagram.trim() || null,
-        whatsapp: whatsapp.replace(/\D/g, "") || null,
+        whatsapp: normalizePhone(whatsapp),
         whatsapp_public: whatsappPublic && Boolean(whatsapp),
         discord: discord.trim() || null,
         goodreads_url: goodreads.trim() || null,
