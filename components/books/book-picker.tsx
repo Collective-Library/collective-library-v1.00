@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { searchGoogleBooks, type BookSearchResult } from "@/lib/openlibrary";
-import { LottieLoading } from "@/components/ui/lottie-loading";
+import { SearchSpinner } from "@/components/ui/search-spinner";
 
 /**
  * Search-as-you-type book picker. Hits Google Books, shows a dropdown of
@@ -26,34 +26,61 @@ export function BookPicker({
   const [activeIdx, setActiveIdx] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Debounced search
+  // Cleanup on unmount
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults([]);
-      setOpen(false);
-      return;
-    }
-    const ctrl = new AbortController();
-    setLoading(true);
-    const t = setTimeout(async () => {
-      try {
-        const res = await searchGoogleBooks(query);
-        if (ctrl.signal.aborted) return;
-        setResults(res);
-        setOpen(res.length > 0 || query.trim().length >= 2);
-        setActiveIdx(0);
-        setLoading(false);
-      } catch {
-        setLoading(false);
-      }
-    }, 300);
     return () => {
-      clearTimeout(t);
-      ctrl.abort();
-      setLoading(false);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
     };
-  }, [query]);
+  }, []);
+
+  const doSearch = useCallback(async (q: string, signal: AbortSignal) => {
+    try {
+      const res = await searchGoogleBooks(q);
+      if (signal.aborted) return;
+      setResults(res);
+      setOpen(res.length > 0);
+      setActiveIdx(0);
+    } catch {
+      // ignore aborted / network errors
+    } finally {
+      if (!signal.aborted) setLoading(false);
+    }
+  }, []);
+
+  const handleChange = useCallback(
+    (value: string) => {
+      setQuery(value);
+      const q = value.trim();
+
+      // Cancel previous
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
+
+      if (q.length < 2) {
+        setResults([]);
+        setOpen(false);
+        setLoading(false);
+        return;
+      }
+
+      // Show loading state immediately
+      setLoading(true);
+      setResults([]);
+      setOpen(true);
+
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+
+      debounceRef.current = setTimeout(() => {
+        doSearch(q, ctrl.signal);
+      }, 300);
+    },
+    [doSearch],
+  );
 
   // Close on outside click + Escape
   useEffect(() => {
@@ -114,9 +141,9 @@ export function BookPicker({
         <input
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKey}
-          onFocus={() => results.length > 0 && setOpen(true)}
+          onFocus={() => { if (query.trim().length >= 2) setOpen(true); }}
           placeholder={placeholder}
           className="w-full h-12 pl-11 pr-12 rounded-button bg-paper text-ink border border-hairline-strong placeholder:text-muted-soft focus:outline-none focus:border-ink focus:border-2 focus:pl-[43px] focus:pr-[47px] transition-colors"
           aria-autocomplete="list"
@@ -124,14 +151,6 @@ export function BookPicker({
           aria-expanded={open}
           role="combobox"
         />
-        {loading && (
-          <span
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-            aria-live="polite"
-          >
-            <LottieLoading size={48} ariaLabel="Mencari buku" />
-          </span>
-        )}
       </div>
 
       {open && (
@@ -141,13 +160,14 @@ export function BookPicker({
           role="listbox"
           className="absolute left-0 right-0 mt-2 max-h-96 overflow-y-auto bg-paper border border-hairline rounded-card-lg shadow-modal z-30 divide-y divide-hairline-soft"
         >
-          {results.length === 0 ? (
+          {loading && results.length === 0 ? (
+            <li className="px-4 py-5 text-muted text-center flex items-center justify-center gap-2">
+              <SearchSpinner />
+              <span className="text-body-sm">Lagi cari buku lo..</span>
+            </li>
+          ) : results.length === 0 ? (
             <li className="px-4 py-5 text-body-sm text-muted text-center">
-              {loading ? (
-                <LottieLoading size={60} ariaLabel="Mencari buku" />
-              ) : (
-                "Gak ketemu. Isi manual aja di bawah."
-              )}
+              Hmm buku lo ga ketemu. Coba cari pake kata kunci lain atau bisa input manual.
             </li>
           ) : (
             results.map((b, i) => (
@@ -162,7 +182,7 @@ export function BookPicker({
                   onClick={() => pick(b)}
                   className={
                     "w-full text-left px-4 py-3 flex items-start gap-3 transition-colors " +
-                    (i === activeIdx ? "bg-cream" : "hover:bg-cream")
+                    (i === activeIdx ? "bg-ink/[0.06]" : "hover:bg-ink/[0.04]")
                   }
                 >
                   <div className="w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline flex items-center justify-center">
