@@ -1,8 +1,8 @@
+import { normalizePhone } from "@/lib/format";
 import type { Profile, BookStatus } from "@/types";
 import { profileUrl } from "@/lib/url";
 
 /** Normalize a phone number to digits-only for wa.me URLs. */
-const cleanPhone = (n: string) => n.replace(/\D/g, "");
 
 export type ContactLink =
   | { type: "whatsapp"; label: string; icon: string; href: string; primary: true }
@@ -52,15 +52,11 @@ function buildBookMessageText(
   ownerName: string,
   viewer: Viewer,
   title: string,
-  status: BookStatus,
+  status: BookStatus
 ): string {
   const { messageVerb } = intentForStatus(status);
-  const viewerLine = viewer?.full_name
-    ? `gue ${viewer.full_name}.`
-    : "kenalin gue.";
-  const profileLine = viewer?.username
-    ? `\n\nIni profil gue: ${profileUrl(viewer.username)}`
-    : "";
+  const viewerLine = viewer?.full_name ? `gue ${viewer.full_name}.` : "kenalin gue.";
+  const profileLine = viewer?.username ? `\n\nIni profil gue: ${profileUrl(viewer.username)}` : "";
   return `Halo ${ownerName}, ${viewerLine} Gue lihat buku *${title}* di Collective Library — ${messageVerb}?${profileLine}`;
 }
 
@@ -72,10 +68,16 @@ function buildBookMessageText(
 export function getContactLinks(
   owner: Pick<
     Profile,
-    "full_name" | "whatsapp" | "whatsapp_public" | "instagram" | "discord" | "goodreads_url" | "storygraph_url"
+    | "full_name"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+    | "goodreads_url"
+    | "storygraph_url"
   >,
   book?: { title: string; status: BookStatus },
-  viewer: Viewer = null,
+  viewer: Viewer = null
 ): ContactLink[] {
   const links: ContactLink[] = [];
   const name = owner.full_name ?? "kak";
@@ -88,7 +90,7 @@ export function getContactLinks(
       type: "whatsapp",
       label: "WhatsApp",
       icon: "💬",
-      href: `https://wa.me/${cleanPhone(owner.whatsapp)}${qs}`,
+      href: `https://wa.me/${normalizePhone(owner.whatsapp)}${qs}`,
       primary: true,
     });
   }
@@ -102,7 +104,9 @@ export function getContactLinks(
       // ig.me/m/HANDLE opens IG Direct chat (mobile app or web).
       // Doesn't support URL prefill — UI copies the template first.
       href: `https://ig.me/m/${handle}`,
-      copyText: bookText || `Halo ${name}, kenalin gue${viewer?.full_name ? ` ${viewer.full_name}` : ""} dari Collective Library.${viewer?.username ? `\n\nIni profil gue: ${profileUrl(viewer.username)}` : ""}`,
+      copyText:
+        bookText ||
+        `Halo ${name}, kenalin gue${viewer?.full_name ? ` ${viewer.full_name}` : ""} dari Collective Library.${viewer?.username ? `\n\nIni profil gue: ${profileUrl(viewer.username)}` : ""}`,
       primary: false,
     });
   }
@@ -147,18 +151,22 @@ export function getContactLinks(
 export function getRequesterContactLinks(
   requester: Pick<
     Profile,
-    "full_name" | "whatsapp" | "whatsapp_public" | "instagram" | "discord" | "goodreads_url" | "storygraph_url"
+    | "full_name"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+    | "goodreads_url"
+    | "storygraph_url"
   >,
   wanted: { title: string; author?: string | null },
-  viewer: Viewer = null,
+  viewer: Viewer = null
 ): ContactLink[] {
   const links: ContactLink[] = [];
   const name = requester.full_name ?? "kak";
   const titleLine = wanted.author ? `*${wanted.title}* (${wanted.author})` : `*${wanted.title}*`;
   const viewerLine = viewer?.full_name ? `gue ${viewer.full_name}.` : "kenalin gue.";
-  const profileLine = viewer?.username
-    ? `\n\nIni profil gue: ${profileUrl(viewer.username)}`
-    : "";
+  const profileLine = viewer?.username ? `\n\nIni profil gue: ${profileUrl(viewer.username)}` : "";
   const messageText = `Halo ${name}, ${viewerLine} Gue lihat lo lagi cari ${titleLine} di Collective Library — gue punya nih, mau ngobrol?${profileLine}`;
 
   if (requester.whatsapp_public && requester.whatsapp) {
@@ -166,7 +174,7 @@ export function getRequesterContactLinks(
       type: "whatsapp",
       label: "WhatsApp",
       icon: "💬",
-      href: `https://wa.me/${cleanPhone(requester.whatsapp)}?text=${encodeURIComponent(messageText)}`,
+      href: `https://wa.me/${normalizePhone(requester.whatsapp)}?text=${encodeURIComponent(messageText)}`,
       primary: true,
     });
   }

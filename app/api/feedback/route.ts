@@ -50,6 +50,7 @@ interface SubmitBody {
   category: string;
   message: string;
   email?: string | null;
+  attachments?: string | null;
   page_url?: string | null;
 }
 
@@ -67,16 +68,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid category" }, { status: 400 });
   }
 
-  // Validate message
-  const message = (body.message ?? "").trim();
-  if (message.length < 3 || message.length > 4000) {
-    return NextResponse.json(
-      { error: "Pesan minimal 3 karakter, maksimal 4000." },
-      { status: 400 },
-    );
+  // Validate message (Issue #16: max 2000)
+  const message = (body.message ?? "").trim().slice(0, 2000);
+  if (message.length < 3) {
+    return NextResponse.json({ error: "Pesan kependekan, minimal 3 karakter." }, { status: 400 });
   }
 
-  const email = (body.email ?? "").trim() || null;
+  const attachments = (body.attachments ?? "").trim() || null;
   const pageUrl = (body.page_url ?? "").trim() || null;
   const userAgent = req.headers.get("user-agent") ?? null;
 
@@ -87,6 +85,9 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Auto-auth email (Issue #16)
+  const email = user?.email ?? null;
+
   // Insert feedback row — RLS allows insert for anyone
   const { data: inserted, error: insertErr } = await supabase
     .from("feedback")
@@ -95,6 +96,7 @@ export async function POST(req: NextRequest) {
       category,
       message,
       email,
+      attachments,
       page_url: pageUrl,
       user_agent: userAgent,
       status: "new",
@@ -133,15 +135,13 @@ export async function POST(req: NextRequest) {
       message,
       userDisplay,
       email,
+      attachments,
       pageUrl,
       userAgent,
       feedbackId: inserted.id as string,
     });
   } catch (err) {
-    console.warn(
-      "[feedback] discord fan-out failed",
-      err instanceof Error ? err.message : err,
-    );
+    console.warn("[feedback] discord fan-out failed", err instanceof Error ? err.message : err);
   }
 
   return NextResponse.json({ ok: true, id: inserted.id }, { status: 201 });
@@ -153,6 +153,7 @@ interface DiscordPayload {
   message: string;
   userDisplay: string | null;
   email: string | null;
+  attachments: string | null;
   pageUrl: string | null;
   userAgent: string | null;
   feedbackId: string;
@@ -160,9 +161,7 @@ interface DiscordPayload {
 
 async function postToDiscord(p: DiscordPayload) {
   if (!p.webhookUrl) {
-    console.warn(
-      "[feedback] DISCORD_FEEDBACK_WEBHOOK_URL not set; skipping fan-out",
-    );
+    console.warn("[feedback] DISCORD_FEEDBACK_WEBHOOK_URL not set; skipping fan-out");
     return;
   }
   console.info("[feedback] posting to Discord", {
@@ -184,6 +183,9 @@ async function postToDiscord(p: DiscordPayload) {
   }
   if (p.email) {
     fields.push({ name: "Email", value: p.email, inline: true });
+  }
+  if (p.attachments) {
+    fields.push({ name: "Attachments", value: p.attachments, inline: false });
   }
   if (p.userAgent) {
     // Trim noisy UA strings; Discord embed value max ~1024

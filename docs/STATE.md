@@ -92,25 +92,25 @@ scripts/                    seed-nikolas, seed-novels-id, verify-seed
 
 Migrations applied (0001-0004) and pending (0005-0007):
 
-| # | Name | Status | Description |
-|---|---|---|---|
-| 0001 | init | ✅ run | All core tables, RLS, storage, JP community seed |
-| 0002 | profiles_public | ✅ run | View masks WhatsApp unless public/self |
-| 0003 | trust_profile | ✅ run | linkedin_url, website_url, profession, interests[], view recreated |
-| 0004 | activity_log | ✅ run | activity_log table + 4 triggers (book_added, status_changed, wtb_posted, user_joined) + backfill |
-| 0005 | profile_extras | ✅ run | currently_reading_book_id + show_on_map + map_lat + map_lng (for /peta). View recreated |
-| 0006 | fts_search | ✅ run | books.search_text tsvector + GIN index. Forward-compat (query stays ilike) |
-| 0007 | audit_log | ✅ run | audit_log table + triggers on books/wanted/profiles UPDATE+DELETE |
-| 0008 | fix_audit_triggers | ✅ run | Splits 0007's generic write_audit() into 3 table-specific functions. Fixes `record "old" has no field "owner_id"` (PL/pgSQL plan-time bug in CASE branches). |
-| 0009 | interest_layers | ⏳ pending | Adds `sub_interests text[]` (Layer 2) + `intents text[]` (Layer 3) + GIN index on intents. View recreated. |
-| 0010 | consolidate_5_9 | ✅ run | Remediation block — re-applied 0005 + 0009 columns idempotently. |
-| 0011 | postal_code | ✅ run | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit. |
-| 0012 | fix_oauth_avatar | ⏳ pending | Updates `handle_new_user` to coalesce `avatar_url` + `picture` (Google uses `picture`, Discord uses `avatar_url`). Backfills existing profiles where `photo_url` is null but OAuth metadata has it. Same backfill for `full_name`. |
-| 0013 | wanted_cover_url | ✅ run | Adds `cover_url text` to wanted_requests. Auto-populated at submit-time via Open Library / Google Books search. Lets WTB cards show book cover thumbnail instead of just typed title. |
-| 0014 | feedback | ⏳ pending | `feedback` table + RLS (anyone INSERTs, only `is_admin` SELECTs/UPDATEs). Powers the `<FeedbackChip>` floating button + `/admin/feedback` dashboard. |
-| 0015 | mastermind_okrs | ⏳ pending | `okr_objectives` + `okr_key_results` tables, admin-only RLS, seeded Q2 2026 (5 Objectives + 25+ KRs verbatim from masterprompt). KRs with `auto_compute_key` resolved live via `lib/mastermind/kr-compute.ts`. Powers `/mastermind/okrs`. |
-| 0016 | mastermind_tasks | ⏳ pending | `team_tasks` table, admin-only RLS, FK link to `okr_objectives` + `okr_key_results`. Seeded with 14 ownership tasks from masterprompt. Powers `/mastermind/team`. |
-| 0017 | mastermind_admin_notes | ⏳ pending | `admin_notes` polymorphic table (entity_type/id) for inline founder annotations across users/books/wanted/feedback/okr/task. Adds `audit_log` admin SELECT policy (was service-role only). |
+| #    | Name                   | Status     | Description                                                                                                                                                                                                                               |
+| ---- | ---------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0001 | init                   | ✅ run     | All core tables, RLS, storage, JP community seed                                                                                                                                                                                          |
+| 0002 | profiles_public        | ✅ run     | View masks WhatsApp unless public/self                                                                                                                                                                                                    |
+| 0003 | trust_profile          | ✅ run     | linkedin_url, website_url, profession, interests[], view recreated                                                                                                                                                                        |
+| 0004 | activity_log           | ✅ run     | activity_log table + 4 triggers (book_added, status_changed, wtb_posted, user_joined) + backfill                                                                                                                                          |
+| 0005 | profile_extras         | ✅ run     | currently_reading_book_id + show_on_map + map_lat + map_lng (for /peta). View recreated                                                                                                                                                   |
+| 0006 | fts_search             | ✅ run     | books.search_text tsvector + GIN index. Forward-compat (query stays ilike)                                                                                                                                                                |
+| 0007 | audit_log              | ✅ run     | audit_log table + triggers on books/wanted/profiles UPDATE+DELETE                                                                                                                                                                         |
+| 0008 | fix_audit_triggers     | ✅ run     | Splits 0007's generic write_audit() into 3 table-specific functions. Fixes `record "old" has no field "owner_id"` (PL/pgSQL plan-time bug in CASE branches).                                                                              |
+| 0009 | interest_layers        | ⏳ pending | Adds `sub_interests text[]` (Layer 2) + `intents text[]` (Layer 3) + GIN index on intents. View recreated.                                                                                                                                |
+| 0010 | consolidate_5_9        | ✅ run     | Remediation block — re-applied 0005 + 0009 columns idempotently.                                                                                                                                                                          |
+| 0011 | postal_code            | ✅ run     | Adds `postal_code text` column + index. View recreated to expose it. Required for the new kode-pos picker on profile edit.                                                                                                                |
+| 0012 | fix_oauth_avatar       | ⏳ pending | Updates `handle_new_user` to coalesce `avatar_url` + `picture` (Google uses `picture`, Discord uses `avatar_url`). Backfills existing profiles where `photo_url` is null but OAuth metadata has it. Same backfill for `full_name`.        |
+| 0013 | wanted_cover_url       | ✅ run     | Adds `cover_url text` to wanted_requests. Auto-populated at submit-time via Open Library / Google Books search. Lets WTB cards show book cover thumbnail instead of just typed title.                                                     |
+| 0014 | feedback               | ⏳ pending | `feedback` table + RLS (anyone INSERTs, only `is_admin` SELECTs/UPDATEs). Powers the `<FeedbackChip>` floating button + `/admin/feedback` dashboard.                                                                                      |
+| 0015 | mastermind_okrs        | ⏳ pending | `okr_objectives` + `okr_key_results` tables, admin-only RLS, seeded Q2 2026 (5 Objectives + 25+ KRs verbatim from masterprompt). KRs with `auto_compute_key` resolved live via `lib/mastermind/kr-compute.ts`. Powers `/mastermind/okrs`. |
+| 0016 | mastermind_tasks       | ⏳ pending | `team_tasks` table, admin-only RLS, FK link to `okr_objectives` + `okr_key_results`. Seeded with 14 ownership tasks from masterprompt. Powers `/mastermind/team`.                                                                         |
+| 0017 | mastermind_admin_notes | ⏳ pending | `admin_notes` polymorphic table (entity_type/id) for inline founder annotations across users/books/wanted/feedback/okr/task. Adds `audit_log` admin SELECT policy (was service-role only).                                                |
 
 SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migration files in `supabase/migrations/`).
 
@@ -139,10 +139,6 @@ If all four are no, we don't build it.
 ---
 
 ---
-
-**Development note:**
-
-When building a new (big/medium) feature, _always_ create a new branch from main first. Do not code directly on the main branch. After finishing the feature, open a pull request (PR) to main for review and merge.
 
 - **~~Map view~~** ✅ shipped — `/peta` with Leaflet + Carto Positron tiles. Snapchat-style avatar markers (photo bubble + book-count badge), deterministic jitter so same-kecamatan members don't perfectly overlap. Opt-in via `show_on_map` toggle on profile edit. Coords stored at kecamatan-level only via Nominatim save-time geocoding (`/api/geocode`, auth-gated, 30-day CDN cache). Works for any Indonesian kecamatan (not Semarang-only).
 - **Per-user Discord DM** — needs proper Discord bot infra. Current channel webhook is community-level only.
