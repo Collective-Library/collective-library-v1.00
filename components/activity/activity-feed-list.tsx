@@ -4,6 +4,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRelativeID } from "@/lib/format";
 import type { ActivityItem } from "@/lib/activity";
+import { groupActivities, GroupedActivityItem } from "@/lib/activity-grouping";
 import { activityVerb, activityTargetUrl } from "./activity-copy";
 
 /**
@@ -22,7 +23,8 @@ export function ActivityFeedList({ items }: { items: ActivityItem[] }) {
     );
   }
 
-  const buckets = bucketByDay(items);
+  const groupedItems = groupActivities(items);
+  const buckets = bucketByDay(groupedItems);
 
   return (
     <div className="flex flex-col gap-7">
@@ -42,7 +44,7 @@ export function ActivityFeedList({ items }: { items: ActivityItem[] }) {
   );
 }
 
-function ActivityRow({ item }: { item: ActivityItem }) {
+function ActivityRow({ item }: { item: GroupedActivityItem }) {
   const ownerHref = item.actor?.username ? `/profile/${item.actor.username}` : null;
   const targetHref = activityTargetUrl(item);
   const verb = activityVerb(item);
@@ -115,7 +117,47 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         </Link>
       )}
 
-      {item.wanted && !item.book && (
+      {item.is_grouped && item.books && (
+        <div className="flex flex-col gap-2">
+          <div className="flex -space-x-4 overflow-hidden py-1">
+            {item.books.slice(0, 5).map((book, idx) => (
+              <div 
+                key={book.id || idx} 
+                className="relative w-12 h-16 md:w-16 md:h-20 shrink-0 rounded-card overflow-hidden bg-cream border border-white ring-1 ring-hairline"
+              >
+                {book.cover_url ? (
+                  <Image
+                    src={book.cover_url}
+                    alt={book.title}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center p-1 bg-cream">
+                    <span className="text-[10px] text-muted line-clamp-2 text-center">{book.title}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+            {item.books.length > 5 && (
+              <div className="w-12 h-16 md:w-16 md:h-20 flex items-center justify-center rounded-card bg-cream border border-white ring-1 ring-hairline text-caption font-semibold text-muted">
+                +{item.books.length - 5}
+              </div>
+            )}
+          </div>
+          {ownerHref && (
+            <Link 
+              href={ownerHref}
+              className="text-caption text-ink-soft hover:text-ink underline underline-offset-4"
+            >
+              Lihat rak buku @{item.actor?.username} →
+            </Link>
+          )}
+        </div>
+      )}
+
+      {item.wanted && !item.book && !item.is_grouped && (
         <Link
           href={targetHref ?? "/wanted"}
           className="block -m-1 p-3 rounded-card border border-hairline-strong border-dashed hover:bg-cream transition-colors"
@@ -146,17 +188,17 @@ function ActivityRow({ item }: { item: ActivityItem }) {
 
 interface Bucket {
   label: string;
-  items: ActivityItem[];
+  items: GroupedActivityItem[];
 }
 
-function bucketByDay(items: ActivityItem[]): Bucket[] {
+function bucketByDay(items: GroupedActivityItem[]): Bucket[] {
   const now = new Date();
   const today = startOfDay(now).getTime();
   const yesterday = today - 86400000;
   const week = today - 7 * 86400000;
   const month = today - 30 * 86400000;
 
-  const groups: Record<string, ActivityItem[]> = {
+  const groups: Record<string, GroupedActivityItem[]> = {
     "Hari ini": [],
     "Kemarin": [],
     "Minggu ini": [],

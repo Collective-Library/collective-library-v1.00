@@ -11,6 +11,7 @@ export interface IsbnLookup {
   description?: string;
   cover_url?: string;
   language?: string;
+  genre?: string;
 }
 
 /** Strip everything but digits, accept ISBN-10 or ISBN-13. */
@@ -39,6 +40,7 @@ async function lookupGoogleBooks(isbn: string): Promise<IsbnLookup | null> {
           description?: string;
           language?: string;
           imageLinks?: { thumbnail?: string; smallThumbnail?: string };
+          categories?: string[];
         };
       }>;
     };
@@ -54,6 +56,7 @@ async function lookupGoogleBooks(isbn: string): Promise<IsbnLookup | null> {
       description: v.description,
       language: v.language,
       cover_url: cover,
+      genre: v.categories?.[0],
     };
   } catch {
     return null;
@@ -107,6 +110,8 @@ export interface BookSearchResult {
   cover_url: string | null;
   /** Year published, if known. */
   year: string | null;
+  /** Genre/category, e.g. "Technology & Engineering". */
+  genre: string | null;
 }
 
 /**
@@ -115,7 +120,7 @@ export interface BookSearchResult {
  */
 async function searchOpenLibraryBooks(query: string, limit = 8): Promise<BookSearchResult[]> {
   try {
-    const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}&fields=key,title,author_name,isbn,cover_i,publisher,first_publish_year,language`;
+    const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}&fields=key,title,author_name,isbn,cover_i,publisher,first_publish_year,language,subject`;
     const r = await fetch(url, { cache: "force-cache" });
     if (!r.ok) return [];
     const data = (await r.json()) as {
@@ -128,6 +133,7 @@ async function searchOpenLibraryBooks(query: string, limit = 8): Promise<BookSea
         publisher?: string[];
         first_publish_year?: number;
         language?: string[];
+        subject?: string[];
       }>;
     };
     return (data.docs ?? [])
@@ -147,6 +153,7 @@ async function searchOpenLibraryBooks(query: string, limit = 8): Promise<BookSea
           isbn,
           cover_url: cover,
           year: d.first_publish_year?.toString() ?? null,
+          genre: d.subject?.[0] ?? null,
         };
       });
   } catch {
@@ -179,6 +186,7 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
           language?: string;
           imageLinks?: { thumbnail?: string; smallThumbnail?: string };
           industryIdentifiers?: { type: string; identifier: string }[];
+          categories?: string[];
         };
       }>;
     };
@@ -202,6 +210,7 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
           isbn,
           cover_url: cover,
           year: v.publishedDate?.slice(0, 4) ?? null,
+          genre: v.categories?.[0] ?? null,
         };
       });
   } catch {
@@ -217,9 +226,33 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
 export async function searchGoogleBooks(query: string, limit = 8): Promise<BookSearchResult[]> {
   const q = query.trim();
   if (q.length < 2) return [];
-  const ol = await searchOpenLibraryBooks(q, limit);
-  if (ol.length > 0) return ol;
-  return await searchGoogleBooksOnly(q, limit);
+
+  // Fetch Open Library (no quota) + Google Books in parallel.
+  // GB has descriptions; OL has broader results.
+  // Merge: prefer GB data for same book (keyed by ISBN), fill gaps from OL.
+  const [ol, gb] = await Promise.all([
+    searchOpenLibraryBooks(q, limit),
+    searchGoogleBooksOnly(q, limit + 3),
+  ]);
+
+  const seen = new Map<string, BookSearchResult>();
+
+  // Insert GB first so they win on conflict.
+  for (const b of gb) seen.set(b.isbn ?? b.title, b);
+
+  // Insert OL only if not already present via GB, or merge description from GB.
+  for (const b of ol) {
+    const key = b.isbn ?? b.title;
+    if (seen.has(key)) {
+      // Inherit description from GB if OL lacks it.
+      const existing = seen.get(key)!;
+      if (!existing.description && b.description) existing.description = b.description;
+    } else {
+      seen.set(key, b);
+    }
+  }
+
+  return Array.from(seen.values()).slice(0, limit);
 }
 
 /** Look up a book by ISBN. Returns null if no provider found anything. */

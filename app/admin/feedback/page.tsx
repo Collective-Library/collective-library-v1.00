@@ -167,6 +167,10 @@ function FeedbackRow({ row }: { row: FeedbackRowWithUser }) {
     (row.user_id ? "anggota" : "anon");
   const handle = row.user?.username ? `@${row.user.username}` : null;
 
+  const attachmentLinks = row.attachments
+    ? row.attachments.split(/[\n,]+/).map((link) => link.trim()).filter(Boolean)
+    : [];
+
   return (
     <article className="bg-paper border border-hairline rounded-card-lg shadow-card p-5 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -188,9 +192,27 @@ function FeedbackRow({ row }: { row: FeedbackRowWithUser }) {
         </span>
       </div>
 
-      <p className="text-body text-ink whitespace-pre-wrap leading-relaxed">
-        {row.message}
-      </p>
+      <div className="flex flex-col gap-2">
+        <p className="text-body text-ink whitespace-pre-wrap leading-relaxed">
+          {row.message}
+        </p>
+
+        {attachmentLinks.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {attachmentLinks.map((link, idx) => (
+              <a
+                key={idx}
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center h-7 px-3 rounded-pill bg-cream text-ink-soft text-[11px] font-medium border border-hairline-strong hover:bg-parchment hover:text-ink transition-colors"
+              >
+                📎 Link {idx + 1}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
 
       <dl className="flex flex-wrap gap-x-5 gap-y-1 text-caption text-muted border-t border-hairline-soft pt-3">
         <div>

@@ -69,6 +69,7 @@ export function AddBookForm({ userId }: { userId: string }) {
       language: found.language ?? null,
       isbn: cleaned,
       cover_url: found.cover_url ?? null,
+      genre: found.genre ?? null,
       year: null,
     });
   }
@@ -80,6 +81,7 @@ export function AddBookForm({ userId }: { userId: string }) {
     if (b.author) setAuthor(b.author);
     if (b.publisher) setPublisher(b.publisher);
     if (b.description) setDescription(b.description);
+    if (b.genre) setGenre(b.genre);
     if (b.cover_url) {
       setIsbnCoverUrl(b.cover_url);
       setCoverPreview(b.cover_url);
@@ -138,11 +140,11 @@ export function AddBookForm({ userId }: { userId: string }) {
         negotiable: status === "sell" ? negotiable : false,
         lending_duration_days:
           status === "lend" && lendingDuration ? Number(lendingDuration) : null,
-        pickup_area: quickAdd ? null : (pickupArea.trim() || null),
-        genre: quickAdd ? null : (genre.trim() || null),
-        publisher: quickAdd ? null : (publisher.trim() || null),
-        description: quickAdd ? null : (description.trim() || null),
-        notes: quickAdd ? null : (notes.trim() || null),
+        pickup_area: pickupArea.trim() || null,
+        genre: genre.trim() || null,
+        publisher: publisher.trim() || null,
+        description: description.trim() || null,
+        notes: notes.trim() || null,
         cover_url: !coverFile && isbnCoverUrl ? isbnCoverUrl : null,
       })
       .select("id")
