@@ -41,8 +41,7 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
     setError(null);
     if (step === 1) {
       if (!fullName.trim()) return setError("Nama wajib diisi.");
-      if (!usernameValid)
-        return setError("Username 3–30 karakter, huruf kecil/angka/-_. saja.");
+      if (!usernameValid) return setError("Username 3–30 karakter, huruf kecil/angka/-_. saja.");
       setStep(2);
     } else if (step === 2) {
       if (!hasContact) return setError("Minimal isi satu cara kontak ya.");
@@ -68,7 +67,10 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
         storygraph_url: storygraph.trim() || null,
         bio: bio.trim() || null,
         favorite_genres: genres
-          ? genres.split(",").map((g) => g.trim()).filter(Boolean)
+          ? genres
+              .split(",")
+              .map((g) => g.trim())
+              .filter(Boolean)
           : null,
       })
       .eq("id", initial.id);
@@ -133,7 +135,8 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
       {step === 2 && (
         <div className="flex flex-col gap-5 mt-6">
           <p className="text-body-sm text-muted">
-            Ini yang orang pakai buat hubungin lo soal buku. <span className="text-ink-soft font-medium">Minimal isi satu</span> ya.
+            Ini yang orang pakai buat hubungin lo soal buku.{" "}
+            <span className="text-ink-soft font-medium">Minimal isi satu</span> ya.
           </p>
 
           <Input
@@ -209,9 +212,7 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
 
           {/* Permission-style Discord invite — ngajak, gak maksa */}
           <div className="rounded-card-lg border border-hairline bg-cream/40 p-4">
-            <p className="text-caption font-semibold text-ink uppercase tracking-wide">
-              💬 Bonus
-            </p>
+            <p className="text-caption font-semibold text-ink uppercase tracking-wide">💬 Bonus</p>
             <p className="mt-1.5 text-body-sm text-ink-soft leading-relaxed">
               Diskusi buku lebih hidup di Discord. Gabung kapan aja —{" "}
               <a
@@ -235,9 +236,13 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
           <Button variant="ghost" onClick={() => setStep((s) => (s - 1) as Step)} type="button">
             ← Kembali
           </Button>
-        ) : <span />}
+        ) : (
+          <span />
+        )}
         {step < 3 ? (
-          <Button onClick={next} type="button">Lanjut</Button>
+          <Button onClick={next} type="button">
+            Lanjut
+          </Button>
         ) : (
           <Button onClick={submit} disabled={saving} type="button">
             {saving ? "Sebentar, lagi nyiapin rak kamu…" : "Selesai & masuk"}
@@ -254,10 +259,7 @@ function Stepper({ current }: { current: Step }) {
       {[1, 2, 3].map((n) => (
         <div
           key={n}
-          className={
-            "h-1 flex-1 rounded-pill " +
-            (n <= current ? "bg-ink" : "bg-hairline")
-          }
+          className={"h-1 flex-1 rounded-pill " + (n <= current ? "bg-ink" : "bg-hairline")}
         />
       ))}
     </div>

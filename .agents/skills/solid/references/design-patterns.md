@@ -98,19 +98,12 @@ class UserBuilder {
   }
 
   build(): User {
-    return new User(
-      this.user.name!,
-      this.user.email!,
-      this.user.age
-    );
+    return new User(this.user.name!, this.user.email!, this.user.age);
   }
 }
 
 // Usage
-const user = new UserBuilder()
-  .withName('Alice')
-  .withEmail('alice@example.com')
-  .build();
+const user = new UserBuilder().withName("Alice").withEmail("alice@example.com").build();
 ```
 
 ### Prototype
@@ -132,11 +125,7 @@ class Document implements Prototype {
   ) {}
 
   clone(): Document {
-    return new Document(
-      this.title,
-      this.content,
-      { ...this.metadata }
-    );
+    return new Document(this.title, this.content, { ...this.metadata });
   }
 }
 ```
@@ -211,12 +200,8 @@ class SlackDecorator implements Notifier {
 }
 
 // Usage - compose behaviors
-const notifier = new SlackDecorator(
-  new SMSDecorator(
-    new EmailNotifier()
-  )
-);
-notifier.send('Alert!'); // Sends to all three
+const notifier = new SlackDecorator(new SMSDecorator(new EmailNotifier()));
+notifier.send("Alert!"); // Sends to all three
 ```
 
 ### Proxy
@@ -282,10 +267,7 @@ class Box implements Component {
   }
 
   getPrice(): number {
-    return this.children.reduce(
-      (sum, child) => sum + child.getPrice(),
-      0
-    );
+    return this.children.reduce((sum, child) => sum + child.getPrice(), 0);
   }
 }
 
@@ -363,11 +345,11 @@ class EventEmitter {
   }
 
   unsubscribe(observer: Observer): void {
-    this.observers = this.observers.filter(o => o !== observer);
+    this.observers = this.observers.filter((o) => o !== observer);
   }
 
   notify(event: Event): void {
-    this.observers.forEach(o => o.update(event));
+    this.observers.forEach((o) => o.update(event));
   }
 }
 
@@ -375,13 +357,13 @@ class EventEmitter {
 class OrderService extends EventEmitter {
   placeOrder(order: Order): void {
     // Process order...
-    this.notify({ type: 'ORDER_PLACED', order });
+    this.notify({ type: "ORDER_PLACED", order });
   }
 }
 
 class EmailService implements Observer {
   update(event: Event): void {
-    if (event.type === 'ORDER_PLACED') {
+    if (event.type === "ORDER_PLACED") {
       this.sendConfirmation(event.order);
     }
   }
@@ -495,10 +477,10 @@ This helps recognize patterns even in unfamiliar code.
 
 ## Anti-Patterns to Avoid
 
-| Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| **God Object** | Class does everything | Split by responsibility |
-| **Spaghetti Code** | Tangled, no structure | Refactor to layers |
-| **Golden Hammer** | Using one pattern for everything | Match pattern to problem |
-| **Premature Optimization** | Optimizing before needed | YAGNI, profile first |
-| **Copy-Paste Programming** | Duplication | Extract, Rule of Three |
+| Anti-Pattern               | Problem                          | Solution                 |
+| -------------------------- | -------------------------------- | ------------------------ |
+| **God Object**             | Class does everything            | Split by responsibility  |
+| **Spaghetti Code**         | Tangled, no structure            | Refactor to layers       |
+| **Golden Hammer**          | Using one pattern for everything | Match pattern to problem |
+| **Premature Optimization** | Optimizing before needed         | YAGNI, profile first     |
+| **Copy-Paste Programming** | Duplication                      | Extract, Rule of Three   |

@@ -1,11 +1,11 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRelativeID } from "@/lib/format";
 import type { ActivityItem } from "@/lib/activity";
 import { groupActivities, GroupedActivityItem } from "@/lib/activity-grouping";
 import { activityVerb, activityTargetUrl } from "./activity-copy";
+import { CoverImage } from "@/components/books/cover-image";
 
 /**
  * Long-format activity feed for the /aktivitas page. Supports all event types
@@ -73,9 +73,7 @@ function ActivityRow({ item }: { item: GroupedActivityItem }) {
             </p>
           </div>
         )}
-        <span className="ml-auto text-caption text-muted">
-          {formatRelativeID(item.created_at)}
-        </span>
+        <span className="ml-auto text-caption text-muted">{formatRelativeID(item.created_at)}</span>
       </div>
 
       {/* Action verb */}
@@ -88,22 +86,13 @@ function ActivityRow({ item }: { item: GroupedActivityItem }) {
           className="flex gap-4 -m-1 p-1 rounded-card hover:bg-cream transition-colors"
         >
           <div className="relative w-20 h-28 md:w-24 md:h-32 shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
-            {item.book.cover_url ? (
-              <Image
-                src={item.book.cover_url}
-                alt={item.book.title}
-                fill
-                sizes="(max-width: 768px) 80px, 96px"
-                className="object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center p-2">
-                <p className="font-display text-caption text-ink line-clamp-3 text-center">
-                  {item.book.title}
-                </p>
-              </div>
-            )}
+            <CoverImage
+              src={item.book.cover_url}
+              alt={item.book.title}
+              title={item.book.title}
+              author={item.book.author}
+              className="object-cover w-full h-full"
+            />
           </div>
           <div className="min-w-0 flex-1 flex flex-col justify-center">
             <h3 className="font-display text-title-md text-ink leading-tight line-clamp-2">
@@ -121,21 +110,23 @@ function ActivityRow({ item }: { item: GroupedActivityItem }) {
         <div className="flex flex-col gap-2">
           <div className="flex -space-x-4 overflow-hidden py-1">
             {item.books.slice(0, 5).map((book, idx) => (
-              <div 
-                key={book.id || idx} 
+              <div
+                key={book.id || idx}
                 className="relative w-12 h-16 md:w-16 md:h-20 shrink-0 rounded-card overflow-hidden bg-cream border border-white ring-1 ring-hairline"
               >
                 {book.cover_url ? (
-                  <Image
+                  <CoverImage
                     src={book.cover_url}
                     alt={book.title}
-                    fill
-                    sizes="64px"
-                    className="object-cover"
+                    title={book.title}
+                    author={book.author}
+                    className="object-cover w-full h-full"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center p-1 bg-cream">
-                    <span className="text-[10px] text-muted line-clamp-2 text-center">{book.title}</span>
+                    <span className="text-[10px] text-muted line-clamp-2 text-center">
+                      {book.title}
+                    </span>
                   </div>
                 )}
               </div>
@@ -147,7 +138,7 @@ function ActivityRow({ item }: { item: GroupedActivityItem }) {
             )}
           </div>
           {ownerHref && (
-            <Link 
+            <Link
               href={ownerHref}
               className="text-caption text-ink-soft hover:text-ink underline underline-offset-4"
             >
@@ -165,9 +156,7 @@ function ActivityRow({ item }: { item: GroupedActivityItem }) {
           <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-1">
             Wanted
           </p>
-          <p className="font-display text-title-md text-ink leading-tight">
-            {item.wanted.title}
-          </p>
+          <p className="font-display text-title-md text-ink leading-tight">{item.wanted.title}</p>
           {item.wanted.author && (
             <p className="text-body-sm text-muted">oleh {item.wanted.author}</p>
           )}
@@ -200,7 +189,7 @@ function bucketByDay(items: GroupedActivityItem[]): Bucket[] {
 
   const groups: Record<string, GroupedActivityItem[]> = {
     "Hari ini": [],
-    "Kemarin": [],
+    Kemarin: [],
     "Minggu ini": [],
     "Bulan ini": [],
     "Lebih lama": [],

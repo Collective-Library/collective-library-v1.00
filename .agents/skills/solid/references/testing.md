@@ -24,13 +24,14 @@
 Test ONE class or function in isolation.
 
 **Characteristics:**
+
 - Fast (milliseconds)
 - No external dependencies (mocked)
 - Most of your tests should be unit tests
 
 ```typescript
-describe('Order', () => {
-  it('calculates total correctly', () => {
+describe("Order", () => {
+  it("calculates total correctly", () => {
     const order = new Order();
     order.addItem({ price: 100 });
     order.addItem({ price: 50 });
@@ -45,12 +46,13 @@ describe('Order', () => {
 Test multiple components together.
 
 **Characteristics:**
+
 - Slower (may use real DB)
 - Test boundaries between components
 - Fewer than unit tests
 
 ```typescript
-describe('OrderService Integration', () => {
+describe("OrderService Integration", () => {
   let db: Database;
   let service: OrderService;
 
@@ -59,8 +61,8 @@ describe('OrderService Integration', () => {
     service = new OrderService(new PostgresOrderRepo(db));
   });
 
-  it('saves and retrieves an order', async () => {
-    const order = Order.create({ customerId: '123' });
+  it("saves and retrieves an order", async () => {
+    const order = Order.create({ customerId: "123" });
     await service.save(order);
 
     const retrieved = await service.findById(order.id);
@@ -74,20 +76,21 @@ describe('OrderService Integration', () => {
 Test the entire system from user perspective.
 
 **Characteristics:**
+
 - Slowest
 - Most brittle (many moving parts)
 - Test critical paths only
 
 ```typescript
-describe('Checkout Flow', () => {
-  it('user can complete purchase', async () => {
-    await page.goto('/products');
+describe("Checkout Flow", () => {
+  it("user can complete purchase", async () => {
+    await page.goto("/products");
     await page.click('[data-testid="add-to-cart"]');
     await page.click('[data-testid="checkout"]');
-    await page.fill('[name="card"]', '4242424242424242');
+    await page.fill('[name="card"]', "4242424242424242");
     await page.click('[data-testid="pay"]');
 
-    expect(await page.textContent('h1')).toBe('Order Confirmed');
+    expect(await page.textContent("h1")).toBe("Order Confirmed");
   });
 });
 ```
@@ -99,7 +102,7 @@ describe('Checkout Flow', () => {
 Structure EVERY test this way:
 
 ```typescript
-it('applies discount to premium users', () => {
+it("applies discount to premium users", () => {
   // ARRANGE - Set up the test world
   const user = new User({ isPremium: true });
   const cart = new Cart(user);
@@ -128,17 +131,17 @@ Sometimes easier to write in reverse:
 ### Bad: Abstract, Technical
 
 ```typescript
-it('should work correctly')
-it('handles the edge case')
-it('sets the data property')
+it("should work correctly");
+it("handles the edge case");
+it("sets the data property");
 ```
 
 ### Good: Concrete Examples, Domain Language
 
 ```typescript
-it('calculates 20% discount for premium users')
-it('returns error when cart is empty')
-it('recognizes "racecar" as a palindrome')
+it("calculates 20% discount for premium users");
+it("returns error when cart is empty");
+it('recognizes "racecar" as a palindrome');
 ```
 
 ### Format
@@ -177,7 +180,7 @@ Returns predefined values.
 
 ```typescript
 const stubRepo: UserRepo = {
-  findById: () => Promise.resolve(new User({ name: 'Test' })),
+  findById: () => Promise.resolve(new User({ name: "Test" })),
   save: () => Promise.resolve(),
 };
 ```
@@ -191,11 +194,11 @@ const emailSpy = {
   sentEmails: [] as string[],
   send(to: string, message: string) {
     this.sentEmails.push(to);
-  }
+  },
 };
 
 // Later
-expect(emailSpy.sentEmails).toContain('user@example.com');
+expect(emailSpy.sentEmails).toContain("user@example.com");
 ```
 
 ### Mock
@@ -239,14 +242,14 @@ class InMemoryUserRepo implements UserRepo {
 - Fast, comprehensive
 
 ```typescript
-describe('Money', () => {
-  it('adds amounts with same currency', () => {
+describe("Money", () => {
+  it("adds amounts with same currency", () => {
     const a = Money.dollars(10);
     const b = Money.dollars(20);
     expect(a.add(b).equals(Money.dollars(30))).toBe(true);
   });
 
-  it('throws when adding different currencies', () => {
+  it("throws when adding different currencies", () => {
     const usd = Money.dollars(10);
     const eur = Money.euros(10);
     expect(() => usd.add(eur)).toThrow(CurrencyMismatch);
@@ -314,22 +317,22 @@ Verify implementations match interfaces.
 ```typescript
 // Shared contract test
 function testUserRepoContract(createRepo: () => UserRepo) {
-  describe('UserRepo Contract', () => {
+  describe("UserRepo Contract", () => {
     let repo: UserRepo;
 
     beforeEach(() => {
       repo = createRepo();
     });
 
-    it('saves and retrieves user', async () => {
-      const user = User.create({ name: 'Test' });
+    it("saves and retrieves user", async () => {
+      const user = User.create({ name: "Test" });
       await repo.save(user);
       const found = await repo.findById(user.id);
       expect(found).toEqual(user);
     });
 
-    it('returns null for missing user', async () => {
-      const found = await repo.findById('nonexistent');
+    it("returns null for missing user", async () => {
+      const found = await repo.findById("nonexistent");
       expect(found).toBeNull();
     });
   });
@@ -349,10 +352,10 @@ Create test objects easily.
 ```typescript
 class OrderBuilder {
   private props: Partial<OrderProps> = {
-    id: 'order-1',
-    customerId: 'cust-1',
+    id: "order-1",
+    customerId: "cust-1",
     items: [],
-    status: 'pending',
+    status: "pending",
   };
 
   withId(id: string): OrderBuilder {
@@ -366,7 +369,7 @@ class OrderBuilder {
   }
 
   paid(): OrderBuilder {
-    this.props.status = 'paid';
+    this.props.status = "paid";
     return this;
   }
 
@@ -377,7 +380,7 @@ class OrderBuilder {
 
 // Usage
 const order = new OrderBuilder()
-  .withItems([{ sku: 'ABC', price: 100 }])
+  .withItems([{ sku: "ABC", price: 100 }])
   .paid()
   .build();
 ```
@@ -386,11 +389,11 @@ const order = new OrderBuilder()
 
 ## Common Testing Mistakes
 
-| Mistake | Problem | Solution |
-|---------|---------|----------|
-| Testing implementation | Brittle tests | Test behavior only |
-| Too many mocks | Tests prove nothing | Use real objects when possible |
-| Shared state | Flaky tests | Isolate each test |
-| No assertions | False confidence | Always assert something meaningful |
-| Testing trivial code | Wasted effort | Focus on logic and edge cases |
-| Slow tests | Reduced feedback | Optimize, use unit tests |
+| Mistake                | Problem             | Solution                           |
+| ---------------------- | ------------------- | ---------------------------------- |
+| Testing implementation | Brittle tests       | Test behavior only                 |
+| Too many mocks         | Tests prove nothing | Use real objects when possible     |
+| Shared state           | Flaky tests         | Isolate each test                  |
+| No assertions          | False confidence    | Always assert something meaningful |
+| Testing trivial code   | Wasted effort       | Focus on logic and edge cases      |
+| Slow tests             | Reduced feedback    | Optimize, use unit tests           |

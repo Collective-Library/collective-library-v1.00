@@ -2,11 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { BookPicker } from "@/components/books/book-picker";
+import { CoverImage } from "@/components/books/cover-image";
 import { cn } from "@/lib/cn";
 import type { BookSearchResult } from "@/lib/openlibrary";
 import type { BookStatus } from "@/types";
@@ -152,19 +152,7 @@ export function BulkAddForm({ userId }: { userId: string }) {
                 className="flex items-start gap-3 p-3 bg-paper"
               >
                 <div className="w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline flex items-center justify-center">
-                  {book.cover_url ? (
-                    <Image
-                      src={book.cover_url}
-                      alt=""
-                      width={40}
-                      height={56}
-                      sizes="40px"
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <span className="text-[10px] text-muted">📖</span>
-                  )}
+                  <CoverImage src={book.cover_url} alt={book.title} title={book.title} author={book.author ?? ""} className="w-full h-full object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-body-sm font-semibold text-ink line-clamp-2 leading-snug">

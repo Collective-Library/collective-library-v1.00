@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { listWantedAdmin, type AdminWantedRow } from "@/lib/mastermind/requests";
 import { FilterRow, FilterPill } from "@/components/mastermind/filter-pills";
 import { Avatar } from "@/components/ui/avatar";
@@ -90,7 +89,7 @@ function WantedRow({ row }: { row: AdminWantedRow }) {
     <article className="flex gap-3 bg-paper border border-hairline rounded-card-lg shadow-card p-4">
       <div className="shrink-0 w-12 h-16 bg-cream rounded-button border border-hairline-soft overflow-hidden">
         {w.cover_url ? (
-          <Image src={w.cover_url} alt={w.title} width={48} height={64} className="w-full h-full object-cover" />
+          <img src={w.cover_url} alt={w.title} width={48} height={64} className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted">📕</div>
         )}

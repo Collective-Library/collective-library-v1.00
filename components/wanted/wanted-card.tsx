@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getRequesterContactLinks, type Viewer } from "@/lib/contact";
@@ -7,6 +6,7 @@ import { formatIDR, formatRelativeID } from "@/lib/format";
 import { CONDITION_LABELS } from "@/lib/status";
 import type { WantedRequestWithRequester, BookCondition } from "@/types";
 import { WantedCTA } from "./wanted-cta";
+import { CoverImage } from "@/components/books/cover-image";
 
 export function WantedCard({
   wanted,
@@ -47,19 +47,7 @@ export function WantedCard({
       {/* Body — cover thumb + title + meta */}
       <div className="flex gap-4">
         <div className="relative w-[72px] h-[100px] shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
-          {wanted.cover_url ? (
-            <Image
-              src={wanted.cover_url}
-              alt=""
-              fill
-              sizes="72px"
-              className="object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-[10px] text-muted px-1.5 text-center leading-tight">
-              {wanted.title.slice(0, 24)}
-            </div>
-          )}
+          <CoverImage src={wanted.cover_url} alt={wanted.title} title={wanted.title} author={wanted.author ?? ""} className="object-cover w-full h-full" />
         </div>
 
         <div className="min-w-0 flex-1 flex flex-col gap-1.5">

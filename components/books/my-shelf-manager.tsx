@@ -3,10 +3,10 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { CoverImage } from "@/components/books/cover-image";
 import { cn } from "@/lib/cn";
 import type { Book, BookStatus } from "@/types";
 
@@ -154,14 +154,14 @@ export function MyShelfManager({
                 )}
               >
                 {book.cover_url ? (
-                  <Image
-                    src={book.cover_url}
-                    alt={book.title}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 200px"
-                    className="object-cover"
-                    loading="lazy"
-                  />
+          //         <img
+          //   src={book.cover_url}
+          //   alt={book.title}
+          //   className="object-cover w-full h-full"
+          //   loading="lazy"
+          // />
+                <CoverImage src={book.cover_url} alt={book.title} title={book.title} author={book.author} className="object-cover w-full h-full" />
+
                 ) : (
                   <div className="w-full h-full flex items-center justify-center p-3">
                     <p className="font-display text-title-sm text-ink line-clamp-3 text-center">
@@ -248,14 +248,14 @@ function BookTile({ book }: { book: Book }) {
   return (
     <div className="relative aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline group-hover:shadow-card-hover transition-shadow">
       {book.cover_url ? (
-        <Image
-          src={book.cover_url}
-          alt={book.title}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 200px"
-          className="object-cover"
-          loading="lazy"
-        />
+        // <img
+        //     src={book.cover_url}
+        //     alt={book.title}
+        //     className="object-cover w-full h-full"
+        //     loading="lazy"
+        //   />
+
+        <CoverImage src={book.cover_url} alt={book.title} title={book.title} author={book.author} className="object-cover w-full h-full" />
       ) : (
         <div className="w-full h-full flex items-center justify-center p-3">
           <p className="font-display text-title-sm text-ink line-clamp-3 text-center">
