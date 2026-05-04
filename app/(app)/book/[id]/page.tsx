@@ -10,6 +10,7 @@ import { CommunityBadge } from "@/components/ui/community-badge";
 import { SecondaryContactRow } from "@/components/books/contact-pills";
 import { TrackedContactCTA } from "@/components/books/tracked-contact-cta";
 import { BookDetailTabs } from "@/components/books/book-detail-tabs";
+import { CoverImage } from "@/components/books/cover-image";
 
 export const dynamic = "force-dynamic";
 
@@ -97,15 +98,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
         {/* Cover + title always side-by-side (flex-row on all sizes) */}
         <div className="relative -mt-32 md:-mt-40 px-4 md:px-6 flex flex-row gap-4 md:gap-6 items-end">
           <div className="relative w-24 md:w-48 aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline shadow-card-hover shrink-0">
-            {book.cover_url ? (
-              <img src={book.cover_url} alt={book.title} className="object-cover w-full h-full" loading="eager" />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center p-3 bg-gradient-to-br from-cream to-parchment">
-                <p className="font-display text-title-md text-ink line-clamp-3 text-center leading-tight">
-                  {book.title}
-                </p>
-              </div>
-            )}
+            <CoverImage src={book.cover_url} alt={book.title} title={book.title} author={book.author} className="object-cover w-full h-full" />
           </div>
           <div className="flex-1 pb-2 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">

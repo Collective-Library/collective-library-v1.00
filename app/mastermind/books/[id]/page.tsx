@@ -6,6 +6,7 @@ import { AdminNotesThread } from "@/components/mastermind/admin-notes-thread";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeID } from "@/lib/format";
+import { CoverImage } from "@/components/books/cover-image";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +32,7 @@ export default async function BookAdminDetailPage({
 
       <header className="bg-paper border border-hairline rounded-card-lg shadow-card p-5 md:p-6 flex flex-col sm:flex-row gap-5">
         <div className="shrink-0 w-32 h-44 bg-cream rounded-card border border-hairline-soft overflow-hidden">
-          {b.cover_url ? (
-            <img src={b.cover_url} alt={b.title} width={128} height={176} className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted text-display-md">📕</div>
-          )}
+          <CoverImage src={b.cover_url} alt={b.title} title={b.title} author={b.author} className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-caption text-muted uppercase tracking-wide font-semibold">Book detail</p>

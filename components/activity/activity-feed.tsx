@@ -3,6 +3,7 @@ import { GatedLink } from "@/components/landing/gated-link";
 import { formatRelativeID } from "@/lib/format";
 import type { ActivityItem } from "@/lib/activity";
 import { activityVerb, activityTargetUrl } from "./activity-copy";
+import { CoverImage } from "@/components/books/cover-image";
 
 /**
  * Compact "Aktivitas terbaru" widget — surfaces on /shelf default view AND
@@ -60,16 +61,9 @@ function Row({ item }: { item: ActivityItem }) {
         </p>
         <p className="text-caption text-muted">{formatRelativeID(item.created_at)}</p>
       </div>
-      {item.book?.cover_url && (
-        <img
-          src={item.book.cover_url}
-          alt=""
-          width={32}
-          height={44}
-          className="w-8 h-11 rounded-[4px] object-cover border border-hairline shrink-0"
-          loading="lazy"
-        />
-      )}
+      <div className="w-10 h-14">
+        {item.book?.cover_url && <CoverImage src={item.book.cover_url} alt={item.book.title} title={item.book.title} author={item.book.author} className="object-cover border border-hairline shrink-0" fallback={null} />}
+      </div>
     </>
   );
 

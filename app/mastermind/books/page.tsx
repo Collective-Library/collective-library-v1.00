@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import type { BookStatus } from "@/types";
 import { formatRelativeID } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { CoverImage } from "@/components/books/cover-image";
 
 export const dynamic = "force-dynamic";
 
@@ -116,11 +117,7 @@ function BookRow({ row }: { row: AdminBookRow }) {
       className="flex gap-3 bg-paper border border-hairline rounded-card hover:bg-cream/40 hover:shadow-card transition-colors p-3"
     >
       <div className="shrink-0 w-12 h-16 bg-cream rounded-button border border-hairline-soft overflow-hidden">
-        {b.cover_url ? (
-          <img src={b.cover_url} alt={b.title} width={48} height={64} className="w-full h-full object-cover" loading="lazy" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted text-caption">📕</div>
-        )}
+        <CoverImage src={b.cover_url} alt={b.title} title={b.title} author={b.author} className="w-full h-full object-cover" />
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div className="flex items-start justify-between gap-2 flex-wrap">

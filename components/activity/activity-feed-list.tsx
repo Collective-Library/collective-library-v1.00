@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRelativeID } from "@/lib/format";
 import type { ActivityItem } from "@/lib/activity";
 import { activityVerb, activityTargetUrl } from "./activity-copy";
+import { CoverImage } from "@/components/books/cover-image";
 
 /**
  * Long-format activity feed for the /aktivitas page. Supports all event types
@@ -85,20 +86,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
           className="flex gap-4 -m-1 p-1 rounded-card hover:bg-cream transition-colors"
         >
           <div className="relative w-20 h-28 md:w-24 md:h-32 shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
-            {item.book.cover_url ? (
-              <img
-                src={item.book.cover_url}
-                alt={item.book.title}
-                className="object-cover w-full h-full"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center p-2">
-                <p className="font-display text-caption text-ink line-clamp-3 text-center">
-                  {item.book.title}
-                </p>
-              </div>
-            )}
+            <CoverImage src={item.book.cover_url} alt={item.book.title} title={item.book.title} author={item.book.author} className="object-cover w-full h-full" />
           </div>
           <div className="min-w-0 flex-1 flex flex-col justify-center">
             <h3 className="font-display text-title-md text-ink leading-tight line-clamp-2">

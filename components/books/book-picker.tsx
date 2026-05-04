@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { searchGoogleBooks, type BookSearchResult } from "@/lib/openlibrary";
 import { LottieLoading } from "@/components/ui/lottie-loading";
+import { CoverImage } from "@/components/books/cover-image";
 
 /**
  * Search-as-you-type book picker. Hits Google Books, shows a dropdown of
@@ -165,19 +166,7 @@ export function BookPicker({
                   }
                 >
                   <div className="w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline flex items-center justify-center">
-                    {b.cover_url ? (
-                      <img
-                        src={b.cover_url}
-                        alt=""
-                        width={40}
-                        height={56}
-                        sizes="40px"
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="text-[10px] text-muted">📖</span>
-                    )}
+                    <CoverImage src={b.cover_url} alt={b.title} title={b.title} author={b.author ?? ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-body-sm font-semibold text-ink line-clamp-2 leading-snug">

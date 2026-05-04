@@ -11,6 +11,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { CommunityBadge } from "@/components/ui/community-badge";
 import { SecondaryContactRow } from "@/components/books/contact-pills";
 import { MyShelfManager } from "@/components/books/my-shelf-manager";
+import { CoverImage } from "@/components/books/cover-image";
 import {
   InterestList,
   SubInterestList,
@@ -187,13 +188,7 @@ export default async function ProfilePage({
         >
           <span className="text-[20px]" aria-hidden>📖</span>
           <div className="relative w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline">
-            {currentlyReading.cover_url ? (
-              <img
-                src={currentlyReading.cover_url}
-                alt=""
-                className="object-cover"
-               loading="lazy" />
-            ) : null}
+            <CoverImage src={currentlyReading.cover_url} alt={currentlyReading.title} title={currentlyReading.title} author={currentlyReading.author} className="object-cover" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-caption text-muted uppercase tracking-wide font-semibold">
