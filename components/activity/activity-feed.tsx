@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { GatedLink } from "@/components/landing/gated-link";
 import { formatRelativeID } from "@/lib/format";
@@ -62,7 +61,7 @@ function Row({ item }: { item: ActivityItem }) {
         <p className="text-caption text-muted">{formatRelativeID(item.created_at)}</p>
       </div>
       {item.book?.cover_url && (
-        <Image
+        <img
           src={item.book.cover_url}
           alt=""
           width={32}

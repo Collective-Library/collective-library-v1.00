@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getBookAdmin } from "@/lib/mastermind/books";
 import { listNotesFor } from "@/lib/mastermind/admin-notes";
@@ -33,7 +32,7 @@ export default async function BookAdminDetailPage({
       <header className="bg-paper border border-hairline rounded-card-lg shadow-card p-5 md:p-6 flex flex-col sm:flex-row gap-5">
         <div className="shrink-0 w-32 h-44 bg-cream rounded-card border border-hairline-soft overflow-hidden">
           {b.cover_url ? (
-            <Image src={b.cover_url} alt={b.title} width={128} height={176} className="w-full h-full object-cover" />
+            <img src={b.cover_url} alt={b.title} width={128} height={176} className="w-full h-full object-cover" loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted text-display-md">📕</div>
           )}

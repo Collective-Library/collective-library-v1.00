@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
 
@@ -33,7 +32,7 @@ export function Avatar({
         style={{ fontSize: size * 0.4 }}
       >
         {src ? (
-          <Image
+          <img
             src={src}
             alt={name ?? ""}
             width={size}

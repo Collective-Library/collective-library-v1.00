@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getRequesterContactLinks, type Viewer } from "@/lib/contact";
@@ -48,7 +47,7 @@ export function WantedCard({
       <div className="flex gap-4">
         <div className="relative w-[72px] h-[100px] shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
           {wanted.cover_url ? (
-            <Image
+            <img
               src={wanted.cover_url}
               alt=""
               fill

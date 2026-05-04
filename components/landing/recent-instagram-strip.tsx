@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { fetchInstagramFeed } from "@/lib/instagram";
 
 /**
@@ -62,7 +61,7 @@ export async function RecentInstagramStrip() {
               }
               className="group relative shrink-0 snap-start w-[200px] h-[200px] rounded-card overflow-hidden bg-cream border border-hairline shadow-card hover:shadow-card-hover transition-shadow"
             >
-              <Image
+              <img
                 src={p.thumbnail}
                 alt=""
                 fill

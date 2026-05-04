@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProfileByUsername, getProfileCommunities } from "@/lib/profile";
@@ -107,14 +106,11 @@ export default async function ProfilePage({
       {/* Banner — only when present */}
       {profile.cover_url && (
         <div className="relative -mx-4 md:-mx-6 mb-6 overflow-hidden md:rounded-card-lg h-32 md:h-48">
-          <Image
+          <img
             src={profile.cover_url}
             alt=""
-            fill
-            preload
-            sizes="(max-width: 768px) 100vw, 896px"
             className="object-cover"
-          />
+           loading="lazy" />
         </div>
       )}
 
@@ -192,13 +188,11 @@ export default async function ProfilePage({
           <span className="text-[20px]" aria-hidden>📖</span>
           <div className="relative w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline">
             {currentlyReading.cover_url ? (
-              <Image
+              <img
                 src={currentlyReading.cover_url}
                 alt=""
-                fill
-                sizes="40px"
                 className="object-cover"
-              />
+               loading="lazy" />
             ) : null}
           </div>
           <div className="min-w-0 flex-1">

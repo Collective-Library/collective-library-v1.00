@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { listShelfBooks } from "@/lib/books";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { GatedLink } from "./gated-link";
@@ -50,7 +49,7 @@ export async function RecentBooksStrip() {
             >
               <div className="relative w-[160px] h-[224px] rounded-card overflow-hidden bg-cream border border-hairline shadow-card group-hover:shadow-card-hover transition-shadow">
                 {b.cover_url ? (
-                  <Image
+                  <img
                     src={b.cover_url}
                     alt=""
                     fill

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { listBooksAdmin, type AdminBookRow, type BookQualityFlag } from "@/lib/mastermind/books";
 import { FilterRow, FilterPill } from "@/components/mastermind/filter-pills";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -118,7 +117,7 @@ function BookRow({ row }: { row: AdminBookRow }) {
     >
       <div className="shrink-0 w-12 h-16 bg-cream rounded-button border border-hairline-soft overflow-hidden">
         {b.cover_url ? (
-          <Image src={b.cover_url} alt={b.title} width={48} height={64} className="w-full h-full object-cover" />
+          <img src={b.cover_url} alt={b.title} width={48} height={64} className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted text-caption">📕</div>
         )}

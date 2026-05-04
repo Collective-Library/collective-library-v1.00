@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { listLandingMembers } from "@/lib/profile";
 import { Avatar } from "@/components/ui/avatar";
@@ -82,14 +81,14 @@ export async function RecentMembersStrip() {
                 {m.book_covers.length > 0 ? (
                   <div className="flex gap-1 mt-auto">
                     {m.book_covers.slice(0, 3).map((url, i) => (
-                      <Image
+                      <img
                         key={i}
                         src={url}
                         alt=""
                         width={36}
                         height={48}
                         className="object-cover rounded-[4px] border border-hairline"
-                      />
+                       loading="lazy" />
                     ))}
                     {m.book_count > 3 && (
                       <div className="w-9 h-12 rounded-[4px] bg-cream border border-hairline flex items-center justify-center text-[10px] text-muted font-medium">

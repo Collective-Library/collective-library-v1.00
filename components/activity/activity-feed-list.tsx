@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRelativeID } from "@/lib/format";
@@ -87,7 +86,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         >
           <div className="relative w-20 h-28 md:w-24 md:h-32 shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
             {item.book.cover_url ? (
-              <Image
+              <img
                 src={item.book.cover_url}
                 alt={item.book.title}
                 fill

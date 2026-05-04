@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CommunityBadge } from "@/components/ui/community-badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,12 +15,11 @@ export function BookCard({ book }: { book: BookWithOwner }) {
       {/* Photo plate */}
       <div className="relative aspect-[3/4] rounded-card overflow-hidden bg-cream border border-hairline group-hover:shadow-card-hover transition-shadow">
         {book.cover_url ? (
-          <Image
+          <img
             src={book.cover_url}
             alt={book.title}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 240px"
-            className="object-cover"
+            className="object-cover w-full h-full"
+            loading="lazy"
           />
         ) : (
           <CoverPlaceholder title={book.title} author={book.author} />
