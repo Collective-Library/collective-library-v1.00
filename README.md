@@ -1,132 +1,102 @@
 # Collective Library
 
-> Where books connect people, and ideas turn into movement.
+> Where books connect people, and ideas become a movement.
 
-Mobile-first community book marketplace + lending network for the Journey Perintis reading community in Semarang. **Gratis selamanya. No take-rate.**
+Collective Library is a **community-driven knowledge ecosystem**.
+It helps people share books from personal shelves, discover ideas through trusted peers, and build meaningful relationships through learning.
 
-🌐 Live: [collectivelibrary.vercel.app](https://collectivelibrary.vercel.app)
-📸 Instagram: [@collectivelibrary.id](https://www.instagram.com/collectivelibrary.id)
-💬 Discord: [discord.gg/2nCu5p9Hsd](https://discord.gg/2nCu5p9Hsd)
+This is not a traditional library app. It is distributed, social, trust-based, and open-source.
+
+- 🌐 Live: [collectivelibrary.vercel.app](https://collectivelibrary.vercel.app)
+- 📸 Instagram: [@collectivelibrary.id](https://www.instagram.com/collectivelibrary.id)
+- 💬 Discord: [discord.gg/2nCu5p9Hsd](https://discord.gg/2nCu5p9Hsd)
 
 ---
 
-## What this is
+## Why this exists
 
-Books already exist on JP members' shelves. Trust already exists in the community. **They're invisible until a platform surfaces them.** Collective Library is infrastructure — not Goodreads-Indo, not Tokopedia-for-books — for a community that's already real.
+Books are already everywhere: on people’s shelves, in reading circles, and inside communities.
+What is usually missing is shared visibility and connection.
 
-Three core verbs:
+Collective Library exists to make knowledge networks visible and usable:
 
-- **Jual** — lepas buku yang udah dibaca, langsung ke pembaca lain
-- **Pinjam** — bagi buku ke anggota terpercaya, balik diskusi
-- **Tukar** — barter judul dengan teman seprogram
+- show who has what books
+- make borrowing/lending/discovery easier
+- help readers find each other
+- turn contribution into identity and trust
 
-Plus a fourth: **WTB (Wanted to Buy)** — posting cari buku, anggota yang punya langsung notif.
+---
 
-## Features
+## Who this is for
 
-| Surface | What it does |
-|---|---|
-| `/` | Public landing — books strip, activity feed, member strip, IG feed (Behold.so), founder voice |
-| `/shelf` | Collective shelf — paginated grid (24/page), filter by status, FTS-ranked search |
-| `/aktivitas` | Activity feed — event-based (USER_JOINED / BOOK_ADDED / STATUS_CHANGED / WTB_POSTED), interest filter, RSS subscribe |
-| `/anggota` | Member directory — kota → kecamatan → interest → intent → mode filter, map teaser |
-| `/peta` | Community map — Leaflet + Carto Positron, Snapchat-style avatar markers, opt-in via `show_on_map`, auto-geocoded via Nominatim or kode pos lookup |
-| `/wanted` | WTB requests — auto-fetched cover from Open Library, IG DM templated, notes always shown |
-| `/profile/[username]` | Public profile (anon-readable) — banner, currently-reading widget, 3-layer interests, share button |
-| `/admin/feedback` | Admin-only feedback inbox — gated by `profiles.is_admin`, status triage, internal notes |
-| `/api/feedback` | Anonymous feedback submission — Supabase + Discord webhook fan-out |
-| `/api/discord-webhook` | Supabase Database Webhook → Discord channel relay (auth via shared secret) |
-| `/api/postal-code/lookup` | Indonesian kode pos / kecamatan resolver via kodepos.vercel.app |
-| `/api/geocode` | Nominatim forward geocoding fallback |
-| `/feed.xml`, `/feed.json` | Public RSS 2.0 + JSON Feed 1.1 of community activity |
+- Readers who want to discover books from real people
+- Community members who want to lend, borrow, or exchange books
+- Organizers building local learning ecosystems
+- Contributors who want to grow an open-source social knowledge platform
 
-## Tech stack
+---
 
-- **Framework**: [Next.js 16.2.4](https://nextjs.org) (App Router, Turbopack, `proxy.ts` instead of `middleware.ts`)
-- **Language**: TypeScript strict mode
-- **Styles**: [Tailwind CSS v4](https://tailwindcss.com) with CSS-based `@theme` tokens (no `tailwind.config.ts`)
-- **Database / Auth / Storage**: [Supabase](https://supabase.com) (Postgres + RLS + storage + auth + realtime + database webhooks)
-- **Auth providers**: email/password, Google OAuth, Discord OAuth — all hCaptcha-protected
-- **Email**: Resend SMTP (Path C — currently single-recipient; needs custom domain to scale)
-- **Errors**: [Sentry](https://sentry.io) (server + client + edge, no-op when DSN unset)
-- **Analytics**: Vercel Analytics + custom `contact_click` event
-- **Image opt**: `next/image` with AVIF/WebP, browser-side compression (`browser-image-compression`) before upload
-- **Maps**: Leaflet + react-leaflet 5, Carto Positron tiles
-- **Animations**: lottie-react (3-dot pulse for loading states)
-- **OG images**: `next/og` runtime "edge" — landing OG card, favicon, apple-touch-icon all generated dynamically
-- **IG feed**: [Behold.so](https://behold.so) JSON feed (1h revalidate)
-- **Notifications**: Discord webhooks (community channel + feedback channel), feedback chip → `/api/feedback` → Discord embed
+## Current features (MVP+)
 
-## Project structure
+- Book shelf with filtering and search
+- Community activity feed + RSS/JSON feed
+- Member directory + map discovery
+- Wanted-to-buy requests
+- Public user profiles
+- Auth (email/password, Google, Discord)
+- Admin feedback inbox
+- Discord webhook relay for selected activities
 
-```
-app/
-  page.tsx                    Landing
-  about/, privacy/            Static pages
-  feed.xml/, feed.json/       Public RSS + JSON feeds
-  opengraph-image.tsx         Dynamic 1200×630 OG card
-  icon.tsx, apple-icon.tsx    Brand-tinted favicon + iOS icon
-  robots.ts, sitemap.ts       SEO basics
-  error.tsx, global-error.tsx 3-tier error boundaries (Sentry-instrumented)
-  api/
-    discord-webhook/          Activity log fan-out → Discord channel
-    feedback/                 Ticketing endpoint
-    geocode/                  Nominatim wrapper
-    postal-code/lookup/       kodepos.vercel.app wrapper
-  auth/{login,register,callback,logout}
-  onboarding/                 3-step + auto-join JP community
-  profile/[username]/         Public profile (anon-readable)
-  admin/                      Admin-gated dashboard
-    feedback/                 Triage inbox + status control
-  (app)/                      Auth-gated routes with TopBar+BottomNav
-    layout.tsx                Profile completeness check
-    shelf/                    Paginated catalog
-    aktivitas/                Activity feed
-    anggota/                  Member directory + filter sheet
-    peta/                     Community map (dynamic-imported Leaflet)
-    book/{add,add/bulk,import,[id],[id]/edit}
-    wanted/                   WTB feed + form
-    search/                   FTS search with empty-state suggestions
-    profile/edit/             Profile edit (location picker, banner upload, etc.)
-components/
-  ui/                         Primitives (Button, Input, PasswordInput, Avatar, ...)
-  books/                      BookCard, BookGrid, AddBookForm, BookPicker, ...
-  wanted/                     WantedCard, WantedForm, WantedCTA
-  profile/                    InterestChips (3-layer), MemberCard, LocationPicker, ShareProfileButton
-  activity/                   ActivityFeed widget + ActivityFeedList
-  layout/                     TopBar, BottomNav, AvatarMenu, PageShell, Footer
-  landing/                    RecentBooksStrip, RecentMembersStrip, RecentInstagramStrip,
-                              LoginNudgeProvider + GatedLink (modal nudge for anon clicks)
-  map/                        PetaClient, MapView (Leaflet + avatar markers + popup)
-  feedback/                   FeedbackChip (floating button + modal)
-  auth/                       LoginForm, RegisterForm, GoogleButton, DiscordButton, AuthShell
-lib/
-  supabase/{client,server,admin}.ts
-  auth.ts, books.ts, profile.ts, communities.ts, wanted.ts, activity.ts
-  contact.ts                  WhatsApp/IG DM template builders
-  format.ts, status.ts, cn.ts, url.ts
-  interests.ts                3-layer taxonomy (broad/sub/intent)
-  openlibrary.ts              Search (OL primary, Google Books fallback) + ISBN lookup
-  goodreads-csv.ts            CSV import parser
-  stats.ts                    Community stats for landing
-  socials.ts                  Single source of truth for social links
-  compress-image.ts           Browser-side WebP compression helper
-  instagram.ts                Behold.so feed fetcher
-  lottie/                     Hand-crafted Lottie JSON animations
-proxy.ts                      Session refresh + thin auth gate (no DB reads)
-instrumentation.ts            Sentry server/edge init
-instrumentation-client.ts     Sentry browser init
-supabase/migrations/          0001 → 0014 (init through feedback table)
-scripts/                      seed-nikolas, seed-novels-id, verify-seed
-docs/
-  STATE.md                    Living handoff doc — read this first
-  AUDIT.md                    Pre-launch audit notes
-  PRE-DEPLOY-CHECKLIST.md     Deprecated; superseded by migrations 0005-0007
-```
+For a complete list, see [`docs/FEATURES.md`](./docs/FEATURES.md).
 
-## Local development
+---
 
-### 1. Install
+## Upcoming features
+
+- Contributor role badges on profiles
+- Manual role assignment for admins (first MVP step)
+- Discord role mapping and sync (future phase)
+- GitHub contribution-aware badges (future phase)
+- Expanded community event workflows
+
+See:
+- [`docs/ROADMAP.md`](./docs/ROADMAP.md)
+- [`docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)
+
+---
+
+## Contributor identity: badges + Discord roles
+
+Collective Library is building a contributor identity layer where contributions become visible trust signals.
+
+Example roles include:
+
+- Inventor
+- Builder
+- Explorer
+- Connector
+- Curator
+- Storyteller
+- Librarian
+- Contributor
+- Maintainer
+- Docs Gardener
+- Pull Request Hero
+
+MVP principle:
+
+- users can have multiple badges
+- one badge can be marked as primary for public display
+- assignment is manual first
+- Discord/GitHub sync is documented now, implemented later
+
+Read details in [`docs/DISCORD_ROLES.md`](./docs/DISCORD_ROLES.md).
+
+---
+
+## Getting started locally
+
+### 1) Install
 
 ```bash
 git clone https://github.com/Collective-Library/collective-library-v1.00.git
@@ -134,116 +104,125 @@ cd collective-library-v1.00
 npm install
 ```
 
-### 2. Environment variables
+### 2) Configure environment
 
-Create `.env.local` in the project root:
+Copy and edit environment values:
 
-```env
-# ─── REQUIRED ──────────────────────────────────────────────────────
-# App dies without these. Get from your Supabase project Settings → API.
-NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-
-# ─── OPTIONAL — features degrade gracefully when unset ─────────────
-
-# Canonical app URL (used for share links, OG tags, sitemap, geocoder UA)
-# Falls back to VERCEL_URL → localhost when unset.
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Discord webhooks (3 separate purposes)
-DISCORD_COMMUNITY_WEBHOOK_URL=         # activity_log → #collective-library channel
-DISCORD_FEEDBACK_WEBHOOK_URL=          # feedback chip → #feedback channel
-DISCORD_WEBHOOK_SECRET=                # shared secret for Supabase Database Webhook auth
-
-# Sentry (server + client)
-SENTRY_DSN=
-NEXT_PUBLIC_SENTRY_DSN=
-
-# hCaptcha (auth pages — bot protection). When unset, captcha is silently disabled.
-NEXT_PUBLIC_HCAPTCHA_SITEKEY=
-
-# Behold.so Instagram feed ID (defaults to the @collectivelibrary.id production feed)
-NEXT_PUBLIC_INSTAGRAM_FEED_ID=
+```bash
+cp .env.example .env.local
 ```
 
-### 3. Database setup
+Minimum required values:
 
-Apply migrations to your Supabase project. From the Supabase Dashboard:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-1. Open **SQL Editor**
-2. For each file in `supabase/migrations/` (in order: `0001_init.sql` → `0014_feedback.sql`):
-   - Open the file
-   - Copy its contents
-   - Paste + Run in SQL Editor
+Optional services include Discord webhooks, Sentry, and hCaptcha.
 
-Alternatively, with the [Supabase CLI](https://supabase.com/docs/guides/cli):
+### 3) Database
+
+Run Supabase migrations in `supabase/migrations` (via Supabase SQL Editor or Supabase CLI).
 
 ```bash
 supabase db push
 ```
 
-After 0014 runs, bootstrap your first admin:
-
-```sql
-update public.profiles set is_admin = true where username = 'YOUR-USERNAME';
-```
-
-### 4. Run
+### 4) Start dev server
 
 ```bash
-npm run dev   # → http://localhost:3000
+npm run dev
 ```
 
-## Deployment
-
-`git push origin main` → Vercel auto-builds and deploys (~2 min). Watch the Vercel dashboard `Deployments` tab for status. Function logs are in `Logs` → filter by route (e.g. `/api/feedback`).
-
-The repo is connected to Vercel via the [Supabase Vercel integration](https://supabase.com/dashboard/project/_/settings/integrations) — Supabase env vars (URL / anon key / service role) auto-sync. Discord / Sentry / hCaptcha env vars must be set manually in Vercel `Settings → Environment Variables`.
-
-### Optional: Supabase Database Webhook → Discord activity channel
-
-If you want activity events (book added, member joined, WTB posted) to appear in your Discord channel:
-
-1. Set the 3 Discord env vars in Vercel (above)
-2. Supabase Dashboard → **Database → Webhooks → Create**:
-   - Name: `activity-discord-fanout`
-   - Table: `activity_log`
-   - Events: `INSERT`
-   - Type: HTTP Request, POST
-   - URL: `https://<your-domain>/api/discord-webhook`
-   - HTTP Header: `Authorization: Bearer <DISCORD_WEBHOOK_SECRET>`
-
-## Contributing
-
-This is a community project. Contributions welcome.
-
-- **Read [`docs/STATE.md`](./docs/STATE.md) first** — it's the living handoff doc covering brand, schema, decisions log, and active backlog
-- Branch from `main`, never commit directly
-- Open a PR with a description of what changes and why
-- Follow existing conventions: TypeScript strict, Tailwind v4, server components by default
-- Don't add new features without checking against the strategic guardrails (Naval/Thiel/Godin tests in STATE.md)
-
-## Architecture decisions
-
-A few opinionated calls made along the way:
-
-- **No internal chat ever** — WhatsApp + IG DM + Discord deep-links only. This is a feature, not a bug. We're not building Slack.
-- **Activity feed is event-based** (Postgres triggers → `activity_log` table), not app-emit. Cross-entity ordering for free, no race conditions.
-- **WhatsApp privacy via masked view** (`profiles_public`) — direct `profiles` SELECT is self-only via RLS.
-- **Image compression client-side** before Supabase upload — saves 70-90% storage, no Vercel function body limit.
-- **Search uses Postgres FTS** with `websearch_to_tsquery`, ilike fallback for partial tokens. No Algolia / Meilisearch.
-- **Map = Leaflet + OSM**, not Google Maps — no API key, no billing card.
-- **Login-nudge modal** instead of `/auth/login` bounce — Seth-Godin-style invitation when anon clicks a card.
-- **Permission-style Discord invite distribution** — footer + onboarding bonus + auth-page subtitle. No popups.
-
-See full decision log in `docs/STATE.md`.
-
-## License
-
-TBD. Currently closed-source; will probably go open-source once the codebase stabilizes. For now: don't redistribute without permission.
+Then open `http://localhost:3000`.
 
 ---
 
-Built by Cole, Initiator Journey Perintis & Collective Library.
-Reach out: [@nikolaswidad_](https://instagram.com/nikolaswidad_) on IG.
+## Contributing
+
+We welcome builders, writers, organizers, and curious learners.
+
+1. Read [`docs/PROJECT_VISION.md`](./docs/PROJECT_VISION.md)
+2. Read [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
+3. Check [`docs/ROADMAP.md`](./docs/ROADMAP.md)
+4. Open or join an issue
+5. Submit a pull request
+
+### First issue proposal
+
+**Title:** `feat: add contributor role badges and Discord role mapping`
+
+**Description:**
+
+```md
+Build a contributor badge system for Collective Library users, starting with manual admin assignment and future support for Discord role sync.
+
+This feature turns community contribution into visible identity:
+- Inventor
+- Builder
+- Explorer
+- Connector
+- Curator
+- Storyteller
+- Librarian
+- Contributor
+- Maintainer
+- Docs Gardener
+- Pull Request Hero
+
+MVP:
+- define contributor role data model
+- allow role assignment to users
+- show public badges on user profile
+- document Discord sync as future integration
+
+Future:
+- Discord OAuth
+- Discord bot role sync
+- GitHub contribution badge sync
+```
+
+---
+
+## Issues and pull requests
+
+- Use templates in `.github/ISSUE_TEMPLATE/`
+- Keep issues specific and actionable
+- In PRs, explain **what changed**, **why**, and **how to test**
+- Link related issues whenever possible
+
+Template files:
+
+- [Bug Report](./.github/ISSUE_TEMPLATE/bug_report.md)
+- [Feature Request](./.github/ISSUE_TEMPLATE/feature_request.md)
+- [Community Event](./.github/ISSUE_TEMPLATE/community_event.md)
+- [Contributor Role Request](./.github/ISSUE_TEMPLATE/contributor_role.md)
+- [Pull Request Template](./.github/PULL_REQUEST_TEMPLATE.md)
+
+---
+
+## Docs index
+
+- [`docs/PROJECT_VISION.md`](./docs/PROJECT_VISION.md)
+- [`docs/FEATURES.md`](./docs/FEATURES.md)
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
+- [`docs/ROADMAP.md`](./docs/ROADMAP.md)
+- [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
+- [`docs/DISCORD_ROLES.md`](./docs/DISCORD_ROLES.md)
+- [`docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)
+
+Legacy context docs:
+
+- [`docs/STATE.md`](./docs/STATE.md)
+- [`docs/AUDIT.md`](./docs/AUDIT.md)
+- [`docs/PRE-DEPLOY-CHECKLIST.md`](./docs/PRE-DEPLOY-CHECKLIST.md)
+
+---
+
+## Community links
+
+- Instagram: https://www.instagram.com/collectivelibrary.id
+- Discord: https://discord.gg/2nCu5p9Hsd
+- Web app: https://collectivelibrary.vercel.app
+
+If you care about books, ideas, and community learning, you are welcome here.
