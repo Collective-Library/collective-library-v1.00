@@ -64,9 +64,8 @@ export async function RecentInstagramStrip() {
               <img
                 src={p.thumbnail}
                 alt=""
-                fill
-                sizes="200px"
-                className="object-cover"
+                className="object-cover w-full h-full"
+                loading="lazy"
               />
 
               {/* Carousel / video icons */}

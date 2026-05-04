@@ -50,9 +50,8 @@ export function WantedCard({
             <img
               src={wanted.cover_url}
               alt=""
-              fill
-              sizes="72px"
-              className="object-cover"
+              className="object-cover w-full h-full"
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-[10px] text-muted px-1.5 text-center leading-tight">

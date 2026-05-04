@@ -89,9 +89,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
               <img
                 src={item.book.cover_url}
                 alt={item.book.title}
-                fill
-                sizes="(max-width: 768px) 80px, 96px"
-                className="object-cover"
+                className="object-cover w-full h-full"
                 loading="lazy"
               />
             ) : (

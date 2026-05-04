@@ -66,7 +66,6 @@ function Row({ item }: { item: ActivityItem }) {
           alt=""
           width={32}
           height={44}
-          sizes="32px"
           className="w-8 h-11 rounded-[4px] object-cover border border-hairline shrink-0"
           loading="lazy"
         />

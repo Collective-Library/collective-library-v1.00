@@ -52,9 +52,8 @@ export async function RecentBooksStrip() {
                   <img
                     src={b.cover_url}
                     alt=""
-                    fill
-                    sizes="160px"
-                    className="object-cover"
+                    className="object-cover w-full h-full"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-caption text-muted px-3 text-center">
