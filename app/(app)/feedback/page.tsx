@@ -29,7 +29,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   // Main data query — RLS policy feedback_select_own filters by auth.uid() = user_id
   let query = supabase
     .from("feedback")
-    .select("*", { count: "exact" })
+    .select("id, category, message, status, attachments, page_url, created_at, internal_note", {
+      count: "exact",
+    })
     .order("created_at", { ascending: false });
 
   if (status !== "all") query = query.eq("status", status);
