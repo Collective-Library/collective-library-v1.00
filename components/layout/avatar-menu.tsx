@@ -53,12 +53,14 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
         <div
           role="menu"
           className={cn(
-            "absolute right-0 mt-2 w-56 rounded-card-lg bg-paper border border-hairline shadow-modal overflow-hidden z-50",
+            "absolute right-0 mt-2 w-56 rounded-card-lg bg-paper border border-hairline shadow-modal overflow-hidden z-50"
           )}
         >
           <div className="px-4 py-3 border-b border-hairline-soft">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-body-sm font-semibold text-ink truncate">{profile.full_name ?? profile.username}</p>
+              <p className="text-body-sm font-semibold text-ink truncate">
+                {profile.full_name ?? profile.username}
+              </p>
               {profile.is_admin && (
                 <span className="inline-flex items-center gap-0.5 h-5 px-1.5 rounded-pill bg-ink text-parchment text-[10px] font-semibold tracking-wide">
                   <span aria-hidden>✦</span>
@@ -93,6 +95,13 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
               Import dari Goodreads
             </MenuItem>
           </ul>
+          {!profile.is_admin && (
+            <div className="border-t border-hairline-soft py-1.5 flex flex-col gap-1">
+              <MenuItem href="/feedback/" onClick={() => setOpen(false)}>
+                My feedback
+              </MenuItem>
+            </div>
+          )}
           {profile.is_admin && (
             <div className="border-t border-hairline-soft py-1.5 px-1.5 flex flex-col gap-1">
               <Link
@@ -101,12 +110,23 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
                 onClick={() => setOpen(false)}
                 className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-button bg-ink text-parchment hover:bg-ink-soft transition-colors"
               >
-                <span aria-hidden className="text-base leading-none">✦</span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-body-sm font-semibold leading-tight">Mastermind cockpit</span>
-                  <span className="block text-[11px] leading-tight opacity-70 mt-0.5">Live OKRs · founder pulse</span>
+                <span aria-hidden className="text-base leading-none">
+                  ✦
                 </span>
-                <span className="text-parchment/60 group-hover:text-parchment transition-colors" aria-hidden>→</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-body-sm font-semibold leading-tight">
+                    Mastermind cockpit
+                  </span>
+                  <span className="block text-[11px] leading-tight opacity-70 mt-0.5">
+                    Live OKRs · founder pulse
+                  </span>
+                </span>
+                <span
+                  className="text-parchment/60 group-hover:text-parchment transition-colors"
+                  aria-hidden
+                >
+                  →
+                </span>
               </Link>
               <Link
                 href="/admin/feedback"
@@ -114,7 +134,9 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-button text-body-sm text-ink-soft hover:bg-cream transition-colors"
               >
-                <span aria-hidden className="text-base leading-none">📥</span>
+                <span aria-hidden className="text-base leading-none">
+                  📥
+                </span>
                 <span>Feedback inbox</span>
               </Link>
             </div>
