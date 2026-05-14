@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { formatEventWhen, formatRelativeID } from "@/lib/format";
+import { AttendeeCard } from "@/components/events/attendee-card";
 import type { EventRsvpWithProfile, EventWithHost } from "@/types";
 
 type Tab = "tentang" | "detail" | "host" | "hadir";
@@ -27,8 +28,8 @@ export function EventDetailTabs({ event, rsvps, isHost }: Props) {
   const hostHref = event.host.username ? `/profile/${event.host.username}` : "#";
   const when = formatEventWhen(event.starts_at, event.ends_at, event.timezone);
 
-  const goingCount = rsvps.filter((r) => r.status === "going").length;
-  const maybeCount = rsvps.filter((r) => r.status === "maybe").length;
+  const goingRsvps = rsvps.filter((r) => r.status === "going");
+  const maybeRsvps = rsvps.filter((r) => r.status === "maybe");
 
   const tabs: Tab[] = [
     "tentang",
@@ -57,8 +58,8 @@ export function EventDetailTabs({ event, rsvps, isHost }: Props) {
               }
             >
               {TAB_LABELS[t]}
-              {t === "hadir" && goingCount > 0 && (
-                <span className="ml-1 text-caption text-muted">({goingCount})</span>
+              {t === "hadir" && goingRsvps.length > 0 && (
+                <span className="ml-1 text-caption text-muted">({goingRsvps.length})</span>
               )}
             </button>
           ))}
@@ -69,7 +70,7 @@ export function EventDetailTabs({ event, rsvps, isHost }: Props) {
           {activeTab === "detail" && <DetailContent event={event} when={when} />}
           {activeTab === "host" && <HostContent hostHref={hostHref} hostName={hostName} event={event} />}
           {activeTab === "hadir" && (
-            <HadirContent rsvps={rsvps} goingCount={goingCount} maybeCount={maybeCount} />
+            <HadirContent goingRsvps={goingRsvps} maybeRsvps={maybeRsvps} />
           )}
         </div>
       </div>
@@ -107,9 +108,9 @@ export function EventDetailTabs({ event, rsvps, isHost }: Props) {
         {rsvps.length > 0 && (
           <section className="p-5 rounded-card-lg border border-hairline bg-paper shadow-card">
             <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-3">
-              {goingCount} hadir{maybeCount > 0 ? ` · ${maybeCount} mungkin` : ""}
+              {goingRsvps.length} siap datang{maybeRsvps.length > 0 ? ` · ${maybeRsvps.length} mungkin` : ""}
             </p>
-            <HadirContent rsvps={rsvps} goingCount={goingCount} maybeCount={maybeCount} />
+            <HadirContent goingRsvps={goingRsvps} maybeRsvps={maybeRsvps} />
           </section>
         )}
       </div>
@@ -118,11 +119,19 @@ export function EventDetailTabs({ event, rsvps, isHost }: Props) {
 }
 
 function TentangContent({ event, isHost }: { event: EventWithHost; isHost: boolean }) {
+  const whatToExpect = event.what_to_expect ?? [];
+
   return (
-    <div>
+    <div className="flex flex-col gap-5">
+      {event.theme && (
+        <p className="text-body-lg text-ink italic leading-relaxed">{event.theme}</p>
+      )}
+
       {event.description ? (
-        <p className="text-body text-ink leading-relaxed whitespace-pre-wrap">{event.description}</p>
-      ) : (
+        <p className="text-body text-ink leading-relaxed whitespace-pre-wrap">
+          {event.description}
+        </p>
+      ) : !event.theme ? (
         <p className="text-body text-ink-soft leading-relaxed">
           Belum ada deskripsi.{" "}
           {isHost ? (
@@ -136,6 +145,46 @@ function TentangContent({ event, isHost }: { event: EventWithHost; isHost: boole
             "Tanya langsung ke host."
           )}
         </p>
+      ) : null}
+
+      {whatToExpect.length > 0 && (
+        <div>
+          <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-2">
+            Di event ini kamu bisa
+          </p>
+          <ul className="flex flex-col gap-2">
+            {whatToExpect.map((line, idx) => (
+              <li key={idx} className="flex gap-2 text-body text-ink-soft">
+                <span aria-hidden className="text-ink shrink-0">•</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {event.reminder_text && (
+        <div className="pl-3 border-l-2 border-ink/20">
+          <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-1.5">
+            Reminder dari host
+          </p>
+          <p className="text-body text-ink-soft italic whitespace-pre-wrap leading-relaxed">
+            {event.reminder_text}
+          </p>
+        </div>
+      )}
+
+      {event.hashtags && event.hashtags.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5 pt-1">
+          {event.hashtags.map((tag) => (
+            <li
+              key={tag}
+              className="text-caption text-ink-soft bg-cream px-2 py-0.5 rounded-pill"
+            >
+              #{tag}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
@@ -170,7 +219,10 @@ function DetailContent({ event, when }: { event: EventWithHost; when: string }) 
       {event.capacity && (
         <DetailRow label="Kapasitas" value={`${event.rsvp_count} / ${event.capacity}`} />
       )}
-      {event.community && (
+      {event.community_name && (
+        <DetailRow label="Komunitas" value={event.community_name} />
+      )}
+      {!event.community_name && event.community && (
         <DetailRow label="Komunitas" value={event.community.name} />
       )}
     </dl>
@@ -201,59 +253,39 @@ function HostContent({
 }
 
 function HadirContent({
-  rsvps,
-  goingCount,
-  maybeCount,
+  goingRsvps,
+  maybeRsvps,
 }: {
-  rsvps: EventRsvpWithProfile[];
-  goingCount: number;
-  maybeCount: number;
+  goingRsvps: EventRsvpWithProfile[];
+  maybeRsvps: EventRsvpWithProfile[];
 }) {
   return (
-    <div className="flex flex-col gap-3">
-      {goingCount > 0 && (
+    <div className="flex flex-col gap-4">
+      {goingRsvps.length > 0 && (
         <div>
           <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-2">
-            Hadir ({goingCount})
+            Siap datang ({goingRsvps.length})
           </p>
-          <ul className="flex flex-col gap-2">
-            {rsvps
-              .filter((r) => r.status === "going")
-              .map((r) => (
-                <RsvpRow key={r.profile_id} rsvp={r} />
-              ))}
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {goingRsvps.map((r) => (
+              <AttendeeCard key={r.profile_id} rsvp={r} />
+            ))}
           </ul>
         </div>
       )}
-      {maybeCount > 0 && (
+      {maybeRsvps.length > 0 && (
         <div>
           <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-2">
-            Mungkin ({maybeCount})
+            Mungkin hadir ({maybeRsvps.length})
           </p>
-          <ul className="flex flex-col gap-2">
-            {rsvps
-              .filter((r) => r.status === "maybe")
-              .map((r) => (
-                <RsvpRow key={r.profile_id} rsvp={r} />
-              ))}
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {maybeRsvps.map((r) => (
+              <AttendeeCard key={r.profile_id} rsvp={r} />
+            ))}
           </ul>
         </div>
       )}
     </div>
-  );
-}
-
-function RsvpRow({ rsvp }: { rsvp: EventRsvpWithProfile }) {
-  const profileHref = rsvp.profile.username ? `/profile/${rsvp.profile.username}` : "#";
-  return (
-    <li>
-      <Link href={profileHref} className="flex items-center gap-2.5 hover:opacity-80">
-        <Avatar src={rsvp.profile.photo_url} name={rsvp.profile.full_name} size={32} />
-        <p className="text-body-sm text-ink truncate">
-          {rsvp.profile.full_name ?? rsvp.profile.username ?? "Anggota"}
-        </p>
-      </Link>
-    </li>
   );
 }
 

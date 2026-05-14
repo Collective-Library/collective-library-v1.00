@@ -1,11 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
+  AttendeeProfile,
   Event,
   EventFormValues,
   EventRsvpStatus,
   EventRsvpWithProfile,
   EventStatus,
   EventWithHost,
+  RsvpContextValues,
 } from "@/types";
 
 const HOST_SELECT = `id, full_name, username, photo_url, city, whatsapp, whatsapp_public, instagram, discord`;
@@ -208,6 +210,17 @@ export async function createEvent(
       cover_url: values.cover_url ?? null,
       contact_method: values.contact_method ?? "whatsapp",
       visibility: values.visibility ?? "public",
+      theme: values.theme ?? null,
+      what_to_expect: values.what_to_expect ?? null,
+      hashtags: values.hashtags ?? null,
+      reminder_text: values.reminder_text ?? null,
+      registration_url: values.registration_url ?? null,
+      registration_label: values.registration_label ?? null,
+      registration_deadline: values.registration_deadline ?? null,
+      instagram_url: values.instagram_url ?? null,
+      community_name: values.community_name ?? null,
+      community_instagram_url: values.community_instagram_url ?? null,
+      community_logo_url: values.community_logo_url ?? null,
     })
     .select("id")
     .single();
@@ -242,6 +255,17 @@ export async function updateEvent(
       ...(patch.contact_method !== undefined && { contact_method: patch.contact_method }),
       ...(patch.visibility !== undefined && { visibility: patch.visibility }),
       ...(patch.status !== undefined && { status: patch.status }),
+      ...(patch.theme !== undefined && { theme: patch.theme }),
+      ...(patch.what_to_expect !== undefined && { what_to_expect: patch.what_to_expect }),
+      ...(patch.hashtags !== undefined && { hashtags: patch.hashtags }),
+      ...(patch.reminder_text !== undefined && { reminder_text: patch.reminder_text }),
+      ...(patch.registration_url !== undefined && { registration_url: patch.registration_url }),
+      ...(patch.registration_label !== undefined && { registration_label: patch.registration_label }),
+      ...(patch.registration_deadline !== undefined && { registration_deadline: patch.registration_deadline }),
+      ...(patch.instagram_url !== undefined && { instagram_url: patch.instagram_url }),
+      ...(patch.community_name !== undefined && { community_name: patch.community_name }),
+      ...(patch.community_instagram_url !== undefined && { community_instagram_url: patch.community_instagram_url }),
+      ...(patch.community_logo_url !== undefined && { community_logo_url: patch.community_logo_url }),
     })
     .eq("id", id);
 
@@ -271,12 +295,14 @@ export async function deleteEvent(id: string): Promise<{ ok: true } | { error: s
 /**
  * Upsert an RSVP for a profile. The trigger only fires on INSERT so
  * updating going → maybe → going doesn't create duplicate activity rows.
+ * Optional context (bringing_book, conversation_topic, origin_city, note)
+ * surfaces on attendee cards as social signal.
  */
 export async function rsvpEvent(
   eventId: string,
   profileId: string,
   status: EventRsvpStatus,
-  note?: string,
+  context?: RsvpContextValues,
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
@@ -285,13 +311,46 @@ export async function rsvpEvent(
       event_id: eventId,
       profile_id: profileId,
       status,
-      note: note ?? null,
+      note: context?.note ?? null,
+      origin_city: context?.origin_city ?? null,
+      bringing_book: context?.bringing_book ?? null,
+      conversation_topic: context?.conversation_topic ?? null,
     },
     { onConflict: "event_id,profile_id" },
   );
 
   if (error) {
     console.error("rsvpEvent", error);
+    return { error: error.message };
+  }
+  return { ok: true };
+}
+
+/**
+ * Update only RSVP context fields without changing status. Used by the
+ * optional post-RSVP context prompt — user RSVPs first (fast), then can
+ * enrich with what they're bringing / want to discuss.
+ */
+export async function updateRsvpContext(
+  eventId: string,
+  profileId: string,
+  context: RsvpContextValues,
+): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("event_rsvps")
+    .update({
+      ...(context.origin_city !== undefined && { origin_city: context.origin_city || null }),
+      ...(context.bringing_book !== undefined && { bringing_book: context.bringing_book || null }),
+      ...(context.conversation_topic !== undefined && { conversation_topic: context.conversation_topic || null }),
+      ...(context.note !== undefined && { note: context.note || null }),
+    })
+    .eq("event_id", eventId)
+    .eq("profile_id", profileId);
+
+  if (error) {
+    console.error("updateRsvpContext", error);
     return { error: error.message };
   }
   return { ok: true };
@@ -317,15 +376,20 @@ export async function cancelRsvp(
   return { ok: true };
 }
 
-/** All RSVPs for an event with attendee profile data, for the "Hadir" tab. */
+/**
+ * All RSVPs for an event with **rich** attendee profile signals for the
+ * "Hadir" tab — city, interests, book count, social links. Built so attendee
+ * cards read as "social signal" (oh, ada yang dari Demak, interest-nya
+ * systems-thinking, bawa Atomic Habits) instead of just "1 nama doang".
+ */
 export async function listEventRsvps(eventId: string): Promise<EventRsvpWithProfile[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("event_rsvps")
     .select(
-      `event_id, profile_id, status, note, created_at,
-       profile:profiles_public!event_rsvps_profile_id_fkey(id, full_name, username, photo_url)`,
+      `event_id, profile_id, status, note, origin_city, bringing_book, conversation_topic, created_at,
+       profile:profiles_public!event_rsvps_profile_id_fkey(id, full_name, username, photo_url, city, interests, instagram, discord)`,
     )
     .eq("event_id", eventId)
     .order("created_at", { ascending: true });
@@ -339,10 +403,38 @@ export async function listEventRsvps(eventId: string): Promise<EventRsvpWithProf
     profile: unknown;
   } & Record<string, unknown>;
 
-  return ((data ?? []) as unknown as Row[]).map((r) => ({
+  const rows = ((data ?? []) as unknown as Row[]).map((r) => ({
     ...r,
     profile: flatten(r.profile as never),
-  })) as unknown as EventRsvpWithProfile[];
+  })) as unknown as Array<EventRsvpWithProfile & { profile: AttendeeProfile }>;
+
+  // Batch-fetch book counts for all attendees in one query (no N+1)
+  const attendeeIds = rows
+    .map((r) => r.profile?.id)
+    .filter((id): id is string => Boolean(id));
+
+  const bookCounts = new Map<string, number>();
+  if (attendeeIds.length > 0) {
+    const { data: countRows } = await supabase
+      .from("books")
+      .select("owner_id")
+      .in("owner_id", attendeeIds)
+      .eq("is_hidden", false)
+      .eq("visibility", "public");
+
+    for (const row of countRows ?? []) {
+      const ownerId = (row as { owner_id: string }).owner_id;
+      bookCounts.set(ownerId, (bookCounts.get(ownerId) ?? 0) + 1);
+    }
+  }
+
+  return rows.map((r) => ({
+    ...r,
+    profile: {
+      ...r.profile,
+      book_count: r.profile?.id ? bookCounts.get(r.profile.id) ?? 0 : 0,
+    },
+  })) as EventRsvpWithProfile[];
 }
 
 /** Fetch a raw Event row (no joins). Used by API routes that just need ownership check. */

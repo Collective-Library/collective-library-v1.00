@@ -4,9 +4,12 @@ import type { Metadata } from "next";
 import { getEvent, listEventRsvps } from "@/lib/events";
 import { getCurrentUser } from "@/lib/auth";
 import { formatEventWhen } from "@/lib/format";
+import { getAppUrl } from "@/lib/url";
 import { EventDetailTabs } from "@/components/events/event-detail-tabs";
 import { RsvpButton } from "@/components/events/rsvp-button";
 import { DiscordAnnounceButton } from "@/components/events/discord-announce-button";
+import { CalendarButton } from "@/components/events/calendar-button";
+import { RsvpContextPrompt } from "@/components/events/rsvp-context-prompt";
 import { CoverImage } from "@/components/books/cover-image";
 import { CommunityBadge } from "@/components/ui/community-badge";
 
@@ -24,7 +27,8 @@ export async function generateMetadata({
   const when = formatEventWhen(event.starts_at, event.ends_at, event.timezone);
   const host = event.host.full_name ?? event.host.username ?? "anggota";
   const where = event.is_online ? "online" : event.location_text ?? "Semarang";
-  const description = `${event.title} — ${when} di ${where}. Host: ${host}.`;
+  const themeOrDesc = event.theme ?? event.description ?? "";
+  const description = `${event.title} — ${when} di ${where}. Host: ${host}.${themeOrDesc ? ` ${themeOrDesc.slice(0, 120)}` : ""}`;
 
   return {
     title: event.title,
@@ -53,8 +57,18 @@ export default async function EventDetailPage({
 
   const rsvps = await listEventRsvps(id);
   const isHost = user?.id === event.host_id;
-  const when = formatEventWhen(event.starts_at, event.ends_at, event.timezone);
   const hostName = event.host.full_name ?? event.host.username ?? "anggota";
+  const publicUrl = `${getAppUrl()}/event/${event.id}`;
+
+  // Viewer's own RSVP row — used to pre-populate context prompt
+  const viewerRsvp = user
+    ? rsvps.find((r) => r.profile_id === user.id) ?? null
+    : null;
+
+  // Registration deadline: hide CTA after deadline passes
+  const registrationOpen =
+    Boolean(event.registration_url) &&
+    (!event.registration_deadline || new Date(event.registration_deadline).getTime() > Date.now());
 
   return (
     <article className="max-w-4xl mx-auto">
@@ -81,7 +95,7 @@ export default async function EventDetailPage({
         <div className="relative -mt-20 px-4 md:px-6 flex flex-col gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center px-2.5 py-1 rounded-pill bg-ink text-parchment text-caption font-semibold">
-              {when}
+              {formatEventWhen(event.starts_at, event.ends_at, event.timezone)}
             </span>
             {event.is_online && (
               <span className="inline-flex items-center px-2.5 py-1 rounded-pill bg-paper text-ink border border-hairline-strong text-caption font-semibold">
@@ -93,7 +107,11 @@ export default async function EventDetailPage({
                 Dibatalkan
               </span>
             )}
-            {event.community && <CommunityBadge name={event.community.name} />}
+            {event.community_name ? (
+              <CommunityBadge name={event.community_name} />
+            ) : (
+              event.community && <CommunityBadge name={event.community.name} />
+            )}
             {isHost && (
               <Link
                 href={`/event/${event.id}/edit`}
@@ -103,10 +121,18 @@ export default async function EventDetailPage({
               </Link>
             )}
           </div>
+
           <h1 className="font-display text-display-md md:text-display-xl text-ink leading-tight">
             {event.title}
           </h1>
-          <p className="text-body text-ink-soft">
+
+          {event.theme && (
+            <p className="text-body-lg text-ink-soft italic leading-relaxed mt-1">
+              {event.theme}
+            </p>
+          )}
+
+          <p className="text-body text-ink-soft mt-1">
             di-host oleh{" "}
             {event.host.username ? (
               <Link
@@ -118,6 +144,23 @@ export default async function EventDetailPage({
             ) : (
               <span className="text-ink font-medium">{hostName}</span>
             )}
+            {event.community_name && (
+              <>
+                {" · "}
+                {event.community_instagram_url ? (
+                  <a
+                    href={event.community_instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-ink font-medium underline underline-offset-4 hover:text-ink-soft"
+                  >
+                    {event.community_name}
+                  </a>
+                ) : (
+                  <span className="text-ink font-medium">{event.community_name}</span>
+                )}
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -128,7 +171,8 @@ export default async function EventDetailPage({
           <EventDetailTabs event={event} rsvps={rsvps} isHost={isHost} />
         </div>
 
-        <aside className="order-first md:order-none md:sticky md:top-20 md:self-start">
+        <aside className="order-first md:order-none md:sticky md:top-20 md:self-start flex flex-col gap-4">
+          {/* ── RSVP card ── */}
           <div className="p-4 md:p-5 rounded-card-lg border border-hairline bg-paper shadow-card flex flex-col gap-3">
             {event.status === "scheduled" ? (
               <>
@@ -136,15 +180,51 @@ export default async function EventDetailPage({
                   eventId={event.id}
                   initialStatus={event.viewer_rsvp}
                   isAuthed={Boolean(user)}
+                  rsvpCount={event.rsvp_count}
+                  capacity={event.capacity}
                 />
-                <p className="text-caption text-muted text-center leading-relaxed">
-                  {event.rsvp_count > 0
-                    ? `${event.rsvp_count} udah RSVP. ${event.capacity ? `Kapasitas ${event.capacity}.` : "Belum ada batas."}`
-                    : "Lo bisa jadi yang pertama RSVP. Nggak nge-bind."}
-                </p>
+
+                {user && viewerRsvp && (
+                  <RsvpContextPrompt
+                    eventId={event.id}
+                    profileId={user.id}
+                    initialContext={{
+                      origin_city: viewerRsvp.origin_city,
+                      bringing_book: viewerRsvp.bringing_book,
+                      conversation_topic: viewerRsvp.conversation_topic,
+                    }}
+                  />
+                )}
+
+                {/* External registration form CTA */}
+                {registrationOpen && event.registration_url && (
+                  <>
+                    <div className="h-px bg-hairline" />
+                    <a
+                      href={event.registration_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-4 py-2.5 rounded-card border border-ink-soft text-body-sm text-ink font-medium hover:bg-cream transition-colors"
+                    >
+                      📝 {event.registration_label || "Daftar via form penyelenggara"}
+                    </a>
+                    <p className="text-caption text-muted text-center leading-relaxed">
+                      RSVP di sini ngebantu orang lain liat siapa yang tertarik hadir. Untuk pendaftaran resmi, ikutin form di atas.
+                      {event.registration_deadline && (
+                        <>
+                          {" "}Deadline: {formatEventWhen(event.registration_deadline, null, event.timezone)}.
+                        </>
+                      )}
+                    </p>
+                  </>
+                )}
+
+                <div className="h-px bg-hairline" />
+                <CalendarButton event={event} publicUrl={publicUrl} />
+
                 {isHost && (
                   <>
-                    <hr className="border-hairline" />
+                    <div className="h-px bg-hairline" />
                     <DiscordAnnounceButton
                       eventId={event.id}
                       discordAnnouncedAt={event.discord_announced_at}
@@ -158,8 +238,57 @@ export default async function EventDetailPage({
               </p>
             )}
           </div>
+
+          {/* ── Social links card (only if any social link exists) ── */}
+          {(event.instagram_url || event.community_instagram_url) && (
+            <div className="p-4 rounded-card-lg border border-hairline bg-paper shadow-card flex flex-col gap-2">
+              <p className="text-caption text-muted uppercase tracking-wide font-semibold">
+                Sosial
+              </p>
+              {event.instagram_url && (
+                <a
+                  href={event.instagram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-body-sm text-ink hover:text-ink-soft"
+                >
+                  <InstagramIcon /> Post event di Instagram
+                </a>
+              )}
+              {event.community_instagram_url && event.community_name && (
+                <a
+                  href={event.community_instagram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-body-sm text-ink hover:text-ink-soft"
+                >
+                  <InstagramIcon /> {event.community_name}
+                </a>
+              )}
+            </div>
+          )}
         </aside>
       </div>
     </article>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+    </svg>
   );
 }
