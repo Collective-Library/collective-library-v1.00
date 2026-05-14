@@ -112,6 +112,7 @@ Migrations applied (0001-0004) and pending (0005-0007):
 | 0016 | mastermind_tasks       | ⏳ pending | `team_tasks` table, admin-only RLS, FK link to `okr_objectives` + `okr_key_results`. Seeded with 14 ownership tasks from masterprompt. Powers `/mastermind/team`.                                                                         |
 | 0017 | mastermind_admin_notes | ⏳ pending | `admin_notes` polymorphic table (entity_type/id) for inline founder annotations across users/books/wanted/feedback/okr/task. Adds `audit_log` admin SELECT policy (was service-role only).                                                |
 | 0020 | events                 | ⏳ pending | `events` + `event_rsvps` tables, RLS (events mirror books, rsvps mirror saved_books). Extends `activity_log` with `EVENT_CREATED` + `EVENT_RSVPED` types and `event_id` FK column. RSVPed trigger only fires on INSERT with `status='going'` so toggling maybe→going→maybe doesn't spam the feed. |
+| 0021 | feedback_user_select   | ⏳ pending | RLS policy `feedback_select_own` letting authenticated users read their own feedback rows (powers `/feedback` "my feedback" page from PR #37). Originally numbered 0020 but renamed to 0021 to resolve collision with the events migration (PR #36 merged first). |
 
 SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migration files in `supabase/migrations/`).
 
