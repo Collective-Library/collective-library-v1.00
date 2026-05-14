@@ -296,7 +296,9 @@ export async function deleteEvent(id: string): Promise<{ ok: true } | { error: s
  * Upsert an RSVP for a profile. The trigger only fires on INSERT so
  * updating going → maybe → going doesn't create duplicate activity rows.
  * Optional context (bringing_book, conversation_topic, origin_city, note)
- * surfaces on attendee cards as social signal.
+ * surfaces on attendee cards as social signal. Context columns are only
+ * written when actually populated — defensive against migrations that
+ * haven't landed yet.
  */
 export async function rsvpEvent(
   eventId: string,
@@ -306,21 +308,27 @@ export async function rsvpEvent(
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
-  const { error } = await supabase.from("event_rsvps").upsert(
-    {
-      event_id: eventId,
-      profile_id: profileId,
-      status,
-      note: context?.note ?? null,
-      origin_city: context?.origin_city ?? null,
-      bringing_book: context?.bringing_book ?? null,
-      conversation_topic: context?.conversation_topic ?? null,
-    },
-    { onConflict: "event_id,profile_id" },
-  );
+  const payload: Record<string, unknown> = {
+    event_id: eventId,
+    profile_id: profileId,
+    status,
+  };
+  if (context?.note) payload.note = context.note;
+  if (context?.origin_city) payload.origin_city = context.origin_city;
+  if (context?.bringing_book) payload.bringing_book = context.bringing_book;
+  if (context?.conversation_topic) payload.conversation_topic = context.conversation_topic;
+
+  const { error } = await supabase
+    .from("event_rsvps")
+    .upsert(payload, { onConflict: "event_id,profile_id" });
 
   if (error) {
-    console.error("rsvpEvent", error);
+    console.error("rsvpEvent failed:", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
     return { error: error.message };
   }
   return { ok: true };
@@ -385,14 +393,32 @@ export async function cancelRsvp(
 export async function listEventRsvps(eventId: string): Promise<EventRsvpWithProfile[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  // Try rich select with context columns; if migration 0022 hasn't applied,
+  // fall back to basic select so the page still works.
+  const richSelect = `event_id, profile_id, status, note, origin_city, bringing_book, conversation_topic, created_at,
+       profile:profiles_public!event_rsvps_profile_id_fkey(id, full_name, username, photo_url, city, interests, instagram, discord)`;
+  const fallbackSelect = `event_id, profile_id, status, note, created_at,
+       profile:profiles_public!event_rsvps_profile_id_fkey(id, full_name, username, photo_url, city, interests, instagram, discord)`;
+
+  const initial = await supabase
     .from("event_rsvps")
-    .select(
-      `event_id, profile_id, status, note, origin_city, bringing_book, conversation_topic, created_at,
-       profile:profiles_public!event_rsvps_profile_id_fkey(id, full_name, username, photo_url, city, interests, instagram, discord)`,
-    )
+    .select(richSelect)
     .eq("event_id", eventId)
     .order("created_at", { ascending: true });
+
+  let data: unknown[] | null = initial.data;
+  let error = initial.error;
+
+  if (error && /column .* (does not exist|undefined)/i.test(error.message)) {
+    console.warn("listEventRsvps: context columns missing, falling back to basic select");
+    const fallback = await supabase
+      .from("event_rsvps")
+      .select(fallbackSelect)
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: true });
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error("listEventRsvps", error);

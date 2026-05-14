@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptimistic, useTransition, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { EventRsvpStatus } from "@/types";
@@ -28,6 +29,7 @@ export function RsvpButton({
   capacity,
   onRsvpSuccess,
 }: Props) {
+  const router = useRouter();
   const [, startTransition] = useTransition();
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(initialStatus);
   const [busy, setBusy] = useState(false);
@@ -65,7 +67,14 @@ export function RsvpButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: next }),
       });
-      if (!res.ok) throw new Error(next === null ? "Gagal cancel RSVP." : "Gagal update RSVP.");
+
+      if (!res.ok) {
+        // Surface the actual server error message so debugging
+        // doesn't require Vercel logs.
+        const errJson = (await res.json().catch(() => ({}))) as { error?: string };
+        const fallback = next === null ? "Gagal cancel RSVP." : "Gagal update RSVP.";
+        throw new Error(`${errJson.error ?? fallback} (HTTP ${res.status})`);
+      }
 
       if (next === null) {
         toast.success("RSVP dibatalkan.");
@@ -76,6 +85,8 @@ export function RsvpButton({
         toast.success("Tercatat: 'mungkin hadir' — kabari kalau jadi.");
         onRsvpSuccess?.(next);
       }
+      // Refresh server data so RSVP count + attendee list re-render
+      router.refresh();
     } catch (err) {
       startTransition(() => {
         setOptimisticStatus(currentStatus);
