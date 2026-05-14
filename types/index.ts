@@ -114,7 +114,20 @@ export interface Book {
 
 /** A Book joined with its owner profile (for shelf cards & detail). */
 export interface BookWithOwner extends Book {
-  owner: Pick<Profile, "id" | "full_name" | "username" | "photo_url" | "city" | "whatsapp" | "whatsapp_public" | "instagram" | "discord" | "goodreads_url" | "storygraph_url">;
+  owner: Pick<
+    Profile,
+    | "id"
+    | "full_name"
+    | "username"
+    | "photo_url"
+    | "city"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+    | "goodreads_url"
+    | "storygraph_url"
+  >;
   community: Pick<Community, "id" | "name" | "slug"> | null;
 }
 
@@ -136,7 +149,17 @@ export interface WantedRequest {
 export interface WantedRequestWithRequester extends WantedRequest {
   requester: Pick<
     Profile,
-    "id" | "full_name" | "username" | "photo_url" | "city" | "whatsapp" | "whatsapp_public" | "instagram" | "discord" | "goodreads_url" | "storygraph_url"
+    | "id"
+    | "full_name"
+    | "username"
+    | "photo_url"
+    | "city"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+    | "goodreads_url"
+    | "storygraph_url"
   >;
 }
 
@@ -170,9 +193,7 @@ export interface BookFormValues {
 export function isProfileComplete(p: Profile | null): p is Profile {
   if (!p) return false;
   if (!p.username) return false;
-  return Boolean(
-    p.instagram || p.whatsapp || p.discord || p.goodreads_url || p.storygraph_url,
-  );
+  return Boolean(p.instagram || p.whatsapp || p.discord || p.goodreads_url || p.storygraph_url);
 }
 
 // =============================================================================

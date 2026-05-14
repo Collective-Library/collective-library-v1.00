@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { getEvent, listEventRsvps } from "@/lib/events";
 import { getCurrentUser } from "@/lib/auth";
@@ -8,6 +7,7 @@ import { formatEventWhen } from "@/lib/format";
 import { EventDetailTabs } from "@/components/events/event-detail-tabs";
 import { RsvpButton } from "@/components/events/rsvp-button";
 import { DiscordAnnounceButton } from "@/components/events/discord-announce-button";
+import { CoverImage } from "@/components/books/cover-image";
 import { CommunityBadge } from "@/components/ui/community-badge";
 
 export const dynamic = "force-dynamic";
@@ -62,13 +62,11 @@ export default async function EventDetailPage({
       <div className="relative -mx-4 md:-mx-6 mb-3 md:mb-8 overflow-hidden rounded-none md:rounded-card-lg">
         <div className="relative aspect-video md:aspect-[21/9] bg-cream">
           {event.cover_url ? (
-            <Image
+            <CoverImage
               src={event.cover_url}
               alt={event.title}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority
+              title={event.title}
+              className="object-cover w-full h-full absolute inset-0"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-cream to-parchment flex items-center justify-center p-6">

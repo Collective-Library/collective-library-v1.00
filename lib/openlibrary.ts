@@ -28,7 +28,7 @@ async function lookupGoogleBooks(isbn: string): Promise<IsbnLookup | null> {
   try {
     const r = await fetch(
       `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`,
-      { cache: "force-cache" },
+      { cache: "force-cache" }
     );
     if (!r.ok) return null;
     const data = (await r.json()) as {
@@ -67,7 +67,7 @@ async function lookupOpenLibrary(isbn: string): Promise<IsbnLookup | null> {
   try {
     const r = await fetch(
       `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`,
-      { cache: "force-cache" },
+      { cache: "force-cache" }
     );
     if (!r.ok) return null;
     const data = (await r.json()) as Record<
@@ -82,8 +82,7 @@ async function lookupOpenLibrary(isbn: string): Promise<IsbnLookup | null> {
     >;
     const v = data[`ISBN:${isbn}`];
     if (!v?.title) return null;
-    const description =
-      typeof v.notes === "string" ? v.notes : v.notes?.value;
+    const description = typeof v.notes === "string" ? v.notes : v.notes?.value;
     return {
       isbn,
       title: v.title,
@@ -142,7 +141,9 @@ async function searchOpenLibraryBooks(query: string, limit = 8): Promise<BookSea
         const isbn = d.isbn?.[0] ?? null;
         const cover = d.cover_i
           ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`
-          : (isbn ? openLibraryCoverUrl(isbn, "L") : null);
+          : isbn
+            ? openLibraryCoverUrl(isbn, "L")
+            : null;
         return {
           id: d.key ?? `ol-${idx}`,
           title: d.title!,
@@ -171,7 +172,7 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
   try {
     const r = await fetch(
       `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=${limit}&printType=books`,
-      { cache: "force-cache" },
+      { cache: "force-cache" }
     );
     if (!r.ok) return [];
     const data = (await r.json()) as {
@@ -199,7 +200,8 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
         const isbn10 = ids.find((i) => i.type === "ISBN_10")?.identifier;
         const isbn = isbn13 ?? isbn10 ?? null;
         const rawCover = v.imageLinks?.thumbnail ?? v.imageLinks?.smallThumbnail;
-        const cover = rawCover?.replace(/^http:/, "https:") ?? (isbn ? openLibraryCoverUrl(isbn, "M") : null);
+        const cover =
+          rawCover?.replace(/^http:/, "https:") ?? (isbn ? openLibraryCoverUrl(isbn, "M") : null);
         return {
           id: it.id ?? `gb-${idx}`,
           title: v.title!,

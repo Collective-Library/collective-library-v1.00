@@ -1,6 +1,6 @@
-import Image from "next/image";
 import { getUpcomingEvents } from "@/lib/events";
 import { formatEventWhen } from "@/lib/format";
+import { CoverImage } from "@/components/books/cover-image";
 import { GatedLink } from "./gated-link";
 
 /**
@@ -49,12 +49,11 @@ export async function UpcomingEventsStrip() {
               >
                 <div className="relative w-[220px] aspect-video rounded-card overflow-hidden bg-cream border border-hairline shadow-card group-hover:shadow-card-hover transition-shadow">
                   {ev.cover_url ? (
-                    <Image
+                    <CoverImage
                       src={ev.cover_url}
-                      alt=""
-                      fill
-                      sizes="220px"
-                      className="object-cover"
+                      alt={ev.title}
+                      title={ev.title}
+                      className="object-cover w-full h-full"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center p-4 bg-gradient-to-br from-cream to-parchment">

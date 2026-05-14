@@ -17,7 +17,10 @@ const STATUS_LABEL_NEW: Record<BookStatus, string> = {
 };
 
 /** Returns the action verb / sentence fragment for an activity row. */
-export function activityVerb(item: ActivityItem | GroupedActivityItem): { text: string; bookTitleEmphasis?: boolean } {
+export function activityVerb(item: ActivityItem | GroupedActivityItem): {
+  text: string;
+  bookTitleEmphasis?: boolean;
+} {
   switch (item.type) {
     case "USER_JOINED":
       return { text: "bergabung di Collective Library" };
@@ -34,9 +37,7 @@ export function activityVerb(item: ActivityItem | GroupedActivityItem): { text: 
       const book = item.book;
       const title = book?.title ?? "buku";
       const newStatus =
-        (item.metadata?.new_status as BookStatus | undefined) ??
-        book?.status ??
-        "unavailable";
+        (item.metadata?.new_status as BookStatus | undefined) ?? book?.status ?? "unavailable";
       return { text: `${STATUS_LABEL_NEW[newStatus]}: ${title}` };
     }
     case "WTB_POSTED": {

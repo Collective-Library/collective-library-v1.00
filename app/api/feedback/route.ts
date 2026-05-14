@@ -71,10 +71,7 @@ export async function POST(req: NextRequest) {
   // Validate message (Issue #16: max 2000)
   const message = (body.message ?? "").trim().slice(0, 2000);
   if (message.length < 3) {
-    return NextResponse.json(
-      { error: "Pesan kependekan, minimal 3 karakter." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Pesan kependekan, minimal 3 karakter." }, { status: 400 });
   }
 
   const attachments = (body.attachments ?? "").trim() || null;
@@ -144,10 +141,7 @@ export async function POST(req: NextRequest) {
       feedbackId: inserted.id as string,
     });
   } catch (err) {
-    console.warn(
-      "[feedback] discord fan-out failed",
-      err instanceof Error ? err.message : err,
-    );
+    console.warn("[feedback] discord fan-out failed", err instanceof Error ? err.message : err);
   }
 
   return NextResponse.json({ ok: true, id: inserted.id }, { status: 201 });
@@ -167,9 +161,7 @@ interface DiscordPayload {
 
 async function postToDiscord(p: DiscordPayload) {
   if (!p.webhookUrl) {
-    console.warn(
-      "[feedback] DISCORD_FEEDBACK_WEBHOOK_URL not set; skipping fan-out",
-    );
+    console.warn("[feedback] DISCORD_FEEDBACK_WEBHOOK_URL not set; skipping fan-out");
     return;
   }
   console.info("[feedback] posting to Discord", {

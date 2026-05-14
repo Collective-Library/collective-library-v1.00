@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
+import { CoverImage } from "@/components/books/cover-image";
 import { formatEventWhen } from "@/lib/format";
 import type { EventWithHost } from "@/types";
 
@@ -15,12 +15,11 @@ export function EventCard({ event }: { event: EventWithHost }) {
       {/* Cover plate — 16:9 ratio */}
       <div className="relative aspect-video rounded-card overflow-hidden bg-cream border border-hairline group-hover:shadow-card-hover transition-shadow">
         {event.cover_url ? (
-          <Image
+          <CoverImage
             src={event.cover_url}
             alt={event.title}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-            className="object-cover"
+            title={event.title}
+            className="object-cover w-full h-full"
           />
         ) : (
           <EventCoverPlaceholder title={event.title} />

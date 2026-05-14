@@ -45,10 +45,30 @@ export function FeedbackChip() {
 }
 
 const CATEGORIES: { slug: FeedbackCategory; label: string; emoji: string; hint: string }[] = [
-  { slug: "idea", label: "Ide / fitur", emoji: "💡", hint: "Sesuatu yang lo bayangin keren ada di sini." },
-  { slug: "bug", label: "Bug / error", emoji: "🐛", hint: "Ada yang error, ngeselin, atau gak jalan." },
-  { slug: "friction", label: "Friksi / susah", emoji: "😕", hint: "Sesuatu yang harusnya gampang tapi ribet." },
-  { slug: "appreciation", label: "Apresiasi", emoji: "❤️", hint: "Yang udah keren, biar tau apa yang harus dijaga." },
+  {
+    slug: "idea",
+    label: "Ide / fitur",
+    emoji: "💡",
+    hint: "Sesuatu yang lo bayangin keren ada di sini.",
+  },
+  {
+    slug: "bug",
+    label: "Bug / error",
+    emoji: "🐛",
+    hint: "Ada yang error, ngeselin, atau gak jalan.",
+  },
+  {
+    slug: "friction",
+    label: "Friksi / susah",
+    emoji: "😕",
+    hint: "Sesuatu yang harusnya gampang tapi ribet.",
+  },
+  {
+    slug: "appreciation",
+    label: "Apresiasi",
+    emoji: "❤️",
+    hint: "Yang udah keren, biar tau apa yang harus dijaga.",
+  },
   { slug: "other", label: "Lain-lain", emoji: "✋", hint: "Apapun yang gak masuk kategori atas." },
 ];
 
@@ -93,7 +113,10 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
           category,
           message: message.trim(),
           attachments: attachments.trim() || null,
-          page_url: typeof window !== "undefined" ? window.location.pathname + window.location.search : null,
+          page_url:
+            typeof window !== "undefined"
+              ? window.location.pathname + window.location.search
+              : null,
         }),
       });
       if (!res.ok) {
@@ -145,9 +168,8 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
           Cerita ke kita.
         </h2>
         <p className="mt-3 text-body-sm text-ink-soft leading-relaxed">
-          Apapun — ide gila, bug ngeselin, friksi kecil, atau apresiasi yang
-          bikin lo balik. Kita baca semua. Gak janjiin instant balik, tapi
-          setiap masukan masuk backlog product.
+          Apapun — ide gila, bug ngeselin, friksi kecil, atau apresiasi yang bikin lo balik. Kita
+          baca semua. Gak janjiin instant balik, tapi setiap masukan masuk backlog product.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
@@ -212,7 +234,9 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
               placeholder="https://...&#10;https://..."
               className="w-full px-3.5 py-2 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink text-body-sm transition-colors resize-none"
             />
-            <p className="text-[10px] text-muted italic">Pisahin pake baris baru kalau lebih dari satu.</p>
+            <p className="text-[10px] text-muted italic">
+              Pisahin pake baris baru kalau lebih dari satu.
+            </p>
           </div>
 
           {error && <p className="text-caption text-(--color-error)">{error}</p>}
@@ -241,7 +265,17 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
 
 function ChatIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   );
@@ -249,7 +283,17 @@ function ChatIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>

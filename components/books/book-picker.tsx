@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { searchGoogleBooks, type BookSearchResult } from "@/lib/openlibrary";
 import { SearchSpinner } from "@/components/ui/search-spinner";
+import { CoverImage } from "@/components/books/cover-image";
 
 /**
  * Search-as-you-type book picker. Hits Google Books, shows a dropdown of
@@ -79,7 +79,7 @@ export function BookPicker({
         doSearch(q, ctrl.signal);
       }, 300);
     },
-    [doSearch],
+    [doSearch]
   );
 
   // Close on outside click + Escape
@@ -133,7 +133,16 @@ export function BookPicker({
           className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
           aria-hidden
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="11" cy="11" r="7" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -143,7 +152,9 @@ export function BookPicker({
           value={query}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKey}
-          onFocus={() => { if (query.trim().length >= 2) setOpen(true); }}
+          onFocus={() => {
+            if (query.trim().length >= 2) setOpen(true);
+          }}
           placeholder={placeholder}
           className="w-full h-12 pl-11 pr-12 rounded-button bg-paper text-ink border border-hairline-strong placeholder:text-muted-soft focus:outline-none focus:border-ink focus:border-2 focus:pl-[43px] focus:pr-[47px] transition-colors"
           aria-autocomplete="list"
@@ -186,19 +197,13 @@ export function BookPicker({
                   }
                 >
                   <div className="w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline flex items-center justify-center">
-                    {b.cover_url ? (
-                      <Image
-                        src={b.cover_url}
-                        alt=""
-                        width={40}
-                        height={56}
-                        sizes="40px"
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="text-[10px] text-muted">📖</span>
-                    )}
+                    <CoverImage
+                      src={b.cover_url}
+                      alt={b.title}
+                      title={b.title}
+                      author={b.author ?? ""}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-body-sm font-semibold text-ink line-clamp-2 leading-snug">

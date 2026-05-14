@@ -1,10 +1,10 @@
-import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { GatedLink } from "@/components/landing/gated-link";
 import { formatRelativeID } from "@/lib/format";
 import type { ActivityItem } from "@/lib/activity";
 import { groupActivities, GroupedActivityItem } from "@/lib/activity-grouping";
 import { activityVerb, activityTargetUrl } from "./activity-copy";
+import { CoverImage } from "@/components/books/cover-image";
 
 /**
  * Compact "Aktivitas terbaru" widget — surfaces on /shelf default view AND
@@ -28,7 +28,12 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
       aria-label="Aktivitas terbaru"
     >
       <div className="flex items-center gap-2 mb-3">
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-cream text-ink text-[11px]" aria-hidden>✦</span>
+        <span
+          className="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-cream text-ink text-[11px]"
+          aria-hidden
+        >
+          ✦
+        </span>
         <p className="text-caption font-semibold text-ink-soft uppercase tracking-wide">
           Aktivitas terbaru
         </p>
@@ -53,9 +58,9 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
 function Row({ item }: { item: GroupedActivityItem }) {
   const href = activityTargetUrl(item);
   const verb = activityVerb(item);
-  
+
   // For grouped items, show the first book's cover or a generic stack icon
-  const coverUrl = item.book?.cover_url || (item.books?.[0]?.cover_url);
+  const coverUrl = item.book?.cover_url || item.books?.[0]?.cover_url;
 
   const inner = (
     <>
@@ -71,22 +76,21 @@ function Row({ item }: { item: GroupedActivityItem }) {
       </div>
       {coverUrl ? (
         <div className="relative shrink-0">
-          <Image
+          <CoverImage
             src={coverUrl}
-            alt=""
-            width={32}
-            height={44}
-            sizes="32px"
+            alt={item.book?.title ?? ""}
+            title={item.book?.title}
+            author={item.book?.author}
             className="w-8 h-11 rounded-[4px] object-cover border border-hairline relative z-10 bg-paper"
-            loading="lazy"
+            fallback={null}
           />
           {item.is_grouped && (
-             <div className="absolute top-0.5 -right-1 w-8 h-11 rounded-[4px] border border-hairline bg-cream -z-10" />
+            <div className="absolute top-0.5 -right-1 w-8 h-11 rounded-[4px] border border-hairline bg-cream -z-10" />
           )}
         </div>
       ) : item.is_grouped ? (
         <div className="w-8 h-11 rounded-[4px] border border-hairline bg-cream flex items-center justify-center shrink-0">
-           <span className="text-[10px] font-bold text-muted">+{item.books?.length}</span>
+          <span className="text-[10px] font-bold text-muted">+{item.books?.length}</span>
         </div>
       ) : null}
     </>

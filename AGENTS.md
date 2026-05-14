@@ -1,10 +1,13 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+
 <!-- END:nextjs-agent-rules -->
 
 <!-- BEGIN:skill-rules -->
+
 # Agent Skills — read before working
 
 Read the relevant `SKILL.md` files in `.agents/skills/` before coding. Available skills:
@@ -15,11 +18,13 @@ Read the relevant `SKILL.md` files in `.agents/skills/` before coding. Available
 - **vercel-react-best-practices** — React/Next.js perf optimization from Vercel
 
 These skills contain project-specific conventions and must be followed.
+
 <!-- END:skill-rules -->
 
 **Development note:**
 
 Branching workflow:
+
 1. New Feature: create `feature/feature-name` branch from `develop`.
 2. PR to `develop`: once the feature is ready, create a PR to `develop` for review & staging.
 3. Release:

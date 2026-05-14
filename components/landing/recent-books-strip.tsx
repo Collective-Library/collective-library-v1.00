@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { listShelfBooks } from "@/lib/books";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { GatedLink } from "./gated-link";
+import { CoverImage } from "@/components/books/cover-image";
 
 /**
  * Horizontal-scroll strip of the most recent public books — landing intro
@@ -49,19 +49,7 @@ export async function RecentBooksStrip() {
               className="group shrink-0 snap-start w-[160px] flex flex-col gap-2"
             >
               <div className="relative w-[160px] h-[224px] rounded-card overflow-hidden bg-cream border border-hairline shadow-card group-hover:shadow-card-hover transition-shadow">
-                {b.cover_url ? (
-                  <Image
-                    src={b.cover_url}
-                    alt=""
-                    fill
-                    sizes="160px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-caption text-muted px-3 text-center">
-                    {b.title}
-                  </div>
-                )}
+                <CoverImage src={b.cover_url} alt={b.title} title={b.title} author={b.author} className="object-cover w-full h-full" />
                 <div className="absolute top-2 left-2">
                   <StatusBadge status={b.status} />
                 </div>

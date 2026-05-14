@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -250,14 +249,14 @@ function ResultRow({
     >
       <div className="shrink-0 w-9 h-12 bg-cream rounded-button border border-hairline-soft overflow-hidden">
         {hit.cover_url ? (
-          <Image
+          <img
             src={hit.cover_url}
             alt=""
             width={36}
             height={48}
             className="w-full h-full object-cover"
             aria-hidden
-          />
+           loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted text-caption">
             📕
