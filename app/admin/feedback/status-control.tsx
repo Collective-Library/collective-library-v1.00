@@ -14,6 +14,12 @@ const STATUSES: { slug: FeedbackStatus; label: string }[] = [
   { slug: "wontfix", label: "Won't fix" },
 ];
 
+interface FeedbackStatusControlProps {
+  id: string;
+  currentStatus: FeedbackStatus;
+  currentNote: string;
+}
+
 /**
  * Inline status + internal note control on each feedback row in the admin
  * inbox. Updates via Supabase client directly — RLS allows update for
@@ -23,11 +29,7 @@ export function FeedbackStatusControl({
   id,
   currentStatus,
   currentNote,
-}: {
-  id: string;
-  currentStatus: FeedbackStatus;
-  currentNote: string;
-}) {
+}: FeedbackStatusControlProps) {
   const router = useRouter();
   const [status, setStatus] = useState<FeedbackStatus>(currentStatus);
   const [note, setNote] = useState(currentNote);
