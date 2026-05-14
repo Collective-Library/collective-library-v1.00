@@ -43,6 +43,14 @@ export function activityVerb(item: ActivityItem | GroupedActivityItem): { text: 
       const title = item.wanted?.title ?? "buku";
       return { text: `cari buku: ${title}` };
     }
+    case "EVENT_CREATED": {
+      const title = item.event?.title ?? "event baru";
+      return { text: `bikin event: ${title}` };
+    }
+    case "EVENT_RSVPED": {
+      const title = item.event?.title ?? "event";
+      return { text: `bakal dateng ke: ${title}` };
+    }
     default:
       return { text: "ada aktivitas baru" };
   }
@@ -56,6 +64,12 @@ export function activityTargetUrl(item: ActivityItem | GroupedActivityItem): str
   }
   if (item.type === "WTB_POSTED") {
     return "/wanted";
+  }
+  if (
+    item.event?.id &&
+    (item.type === "EVENT_CREATED" || item.type === "EVENT_RSVPED")
+  ) {
+    return `/event/${item.event.id}`;
   }
   if (item.type === "USER_JOINED" && item.actor?.username) {
     return `/profile/${item.actor.username}`;

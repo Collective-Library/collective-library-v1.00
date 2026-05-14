@@ -268,3 +268,81 @@ export interface AdminNote {
 export interface AdminNoteWithAuthor extends AdminNote {
   author: Pick<Profile, "id" | "full_name" | "username" | "photo_url"> | null;
 }
+
+// =============================================================================
+// Events (mirrors supabase/migrations/0020_events.sql)
+// =============================================================================
+
+export type EventStatus = "scheduled" | "cancelled" | "completed";
+export type EventVisibility = "public" | "community";
+export type EventRsvpStatus = "going" | "maybe" | "declined";
+
+export interface Event {
+  id: string;
+  host_id: string;
+  community_id: string | null;
+  title: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  timezone: string;
+  location_text: string | null;
+  location_url: string | null;
+  is_online: boolean;
+  capacity: number | null;
+  cover_url: string | null;
+  contact_method: ContactMethod;
+  visibility: EventVisibility;
+  status: EventStatus;
+  is_hidden: boolean;
+  discord_announced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** An Event joined with host profile + community + viewer-specific RSVP state. */
+export interface EventWithHost extends Event {
+  host: Pick<
+    Profile,
+    | "id"
+    | "full_name"
+    | "username"
+    | "photo_url"
+    | "city"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+  >;
+  community: Pick<Community, "id" | "name" | "slug"> | null;
+  rsvp_count: number;
+  viewer_rsvp: EventRsvpStatus | null;
+}
+
+export interface EventRsvp {
+  event_id: string;
+  profile_id: string;
+  status: EventRsvpStatus;
+  note: string | null;
+  created_at: string;
+}
+
+export interface EventRsvpWithProfile extends EventRsvp {
+  profile: Pick<Profile, "id" | "full_name" | "username" | "photo_url">;
+}
+
+/** Form value types — what the Event form posts. */
+export interface EventFormValues {
+  title: string;
+  description?: string;
+  starts_at: string;
+  ends_at?: string;
+  timezone?: string;
+  location_text?: string;
+  location_url?: string;
+  is_online?: boolean;
+  capacity?: number;
+  cover_url?: string;
+  contact_method?: ContactMethod;
+  visibility?: EventVisibility;
+}
