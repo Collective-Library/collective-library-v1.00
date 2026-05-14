@@ -104,12 +104,13 @@ export default function FeedbackRow({ row, isAdmin = false }: FeedbackRowProps) 
       )}
 
       {/* Status control + internal note (client component) */}
-      <FeedbackStatusControl
-        id={row.id}
-        currentStatus={row.status}
-        currentNote={row.internal_note ?? ""}
-        isAdmin={isAdmin}
-      />
+      {isAdmin && (
+        <FeedbackStatusControl
+          id={row.id}
+          currentStatus={row.status}
+          currentNote={row.internal_note ?? ""}
+        />
+      )}
     </article>
   );
 }

@@ -18,7 +18,6 @@ interface FeedbackStatusControlProps {
   id: string;
   currentStatus: FeedbackStatus;
   currentNote: string;
-  isAdmin?: boolean;
 }
 
 /**
@@ -30,7 +29,6 @@ export function FeedbackStatusControl({
   id,
   currentStatus,
   currentNote,
-  isAdmin,
 }: FeedbackStatusControlProps) {
   const router = useRouter();
   const [status, setStatus] = useState<FeedbackStatus>(currentStatus);
@@ -57,32 +55,30 @@ export function FeedbackStatusControl({
 
   return (
     <div className="flex flex-col gap-2 pt-3 border-t border-hairline-soft">
-      {isAdmin && (
-        <div className="flex flex-wrap gap-1.5">
-          {STATUSES.map((s) => {
-            const active = status === s.slug;
-            return (
-              <button
-                key={s.slug}
-                type="button"
-                disabled={pending}
-                onClick={() => {
-                  setStatus(s.slug);
-                  save(s.slug, note);
-                }}
-                className={
-                  "inline-flex items-center h-8 px-3 rounded-pill text-caption font-medium transition-colors disabled:opacity-50 " +
-                  (active
-                    ? "bg-ink text-parchment border border-ink"
-                    : "bg-paper text-ink-soft border border-hairline hover:bg-cream")
-                }
-              >
-                → {s.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div className="flex flex-wrap gap-1.5">
+        {STATUSES.map((s) => {
+          const active = status === s.slug;
+          return (
+            <button
+              key={s.slug}
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                setStatus(s.slug);
+                save(s.slug, note);
+              }}
+              className={
+                "inline-flex items-center h-8 px-3 rounded-pill text-caption font-medium transition-colors disabled:opacity-50 " +
+                (active
+                  ? "bg-ink text-parchment border border-ink"
+                  : "bg-paper text-ink-soft border border-hairline hover:bg-cream")
+              }
+            >
+              → {s.label}
+            </button>
+          );
+        })}
+      </div>
 
       {editing ? (
         <div className="flex flex-col gap-2">
@@ -115,26 +111,21 @@ export function FeedbackStatusControl({
           </div>
         </div>
       ) : (
-        <div className="flex flex-row justify-between items-start gap-2">
+        <div className="flex items-start gap-2 flex-wrap">
           {note ? (
-            <div className="flex flex-col">
-              <p className="text-body-sm font-semibold text-caption">Note dari admin:</p>
-              <p className="text-caption text-muted italic whitespace-pre-wrap flex-1 min-w-0">
-                {note}
-              </p>
-            </div>
+            <p className="text-caption text-muted italic whitespace-pre-wrap flex-1 min-w-0">
+              📝 {note}
+            </p>
           ) : (
             <p className="text-caption text-muted italic">Belum ada note internal.</p>
           )}
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="text-caption text-ink-soft underline underline-offset-4 hover:text-ink"
-            >
-              {note ? "Edit" : "Tambah note"}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-caption text-ink-soft underline underline-offset-4 hover:text-ink"
+          >
+            {note ? "Edit" : "Tambah note"}
+          </button>
         </div>
       )}
     </div>
