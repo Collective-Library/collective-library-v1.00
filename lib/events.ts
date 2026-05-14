@@ -79,9 +79,9 @@ export async function listEvents(opts?: {
     ...r,
     host: flatten(r.host as never),
     community: flatten(r.community as never),
-    rsvp_count: (r.rsvps?.[0] as { count: number } | undefined)?.count ?? 0,
+    rsvp_count: r.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: null,
-  })) as EventWithHost[];
+  })) as unknown as EventWithHost[];
 
   return { events, total: count ?? 0 };
 }
@@ -123,9 +123,9 @@ export async function getUpcomingEvents(limit = 8): Promise<EventWithHost[]> {
     ...r,
     host: flatten(r.host as never),
     community: flatten(r.community as never),
-    rsvp_count: (r.rsvps?.[0] as { count: number } | undefined)?.count ?? 0,
+    rsvp_count: r.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: null,
-  })) as EventWithHost[];
+  })) as unknown as EventWithHost[];
 }
 
 /**
@@ -180,9 +180,9 @@ export async function getEvent(
     ...row,
     host: flatten(row.host as never),
     community: flatten(row.community as never),
-    rsvp_count: (row.rsvps?.[0] as { count: number } | undefined)?.count ?? 0,
+    rsvp_count: row.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: viewerRsvp,
-  } as EventWithHost;
+  } as unknown as EventWithHost;
 }
 
 /** Create a new event. Returns the new row id on success or an error string. */
@@ -342,7 +342,7 @@ export async function listEventRsvps(eventId: string): Promise<EventRsvpWithProf
   return ((data ?? []) as unknown as Row[]).map((r) => ({
     ...r,
     profile: flatten(r.profile as never),
-  })) as EventRsvpWithProfile[];
+  })) as unknown as EventRsvpWithProfile[];
 }
 
 /** Fetch a raw Event row (no joins). Used by API routes that just need ownership check. */

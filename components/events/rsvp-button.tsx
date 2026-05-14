@@ -82,7 +82,8 @@ export function RsvpButton({ eventId, initialStatus, isAuthed }: Props) {
       ? "~ Mungkin hadir — klik untuk batal"
       : "Hadir di event ini";
 
-  const variant = optimisticStatus === "going" ? "secondary" : optimisticStatus === "maybe" ? "secondary" : "default";
+  const variant: "primary" | "secondary" =
+    optimisticStatus === null ? "primary" : "secondary";
 
   return (
     <Button

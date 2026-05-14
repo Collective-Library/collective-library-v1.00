@@ -2,9 +2,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { listShelfBooks, getShelfCounts } from "@/lib/books";
 import { listActivity } from "@/lib/activity";
+import { getUpcomingEvents } from "@/lib/events";
 import { BookGrid } from "@/components/books/book-grid";
 import { ShelfClientWrapper } from "@/components/books/shelf-client-wrapper";
 import { ActivityFeed } from "@/components/activity/activity-feed";
+import { EventCard } from "@/components/events/event-card";
 import { ButtonLink } from "@/components/ui/button";
 import { STATUS_FILTER_OPTIONS } from "@/lib/status";
 import type { BookStatus } from "@/types";
@@ -26,12 +28,14 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
   const filter = (STATUS_FILTER_OPTIONS.find((o) => o.value === status)?.value ?? "all") as BookStatus | "all";
   const page = Math.max(1, parseInt(pageStr ?? "1", 10) || 1);
 
-  const [{ books, total }, counts, activity] = await Promise.all([
+  const showSidePanels = filter === "all" && !q && page === 1;
+  const [{ books, total }, counts, activity, upcomingEvents] = await Promise.all([
     listShelfBooks({ status: filter, search: q, page, pageSize: PAGE_SIZE }),
     getShelfCounts(),
-    // Activity widget only on the unfiltered "all" view, page 1 — keeps the
-    // filtered browsing experience clean.
-    filter === "all" && !q && page === 1 ? listActivity(4) : Promise.resolve([]),
+    // Activity widget + events strip only on the unfiltered "all" view, page 1
+    // — keeps the filtered browsing experience clean.
+    showSidePanels ? listActivity(4) : Promise.resolve([]),
+    showSidePanels ? getUpcomingEvents(4) : Promise.resolve([]),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -53,6 +57,28 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
           <ButtonLink href="/book/add">+ Tambah Buku</ButtonLink>
         </div>
       </div>
+
+      {/* Upcoming events — only on the default unfiltered view */}
+      {upcomingEvents.length > 0 && (
+        <section aria-label="Event komunitas yang akan datang">
+          <div className="flex items-end justify-between gap-3 mb-3">
+            <h2 className="font-display text-title-lg text-ink leading-tight">
+              Event yang akan datang
+            </h2>
+            <Link
+              href="/event"
+              className="shrink-0 text-body-sm font-medium text-ink-soft hover:text-ink underline underline-offset-4"
+            >
+              Lihat semua →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {upcomingEvents.map((ev) => (
+              <EventCard key={ev.id} event={ev} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Activity feed — only on the default unfiltered view */}
       {activity.length > 0 && <ActivityFeed items={activity} />}
