@@ -8,7 +8,7 @@ import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { ContactMethod, Event, EventFormValues, EventVisibility } from "@/types";
 
-type Step = 1 | 2;
+type Step = 1 | 2 | 3;
 type Mode = "create" | "edit";
 
 interface Props {
@@ -28,12 +28,29 @@ const VISIBILITY_OPTIONS: { value: EventVisibility; label: string }[] = [
   { value: "community", label: "Komunitas — anggota Journey Perintis" },
 ];
 
+/** Split a multi-line/text-list into a clean array. */
+function splitLines(input: string): string[] {
+  return input
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/** Split hashtags by space or comma; strip leading '#'. */
+function splitTags(input: string): string[] {
+  return input
+    .split(/[\s,]+/)
+    .map((t) => t.trim().replace(/^#+/, ""))
+    .filter(Boolean);
+}
+
 export function EventForm({ userId, mode, initial }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Step 1: When & Where
   const [title, setTitle] = useState(initial?.title ?? "");
   const [startsAt, setStartsAt] = useState(
     initial?.starts_at ? initial.starts_at.slice(0, 16) : "",
@@ -45,9 +62,29 @@ export function EventForm({ userId, mode, initial }: Props) {
   const [locationUrl, setLocationUrl] = useState(initial?.location_url ?? "");
   const [isOnline, setIsOnline] = useState(initial?.is_online ?? false);
 
+  // Step 2: Description & vibe
+  const [theme, setTheme] = useState(initial?.theme ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [capacity, setCapacity] = useState(initial?.capacity?.toString() ?? "");
+  const [whatToExpect, setWhatToExpect] = useState(
+    (initial?.what_to_expect ?? []).join("\n"),
+  );
+  const [reminderText, setReminderText] = useState(initial?.reminder_text ?? "");
+  const [hashtags, setHashtags] = useState((initial?.hashtags ?? []).join(" "));
   const [coverUrl, setCoverUrl] = useState(initial?.cover_url ?? "");
+
+  // Step 3: Registration + social + ops
+  const [registrationUrl, setRegistrationUrl] = useState(initial?.registration_url ?? "");
+  const [registrationLabel, setRegistrationLabel] = useState(initial?.registration_label ?? "");
+  const [registrationDeadline, setRegistrationDeadline] = useState(
+    initial?.registration_deadline ? initial.registration_deadline.slice(0, 16) : "",
+  );
+  const [instagramUrl, setInstagramUrl] = useState(initial?.instagram_url ?? "");
+  const [communityName, setCommunityName] = useState(initial?.community_name ?? "");
+  const [communityInstagramUrl, setCommunityInstagramUrl] = useState(
+    initial?.community_instagram_url ?? "",
+  );
+  const [communityLogoUrl, setCommunityLogoUrl] = useState(initial?.community_logo_url ?? "");
+  const [capacity, setCapacity] = useState(initial?.capacity?.toString() ?? "");
   const [contactMethod, setContactMethod] = useState<ContactMethod>(
     initial?.contact_method ?? "whatsapp",
   );
@@ -80,6 +117,19 @@ export function EventForm({ userId, mode, initial }: Props) {
       cover_url: coverUrl.trim() || undefined,
       contact_method: contactMethod,
       visibility,
+      theme: theme.trim() || undefined,
+      what_to_expect: splitLines(whatToExpect).length > 0 ? splitLines(whatToExpect) : undefined,
+      hashtags: splitTags(hashtags).length > 0 ? splitTags(hashtags) : undefined,
+      reminder_text: reminderText.trim() || undefined,
+      registration_url: registrationUrl.trim() || undefined,
+      registration_label: registrationLabel.trim() || undefined,
+      registration_deadline: registrationDeadline
+        ? new Date(registrationDeadline).toISOString()
+        : undefined,
+      instagram_url: instagramUrl.trim() || undefined,
+      community_name: communityName.trim() || undefined,
+      community_instagram_url: communityInstagramUrl.trim() || undefined,
+      community_logo_url: communityLogoUrl.trim() || undefined,
     };
 
     try {
@@ -119,7 +169,7 @@ export function EventForm({ userId, mode, initial }: Props) {
     <div className="max-w-xl mx-auto flex flex-col gap-6">
       {/* Step indicator */}
       <div className="flex items-center gap-2">
-        {([1, 2] as Step[]).map((s) => (
+        {([1, 2, 3] as Step[]).map((s) => (
           <div
             key={s}
             className={
@@ -129,6 +179,10 @@ export function EventForm({ userId, mode, initial }: Props) {
           />
         ))}
       </div>
+      <p className="text-caption text-muted">
+        Step {step} / 3 ·{" "}
+        {step === 1 ? "Kapan & di mana" : step === 2 ? "Tentang event" : "Pendaftaran & sosial"}
+      </p>
 
       {error && (
         <p className="text-body-sm text-red-700 bg-red-50 border border-red-200 rounded-card px-4 py-3">
@@ -146,7 +200,7 @@ export function EventForm({ userId, mode, initial }: Props) {
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: Diskusi Buku Bulan Mei"
+              placeholder="Contoh: Share&Connect Vol. 6"
               maxLength={140}
             />
           </div>
@@ -195,7 +249,7 @@ export function EventForm({ userId, mode, initial }: Props) {
               <Input
                 value={locationText}
                 onChange={(e) => setLocationText(e.target.value)}
-                placeholder="Contoh: Treetales Coffee, Semarang"
+                placeholder="Contoh: Honest Coffee, Semarang"
               />
             </div>
           )}
@@ -228,9 +282,24 @@ export function EventForm({ userId, mode, initial }: Props) {
         </div>
       )}
 
-      {/* ── Step 2: Details ── */}
+      {/* ── Step 2: Description & vibe ── */}
       {step === 2 && (
         <div className="flex flex-col gap-5">
+          <div>
+            <label className="block text-body-sm font-semibold text-ink mb-1.5">
+              Tagline / tema (opsional)
+            </label>
+            <Input
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              placeholder="Tumbuh bersama sesama 🤝"
+              maxLength={200}
+            />
+            <p className="text-caption text-muted mt-1">
+              Sekalimat punchy yang ngegambarin vibe event-nya.
+            </p>
+          </div>
+
           <div>
             <label className="block text-body-sm font-semibold text-ink mb-1.5">
               Deskripsi (opsional)
@@ -238,7 +307,7 @@ export function EventForm({ userId, mode, initial }: Props) {
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ceritain event ini buat yang belum tau..."
+              placeholder="Ceritain event ini buat yang belum tau. Kenapa bikin? Buat siapa?"
               rows={4}
               maxLength={4000}
             />
@@ -246,20 +315,49 @@ export function EventForm({ userId, mode, initial }: Props) {
 
           <div>
             <label className="block text-body-sm font-semibold text-ink mb-1.5">
-              Kapasitas (opsional)
+              Di event ini kamu bisa... (opsional, satu baris per bullet)
             </label>
-            <Input
-              type="number"
-              value={capacity}
-              onChange={(e) => setCapacity(e.target.value)}
-              placeholder="Kosongi kalau tidak terbatas"
-              min={1}
+            <Textarea
+              value={whatToExpect}
+              onChange={(e) => setWhatToExpect(e.target.value)}
+              placeholder={"baca buku favorit dalam suasana santai\nkenalan sama pembaca lain\nshare insight dari buku yang lagi dibaca"}
+              rows={4}
+            />
+            <p className="text-caption text-muted mt-1">
+              Tiap baris jadi bullet di event page. Bikin jelas apa yg bakal terjadi.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-body-sm font-semibold text-ink mb-1.5">
+              Reminder / catatan ke peserta (opsional)
+            </label>
+            <Textarea
+              value={reminderText}
+              onChange={(e) => setReminderText(e.target.value)}
+              placeholder="Bawa buku yang mau didiskusi, plus IG story tag @collectivelibrary.id yaa 📸"
+              rows={3}
+              maxLength={1000}
             />
           </div>
 
           <div>
             <label className="block text-body-sm font-semibold text-ink mb-1.5">
-              URL cover (opsional)
+              Hashtag (opsional)
+            </label>
+            <Input
+              value={hashtags}
+              onChange={(e) => setHashtags(e.target.value)}
+              placeholder="ShareConnect BookClubSemarang TumbuhBersama"
+            />
+            <p className="text-caption text-muted mt-1">
+              Pisahkan dengan spasi. Tanpa tanda #.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-body-sm font-semibold text-ink mb-1.5">
+              URL cover image (opsional)
             </label>
             <Input
               type="url"
@@ -269,18 +367,147 @@ export function EventForm({ userId, mode, initial }: Props) {
             />
           </div>
 
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => { setError(null); setStep(1); }}
+              className="flex-1"
+            >
+              ← Balik
+            </Button>
+            <Button onClick={() => { setError(null); setStep(3); }} className="flex-1">
+              Lanjut →
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 3: Registration + Social + Ops ── */}
+      {step === 3 && (
+        <div className="flex flex-col gap-5">
+          <div className="p-3 rounded-card bg-cream/50 border border-hairline">
+            <p className="text-caption text-muted leading-relaxed">
+              💡 <strong>RSVP di Collective Library</strong> ngegantiin form pendaftaran terpisah —
+              tapi kalo komunitas kamu udah punya Google Form / Lu.ma, link aja di sini. Web app ini
+              jadi <em>social visibility layer</em>, bukan ngotot replace flow lama.
+            </p>
+          </div>
+
           <div>
             <label className="block text-body-sm font-semibold text-ink mb-1.5">
-              Kontak host
+              Link form pendaftaran eksternal (opsional)
             </label>
-            <Select
-              value={contactMethod}
-              onChange={(e) => setContactMethod(e.target.value as ContactMethod)}
-            >
-              {CONTACT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </Select>
+            <Input
+              type="url"
+              value={registrationUrl}
+              onChange={(e) => setRegistrationUrl(e.target.value)}
+              placeholder="https://forms.gle/... atau https://lu.ma/..."
+            />
+          </div>
+
+          {registrationUrl && (
+            <>
+              <div>
+                <label className="block text-body-sm font-semibold text-ink mb-1.5">
+                  Label tombol pendaftaran
+                </label>
+                <Input
+                  value={registrationLabel}
+                  onChange={(e) => setRegistrationLabel(e.target.value)}
+                  placeholder="Daftar via Google Form"
+                  maxLength={60}
+                />
+              </div>
+              <div>
+                <label className="block text-body-sm font-semibold text-ink mb-1.5">
+                  Deadline pendaftaran (opsional)
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={registrationDeadline}
+                  onChange={(e) => setRegistrationDeadline(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block text-body-sm font-semibold text-ink mb-1.5">
+              Instagram post event (opsional)
+            </label>
+            <Input
+              type="url"
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+              placeholder="https://instagram.com/p/..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-body-sm font-semibold text-ink mb-1.5">
+              Nama komunitas penyelenggara (opsional)
+            </label>
+            <Input
+              value={communityName}
+              onChange={(e) => setCommunityName(e.target.value)}
+              placeholder="Book Club Semarang"
+              maxLength={120}
+            />
+          </div>
+
+          {communityName && (
+            <>
+              <div>
+                <label className="block text-body-sm font-semibold text-ink mb-1.5">
+                  Instagram komunitas (opsional)
+                </label>
+                <Input
+                  type="url"
+                  value={communityInstagramUrl}
+                  onChange={(e) => setCommunityInstagramUrl(e.target.value)}
+                  placeholder="https://instagram.com/bookclub_semarang"
+                />
+              </div>
+              <div>
+                <label className="block text-body-sm font-semibold text-ink mb-1.5">
+                  URL logo komunitas (opsional)
+                </label>
+                <Input
+                  type="url"
+                  value={communityLogoUrl}
+                  onChange={(e) => setCommunityLogoUrl(e.target.value)}
+                  placeholder="https://... (link gambar logo)"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-body-sm font-semibold text-ink mb-1.5">
+                Kapasitas
+              </label>
+              <Input
+                type="number"
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)}
+                placeholder="∞"
+                min={1}
+              />
+            </div>
+            <div>
+              <label className="block text-body-sm font-semibold text-ink mb-1.5">
+                Kontak host
+              </label>
+              <Select
+                value={contactMethod}
+                onChange={(e) => setContactMethod(e.target.value as ContactMethod)}
+              >
+                {CONTACT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </Select>
+            </div>
           </div>
 
           <div>
@@ -300,7 +527,7 @@ export function EventForm({ userId, mode, initial }: Props) {
           <div className="flex gap-3">
             <Button
               variant="secondary"
-              onClick={() => { setError(null); setStep(1); }}
+              onClick={() => { setError(null); setStep(2); }}
               className="flex-1"
               disabled={saving}
             >
