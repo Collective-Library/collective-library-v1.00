@@ -41,6 +41,40 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/**
+ * Formats an event's start time as a readable Indonesian date-time string.
+ * e.g. "Sab, 25 Mei 2026 · 19:00 WIB"
+ */
+export function formatEventWhen(
+  startsAt: string,
+  endsAt?: string | null,
+  timezone = "Asia/Jakarta",
+): string {
+  const tzLabel: Record<string, string> = {
+    "Asia/Jakarta": "WIB",
+    "Asia/Makassar": "WITA",
+    "Asia/Jayapura": "WIT",
+  };
+  const label = tzLabel[timezone] ?? timezone;
+
+  const fmt = (iso: string, opts: Intl.DateTimeFormatOptions) =>
+    new Date(iso).toLocaleString("id-ID", { timeZone: timezone, ...opts });
+
+  const date = fmt(startsAt, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const time = fmt(startsAt, { hour: "2-digit", minute: "2-digit", hour12: false });
+
+  if (endsAt) {
+    const endTime = fmt(endsAt, { hour: "2-digit", minute: "2-digit", hour12: false });
+    return `${date} · ${time}–${endTime} ${label}`;
+  }
+  return `${date} · ${time} ${label}`;
+}
+
 /** Normalizes a phone number for DB storage (remove non-digits, 0 -> 62). */
 export function normalizePhone(input: string | null | undefined): string | null {
   if (!input) return null;

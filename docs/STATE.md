@@ -111,6 +111,8 @@ Migrations applied (0001-0004) and pending (0005-0007):
 | 0015 | mastermind_okrs        | ⏳ pending | `okr_objectives` + `okr_key_results` tables, admin-only RLS, seeded Q2 2026 (5 Objectives + 25+ KRs verbatim from masterprompt). KRs with `auto_compute_key` resolved live via `lib/mastermind/kr-compute.ts`. Powers `/mastermind/okrs`. |
 | 0016 | mastermind_tasks       | ⏳ pending | `team_tasks` table, admin-only RLS, FK link to `okr_objectives` + `okr_key_results`. Seeded with 14 ownership tasks from masterprompt. Powers `/mastermind/team`.                                                                         |
 | 0017 | mastermind_admin_notes | ⏳ pending | `admin_notes` polymorphic table (entity_type/id) for inline founder annotations across users/books/wanted/feedback/okr/task. Adds `audit_log` admin SELECT policy (was service-role only).                                                |
+| 0020 | events                 | ⏳ pending | `events` + `event_rsvps` tables, RLS (events mirror books, rsvps mirror saved_books). Extends `activity_log` with `EVENT_CREATED` + `EVENT_RSVPED` types and `event_id` FK column. RSVPed trigger only fires on INSERT with `status='going'` so toggling maybe→going→maybe doesn't spam the feed. |
+| 0021 | feedback_user_select   | ⏳ pending | RLS policy `feedback_select_own` letting authenticated users read their own feedback rows (powers `/feedback` "my feedback" page from PR #37). Originally numbered 0020 but renamed to 0021 to resolve collision with the events migration (PR #36 merged first). |
 
 SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migration files in `supabase/migrations/`).
 
@@ -122,6 +124,7 @@ SQL for 0005-0007 is in `docs/PRE-DEPLOY-CHECKLIST.md` (deprecated; use the migr
 | 2   | Custom domain SMTP (Path B)                                                 | Resend domain verify + Supabase SMTP            | Yes for inviting JP — currently only journey.perintis@gmail.com receives |
 | 3   | Optional: Vercel `NEXT_PUBLIC_APP_URL=https://collectivelibrary.vercel.app` | Vercel env vars                                 | Soft-blocking — falls back to VERCEL_URL otherwise                       |
 | 4   | Rotate API keys/secrets shared during chat                                  | Resend, hCaptcha, Sentry, Discord, Supabase     | Recommended pre-launch                                                   |
+| 5   | Optional: `DISCORD_EVENTS_WEBHOOK_URL` for event announcements              | Vercel env vars                                 | No — falls back to `DISCORD_FEEDBACK_WEBHOOK_URL` if unset               |
 
 ## Strategic guardrails (from product philosophy doc)
 
@@ -140,6 +143,7 @@ If all four are no, we don't build it.
 
 ---
 
+- **~~Event Management MVP~~** ✅ shipped — Phase 1 "activation spine" from the Business Model Canvas. `/event`, `/event/new`, `/event/[id]`, `/event/[id]/edit` routes (all auth-gated like `/book/[id]`). 2-step create form (when+where / details), 3-state RSVP toggle (going/maybe/cancel) with `useOptimistic` + `useTransition`, host-only Discord announce button (idempotent via `discord_announced_at`, reuses `DISCORD_FEEDBACK_WEBHOOK_URL` if `DISCORD_EVENTS_WEBHOOK_URL` unset). Activity feed integration: `EVENT_CREATED` + `EVENT_RSVPED` types in `activity_log` (trigger fires on INSERT only with `status='going'` so RSVP toggles don't spam). Landing strip `<UpcomingEventsStrip />` between RecentBooks and ActivityFeed on `/`, additional `EventCard` grid above ActivityFeed on `/shelf` (only on unfiltered page 1). RSS + JSON Feed both updated to emit `/event/[id]` permalinks with cover thumbnails. Migration `0020_events.sql` re-runnable. Deferred (next slices): cover-image upload, recurring events, ticketing, comments, check-in, place picker, capacity hard-enforcement, calendar export, co-hosts.
 - **~~Map view~~** ✅ shipped — `/peta` with Leaflet + Carto Positron tiles. Snapchat-style avatar markers (photo bubble + book-count badge), deterministic jitter so same-kecamatan members don't perfectly overlap. Opt-in via `show_on_map` toggle on profile edit. Coords stored at kecamatan-level only via Nominatim save-time geocoding (`/api/geocode`, auth-gated, 30-day CDN cache). Works for any Indonesian kecamatan (not Semarang-only).
 - **Per-user Discord DM** — needs proper Discord bot infra. Current channel webhook is community-level only.
 - **~~3-layer interest~~** ✅ shipped — Layer 1 (broad), Layer 2 (sub-interest, gated by L1), Layer 3 (intent — what they want to DO). Stored as 3 separate `text[]` columns. /anggota gets a new "Available untuk" filter row driven by intent. Profile page displays all 3 layers with distinct visual weights (dark / light / accent-green).

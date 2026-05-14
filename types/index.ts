@@ -289,3 +289,130 @@ export interface AdminNote {
 export interface AdminNoteWithAuthor extends AdminNote {
   author: Pick<Profile, "id" | "full_name" | "username" | "photo_url"> | null;
 }
+
+// =============================================================================
+// Events (mirrors supabase/migrations/0020_events.sql)
+// =============================================================================
+
+export type EventStatus = "scheduled" | "cancelled" | "completed";
+export type EventVisibility = "public" | "community";
+export type EventRsvpStatus = "going" | "maybe" | "declined";
+
+export interface Event {
+  id: string;
+  host_id: string;
+  community_id: string | null;
+  title: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  timezone: string;
+  location_text: string | null;
+  location_url: string | null;
+  is_online: boolean;
+  capacity: number | null;
+  cover_url: string | null;
+  contact_method: ContactMethod;
+  visibility: EventVisibility;
+  status: EventStatus;
+  is_hidden: boolean;
+  discord_announced_at: string | null;
+  // Social activation fields (added in migration 0022)
+  theme: string | null;
+  what_to_expect: string[] | null;
+  hashtags: string[] | null;
+  reminder_text: string | null;
+  registration_url: string | null;
+  registration_label: string | null;
+  registration_deadline: string | null;
+  instagram_url: string | null;
+  community_name: string | null;
+  community_instagram_url: string | null;
+  community_logo_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** An Event joined with host profile + community + viewer-specific RSVP state. */
+export interface EventWithHost extends Event {
+  host: Pick<
+    Profile,
+    | "id"
+    | "full_name"
+    | "username"
+    | "photo_url"
+    | "city"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+  >;
+  community: Pick<Community, "id" | "name" | "slug"> | null;
+  rsvp_count: number;
+  viewer_rsvp: EventRsvpStatus | null;
+}
+
+export interface EventRsvp {
+  event_id: string;
+  profile_id: string;
+  status: EventRsvpStatus;
+  note: string | null;
+  // RSVP context (added in migration 0022) — optional, for social signal
+  origin_city: string | null;
+  bringing_book: string | null;
+  conversation_topic: string | null;
+  created_at: string;
+}
+
+/** Attendee profile signals for rich attendee cards. */
+export interface AttendeeProfile {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  photo_url: string | null;
+  city: string | null;
+  interests: string[] | null;
+  instagram: string | null;
+  discord: string | null;
+  book_count: number;
+}
+
+export interface EventRsvpWithProfile extends EventRsvp {
+  profile: AttendeeProfile;
+}
+
+/** Form value types — what the Event form posts. */
+export interface EventFormValues {
+  title: string;
+  description?: string;
+  starts_at: string;
+  ends_at?: string;
+  timezone?: string;
+  location_text?: string;
+  location_url?: string;
+  is_online?: boolean;
+  capacity?: number;
+  cover_url?: string;
+  contact_method?: ContactMethod;
+  visibility?: EventVisibility;
+  // Social activation
+  theme?: string;
+  what_to_expect?: string[];
+  hashtags?: string[];
+  reminder_text?: string;
+  registration_url?: string;
+  registration_label?: string;
+  registration_deadline?: string;
+  instagram_url?: string;
+  community_name?: string;
+  community_instagram_url?: string;
+  community_logo_url?: string;
+}
+
+/** RSVP context — optional fields collected after RSVP confirmation. */
+export interface RsvpContextValues {
+  origin_city?: string;
+  bringing_book?: string;
+  conversation_topic?: string;
+  note?: string;
+}

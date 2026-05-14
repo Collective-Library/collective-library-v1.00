@@ -40,12 +40,22 @@ function itemToJson(item: ActivityItem, base: string) {
 
   let url = `${base}/aktivitas`;
   if (item.book?.id) url = `${base}/book/${item.book.id}`;
+  else if (item.event?.id) url = `${base}/event/${item.event.id}`;
   else if (item.type === "WTB_POSTED") url = `${base}/wanted`;
   else if (item.type === "USER_JOINED" && item.actor?.username)
     url = `${base}/profile/${item.actor.username}`;
 
   const summaryParts: string[] = [];
   if (item.book) summaryParts.push(`${item.book.title} — ${item.book.author}`);
+  if (item.event) {
+    const whenLabel = new Date(item.event.starts_at).toLocaleDateString("id-ID", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      timeZone: "Asia/Jakarta",
+    });
+    summaryParts.push(`${item.event.title} — ${whenLabel}`);
+  }
   if (item.wanted)
     summaryParts.push(
       `${item.wanted.title}${item.wanted.author ? ` — ${item.wanted.author}` : ""}`,
@@ -57,7 +67,7 @@ function itemToJson(item: ActivityItem, base: string) {
     url,
     title,
     summary,
-    image: item.book?.cover_url ?? undefined,
+    image: item.book?.cover_url ?? item.event?.cover_url ?? undefined,
     date_published: new Date(item.created_at).toISOString(),
     authors: item.actor
       ? [
