@@ -64,6 +64,7 @@ function renderItem(item: ActivityItem, base: string): string {
   // Best-effort permalink
   let link = `${base}/aktivitas`;
   if (item.book?.id) link = `${base}/book/${item.book.id}`;
+  else if (item.event?.id) link = `${base}/event/${item.event.id}`;
   else if (item.type === "WTB_POSTED") link = `${base}/wanted`;
   else if (item.type === "USER_JOINED" && item.actor?.username)
     link = `${base}/profile/${item.actor.username}`;
@@ -73,6 +74,16 @@ function renderItem(item: ActivityItem, base: string): string {
   if (item.book) {
     descParts.push(`📖 ${item.book.title} — ${item.book.author}`);
   }
+  if (item.event) {
+    const whenLabel = new Date(item.event.starts_at).toLocaleDateString("id-ID", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "Asia/Jakarta",
+    });
+    descParts.push(`📅 ${item.event.title} — ${whenLabel}`);
+  }
   if (item.wanted) {
     descParts.push(`🔍 ${item.wanted.title}${item.wanted.author ? ` — ${item.wanted.author}` : ""}`);
   }
@@ -81,7 +92,7 @@ function renderItem(item: ActivityItem, base: string): string {
   }
   const description = descParts.join("\n");
 
-  const cover = item.book?.cover_url;
+  const cover = item.book?.cover_url ?? item.event?.cover_url ?? null;
   const enclosure = cover
     ? `\n      <enclosure url="${escapeXml(cover)}" type="image/jpeg" length="0" />\n      <media:thumbnail url="${escapeXml(cover)}" />`
     : "";

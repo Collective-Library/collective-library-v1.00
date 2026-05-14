@@ -6,6 +6,7 @@ import { ActivityFeed } from "@/components/activity/activity-feed";
 import { RecentBooksStrip } from "@/components/landing/recent-books-strip";
 import { RecentMembersStrip } from "@/components/landing/recent-members-strip";
 import { RecentInstagramStrip } from "@/components/landing/recent-instagram-strip";
+import { UpcomingEventsStrip } from "@/components/landing/upcoming-events-strip";
 import { LoginNudgeProvider } from "@/components/landing/login-nudge";
 import { GatedLink } from "@/components/landing/gated-link";
 import { getCurrentUser } from "@/lib/auth";
@@ -103,6 +104,9 @@ export default async function HomePage() {
 
         {/* Recent books — horizontal scroll strip */}
         <RecentBooksStrip />
+
+        {/* Upcoming events — horizontal scroll strip (returns null if 0) */}
+        <UpcomingEventsStrip />
 
         {/* Recent activity — peek at what's happening */}
         {activity.length > 0 && (

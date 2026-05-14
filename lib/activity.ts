@@ -5,7 +5,9 @@ export type ActivityType =
   | "USER_JOINED"
   | "BOOK_ADDED"
   | "BOOK_STATUS_CHANGED"
-  | "WTB_POSTED";
+  | "WTB_POSTED"
+  | "EVENT_CREATED"
+  | "EVENT_RSVPED";
 
 export interface ActivityActor {
   id: string;
@@ -28,21 +30,30 @@ export interface ActivityWanted {
   author: string | null;
 }
 
+export interface ActivityEvent {
+  id: string;
+  title: string;
+  starts_at: string;
+  cover_url: string | null;
+}
+
 export interface ActivityItem {
   id: string;
   type: ActivityType;
   created_at: string;
-  metadata: { old_status?: BookStatus; new_status?: BookStatus } | null;
+  metadata: { old_status?: BookStatus; new_status?: BookStatus; rsvp_status?: string } | null;
   actor: ActivityActor | null;
   book: ActivityBook | null;
   wanted: ActivityWanted | null;
+  event: ActivityEvent | null;
 }
 
 const SELECT = `
   id, type, created_at, metadata,
   actor:profiles_public!actor_user_id(id, full_name, username, photo_url),
   book:books(id, title, author, cover_url, status),
-  wanted:wanted_requests(id, title, author)
+  wanted:wanted_requests(id, title, author),
+  event:events(id, title, starts_at, cover_url)
 `;
 
 /**
@@ -91,6 +102,7 @@ export async function listActivity(
     actor: ActivityActor | ActivityActor[] | null;
     book: ActivityBook | ActivityBook[] | null;
     wanted: ActivityWanted | ActivityWanted[] | null;
+    event: ActivityEvent | ActivityEvent[] | null;
   };
 
   // Supabase types embedded relations as arrays; flatten to single object.
@@ -105,5 +117,6 @@ export async function listActivity(
     actor: flatten(r.actor),
     book: flatten(r.book),
     wanted: flatten(r.wanted),
+    event: flatten(r.event),
   }));
 }

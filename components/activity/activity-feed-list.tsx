@@ -157,7 +157,43 @@ function ActivityRow({ item }: { item: GroupedActivityItem }) {
         </div>
       )}
 
-      {item.wanted && !item.book && !item.is_grouped && (
+      {item.event && !item.book && !item.is_grouped && (
+        <Link
+          href={targetHref ?? `/event/${item.event.id}`}
+          className="flex gap-3 -m-1 p-3 rounded-card border border-hairline hover:bg-cream transition-colors"
+        >
+          {item.event.cover_url && (
+            <div className="relative w-20 aspect-video shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
+              <Image
+                src={item.event.cover_url}
+                alt={item.event.title}
+                fill
+                sizes="80px"
+                className="object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+          <div className="min-w-0 flex-1 flex flex-col justify-center">
+            <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-0.5">
+              Event
+            </p>
+            <p className="font-display text-title-md text-ink leading-tight line-clamp-2">
+              {item.event.title}
+            </p>
+            <p className="mt-1 text-body-sm text-muted">
+              {new Date(item.event.starts_at).toLocaleDateString("id-ID", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                timeZone: "Asia/Jakarta",
+              })}
+            </p>
+          </div>
+        </Link>
+      )}
+
+      {item.wanted && !item.book && !item.is_grouped && !item.event && (
         <Link
           href={targetHref ?? "/wanted"}
           className="block -m-1 p-3 rounded-card border border-hairline-strong border-dashed hover:bg-cream transition-colors"
