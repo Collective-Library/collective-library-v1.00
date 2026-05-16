@@ -9,12 +9,41 @@ export function BottomNav({ profile }: { profile: Profile | null }) {
   const pathname = usePathname();
   const profileHref = profile?.username ? `/profile/${profile.username}` : "/profile/edit";
 
+  // English-first labels. URLs point to the English aliases (rewrites
+  // in next.config.ts internally serve the same pages; old Indonesian
+  // URLs still work for shared/bookmarked links).
   const items = [
-    { href: "/shelf", label: "Rak", icon: ShelfIcon, match: (p: string) => p.startsWith("/shelf") || p === "/" },
-    { href: "/aktivitas", label: "Aktivitas", icon: ActivityIcon, match: (p: string) => p.startsWith("/aktivitas") },
-    { href: "/book/add", label: "Tambah", icon: AddIcon, match: (p: string) => p.startsWith("/book/add"), prominent: true },
-    { href: "/wanted", label: "Dicari", icon: WantedIcon, match: (p: string) => p.startsWith("/wanted") },
-    { href: profileHref, label: "Profil", icon: ProfileIcon, match: (p: string) => p.startsWith("/profile") },
+    {
+      href: "/library",
+      label: "Library",
+      icon: ShelfIcon,
+      match: (p: string) => p === "/" || p.startsWith("/library") || p.startsWith("/shelf"),
+    },
+    {
+      href: "/activity",
+      label: "Activity",
+      icon: ActivityIcon,
+      match: (p: string) => p.startsWith("/activity") || p.startsWith("/aktivitas"),
+    },
+    {
+      href: "/book/add",
+      label: "Add",
+      icon: AddIcon,
+      match: (p: string) => p.startsWith("/book/add"),
+      prominent: true,
+    },
+    {
+      href: "/wanted",
+      label: "Wanted",
+      icon: WantedIcon,
+      match: (p: string) => p.startsWith("/wanted"),
+    },
+    {
+      href: profileHref,
+      label: "Profile",
+      icon: ProfileIcon,
+      match: (p: string) => p.startsWith("/profile"),
+    },
   ];
 
   return (

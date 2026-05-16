@@ -74,31 +74,31 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
           </div>
           <ul className="py-1">
             <MenuItem href={profileHref} onClick={() => setOpen(false)}>
-              Lihat profil
+              View profile
             </MenuItem>
             <MenuItem href="/profile/edit" onClick={() => setOpen(false)}>
-              Edit profil
+              Edit profile
             </MenuItem>
-            <MenuItem href="/aktivitas" onClick={() => setOpen(false)}>
-              Aktivitas komunitas
+            <MenuItem href="/activity" onClick={() => setOpen(false)}>
+              Activity feed
             </MenuItem>
-            <MenuItem href="/anggota" onClick={() => setOpen(false)}>
-              Anggota komunitas
+            <MenuItem href="/members" onClick={() => setOpen(false)}>
+              Members
             </MenuItem>
             <MenuItem href="/event" onClick={() => setOpen(false)}>
-              Event komunitas
+              Events
             </MenuItem>
             <MenuItem href="/manifest" onClick={() => setOpen(false)}>
-              Manifesto komunitas
+              Manifest
             </MenuItem>
             <MenuItem href="/book/add" onClick={() => setOpen(false)}>
-              Tambah buku
+              Add book
             </MenuItem>
             <MenuItem href="/book/add/bulk" onClick={() => setOpen(false)}>
-              Tambah cepat (banyak)
+              Quick add (multiple)
             </MenuItem>
             <MenuItem href="/book/import" onClick={() => setOpen(false)}>
-              Import dari Goodreads
+              Import from Goodreads
             </MenuItem>
           </ul>
           {!profile.is_admin && (
@@ -154,7 +154,7 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
                 role="menuitem"
                 className="w-full text-left px-4 py-2.5 text-body-sm text-(--color-error) hover:bg-cream transition-colors"
               >
-                Keluar
+                Sign out
               </button>
             </form>
           </div>

@@ -3,31 +3,38 @@ import { Logo } from "./logo";
 import { AvatarMenu } from "./avatar-menu";
 import { DesktopNav } from "./desktop-nav";
 import { TopBarSearch } from "./topbar-search";
+import { HamburgerMenu } from "./hamburger-menu";
 import type { Profile } from "@/types";
 
 export function TopBar({ profile }: { profile: Profile | null }) {
   return (
     <header className="sticky top-0 z-40 bg-paper/85 backdrop-blur-md border-b border-hairline-soft">
-      <div className="mx-auto max-w-6xl px-4 md:px-6 h-16 flex items-center justify-between gap-3">
-        <Link href="/shelf" aria-label="Collective Library — Beranda" className="flex items-center gap-2 shrink-0">
-          <Logo size={32} />
-          <span className="hidden sm:inline md:hidden lg:inline font-display text-title-md text-ink leading-none">
-            Collective Library
-          </span>
-        </Link>
+      <div className="mx-auto max-w-6xl px-4 md:px-6 h-16 flex items-center justify-between gap-2 md:gap-3">
+        <div className="flex items-center gap-1 md:gap-2 shrink-0">
+          {/* Hamburger reveals the full product map. Shown on all viewports —
+              the TopBar/DesktopNav stays simple, hamburger scales with us. */}
+          <HamburgerMenu profile={profile} />
+
+          <Link href="/library" aria-label="Collective Library — Beranda" className="flex items-center gap-2">
+            <Logo size={32} />
+            <span className="hidden sm:inline md:hidden lg:inline font-display text-title-md text-ink leading-none">
+              Collective Library
+            </span>
+          </Link>
+        </div>
 
         {/* Desktop / tablet primary nav (md+) — labeled home affordance.
             BottomNav still owns mobile. */}
         <DesktopNav />
 
         {/* Inline search with autocomplete dropdown — md+ only.
-            Mobile uses the icon below which goes to /search full page. */}
+            Mobile uses the icon below which goes to /discover full page. */}
         <TopBarSearch />
 
         <div className="flex items-center gap-2">
           <Link
-            href="/search"
-            aria-label="Cari"
+            href="/discover"
+            aria-label="Discover"
             className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-pill hover:bg-cream"
           >
             <SearchIcon />
@@ -39,7 +46,7 @@ export function TopBar({ profile }: { profile: Profile | null }) {
               href="/auth/login"
               className="inline-flex items-center h-10 px-4 rounded-pill bg-ink text-parchment text-body-sm font-medium hover:bg-ink-soft"
             >
-              Masuk
+              Sign in
             </Link>
           )}
         </div>
