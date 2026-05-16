@@ -9,35 +9,41 @@ import { cn } from "@/lib/cn";
  * visible on md+ only — replaces the BottomNav (mobile-only) for keyboard
  * + mouse users who otherwise had only the Logo as a home affordance.
  *
- * Order mirrors BottomNav (Rak / Aktivitas / Dicari) so muscle memory
- * carries between viewports. "Tambah" is in AvatarMenu on desktop.
+ * Order mirrors BottomNav (Library / Activity / Wanted) so muscle memory
+ * carries between viewports. "Add" is in AvatarMenu on desktop.
+ *
+ * English labels + English URLs via next.config rewrites — old Indonesian
+ * URLs (`/shelf`, `/aktivitas`) still resolve directly for shared links.
  */
 export function DesktopNav() {
   const pathname = usePathname();
 
   const items: { href: string; label: string; match: (p: string) => boolean; icon: () => React.ReactElement }[] = [
     {
-      href: "/shelf",
-      label: "Rak",
-      match: (p) => p === "/shelf" || p.startsWith("/shelf/") || p === "/" || p.startsWith("/book/"),
+      href: "/library",
+      label: "Library",
+      match: (p) =>
+        p === "/library" || p.startsWith("/library/") ||
+        p === "/shelf" || p.startsWith("/shelf/") ||
+        p === "/" || p.startsWith("/book/"),
       icon: ShelfIcon,
     },
     {
-      href: "/aktivitas",
-      label: "Aktivitas",
-      match: (p) => p.startsWith("/aktivitas"),
+      href: "/activity",
+      label: "Activity",
+      match: (p) => p.startsWith("/activity") || p.startsWith("/aktivitas"),
       icon: ActivityIcon,
     },
     {
       href: "/wanted",
-      label: "Dicari",
+      label: "Wanted",
       match: (p) => p.startsWith("/wanted"),
       icon: WantedIcon,
     },
   ];
 
   return (
-    <nav className="hidden md:flex items-center gap-1" aria-label="Navigasi utama">
+    <nav className="hidden md:flex items-center gap-1" aria-label="Primary navigation">
       {items.map(({ href, label, match, icon: Icon }) => {
         const active = match(pathname ?? "");
         return (

@@ -182,7 +182,22 @@ function ActivityRow({ item }: { item: GroupedActivityItem }) {
         </Link>
       )}
 
-      {item.wanted && !item.book && !item.is_grouped && !item.event && (
+      {item.manifest && !item.book && !item.is_grouped && !item.event && (
+        <Link
+          href={targetHref ?? `/manifest/${item.manifest.id}`}
+          className="block -m-1 p-3 rounded-card border border-hairline hover:bg-cream transition-colors"
+        >
+          <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-1">
+            Manifesto{item.manifest.topic ? ` · ${item.manifest.topic}` : ""}
+            {item.manifest.mood ? ` · ${item.manifest.mood}` : ""}
+          </p>
+          <p className="text-body text-ink leading-relaxed line-clamp-3 italic">
+            &ldquo;{item.manifest.body}&rdquo;
+          </p>
+        </Link>
+      )}
+
+      {item.wanted && !item.book && !item.is_grouped && !item.event && !item.manifest && (
         <Link
           href={targetHref ?? "/wanted"}
           className="block -m-1 p-3 rounded-card border border-hairline-strong border-dashed hover:bg-cream transition-colors"

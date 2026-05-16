@@ -52,6 +52,10 @@ export function activityVerb(item: ActivityItem | GroupedActivityItem): {
       const title = item.event?.title ?? "event";
       return { text: `bakal dateng ke: ${title}` };
     }
+    case "MANIFEST_POSTED": {
+      const topic = item.manifest?.topic;
+      return { text: topic ? `nulis manifesto soal ${topic}` : `nulis manifesto baru` };
+    }
     default:
       return { text: "ada aktivitas baru" };
   }
@@ -71,6 +75,9 @@ export function activityTargetUrl(item: ActivityItem | GroupedActivityItem): str
     (item.type === "EVENT_CREATED" || item.type === "EVENT_RSVPED")
   ) {
     return `/event/${item.event.id}`;
+  }
+  if (item.manifest?.id && item.type === "MANIFEST_POSTED") {
+    return `/manifest/${item.manifest.id}`;
   }
   if (item.type === "USER_JOINED" && item.actor?.username) {
     return `/profile/${item.actor.username}`;
