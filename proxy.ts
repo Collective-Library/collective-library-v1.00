@@ -45,6 +45,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/book") ||
     pathname.startsWith("/wanted") ||
     pathname.startsWith("/event") ||
+    pathname.startsWith("/manifest") ||
     pathname.startsWith("/profile/edit") ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/mastermind") ||
