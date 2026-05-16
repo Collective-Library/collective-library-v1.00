@@ -24,6 +24,34 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  /**
+   * English-first route aliases.
+   *
+   * Phase 1 goal: surface English URLs in the navigation while preserving
+   * existing Indonesian routes (shared in chats, bookmarks, RSS feeds).
+   * Rewrites mask the destination — `/library` stays as `/library` in the URL
+   * bar but renders the `/shelf` page underneath. Old routes (`/shelf`,
+   * `/aktivitas`, etc.) keep working directly with zero redirect overhead.
+   *
+   * Reminder: rewrites run AFTER middleware/proxy. proxy.ts must gate both
+   * the English alias AND the underlying Indonesian path for auth — see
+   * proxy.ts `isAppRoute` for the union list.
+   */
+  async rewrites() {
+    return [
+      { source: "/library", destination: "/shelf" },
+      { source: "/library/:path*", destination: "/shelf/:path*" },
+      { source: "/activity", destination: "/aktivitas" },
+      { source: "/activity/:path*", destination: "/aktivitas/:path*" },
+      { source: "/discover", destination: "/search" },
+      { source: "/discover/:path*", destination: "/search/:path*" },
+      { source: "/members", destination: "/anggota" },
+      { source: "/members/:path*", destination: "/anggota/:path*" },
+      { source: "/map", destination: "/peta" },
+      { source: "/map/:path*", destination: "/peta/:path*" },
+    ];
+  },
+
   // Strict security headers. CSP allows the image hosts above + inline styles
   // for the few inline-style props we set. Tighten further once we audit.
   async headers() {

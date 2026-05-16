@@ -45,10 +45,23 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/book") ||
     pathname.startsWith("/wanted") ||
     pathname.startsWith("/event") ||
+    pathname.startsWith("/manifest") ||
     pathname.startsWith("/profile/edit") ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/mastermind") ||
-    pathname.startsWith("/admin");
+    pathname.startsWith("/admin") ||
+    // English aliases — see next.config.ts rewrites. Rewrites run after
+    // middleware so we have to gate both the alias AND the destination.
+    pathname.startsWith("/library") ||
+    pathname.startsWith("/activity") ||
+    pathname.startsWith("/discover") ||
+    pathname.startsWith("/members") ||
+    pathname.startsWith("/map") ||
+    pathname.startsWith("/aktivitas") ||
+    pathname.startsWith("/anggota") ||
+    pathname.startsWith("/peta") ||
+    pathname.startsWith("/search") ||
+    pathname.startsWith("/feedback");
 
   // Not signed in & trying to access an authed route → login
   if (!user && isAppRoute) {

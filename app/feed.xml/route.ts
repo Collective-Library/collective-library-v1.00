@@ -65,6 +65,7 @@ function renderItem(item: ActivityItem, base: string): string {
   let link = `${base}/aktivitas`;
   if (item.book?.id) link = `${base}/book/${item.book.id}`;
   else if (item.event?.id) link = `${base}/event/${item.event.id}`;
+  else if (item.manifest?.id) link = `${base}/manifest/${item.manifest.id}`;
   else if (item.type === "WTB_POSTED") link = `${base}/wanted`;
   else if (item.type === "USER_JOINED" && item.actor?.username)
     link = `${base}/profile/${item.actor.username}`;
@@ -83,6 +84,9 @@ function renderItem(item: ActivityItem, base: string): string {
       timeZone: "Asia/Jakarta",
     });
     descParts.push(`📅 ${item.event.title} — ${whenLabel}`);
+  }
+  if (item.manifest) {
+    descParts.push(`💭 "${item.manifest.body.slice(0, 200)}${item.manifest.body.length > 200 ? "..." : ""}"`);
   }
   if (item.wanted) {
     descParts.push(`🔍 ${item.wanted.title}${item.wanted.author ? ` — ${item.wanted.author}` : ""}`);

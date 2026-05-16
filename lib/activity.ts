@@ -7,7 +7,8 @@ export type ActivityType =
   | "BOOK_STATUS_CHANGED"
   | "WTB_POSTED"
   | "EVENT_CREATED"
-  | "EVENT_RSVPED";
+  | "EVENT_RSVPED"
+  | "MANIFEST_POSTED";
 
 export interface ActivityActor {
   id: string;
@@ -37,6 +38,14 @@ export interface ActivityEvent {
   cover_url: string | null;
 }
 
+export interface ActivityManifest {
+  id: string;
+  body: string;
+  mood: string | null;
+  topic: string | null;
+  is_anonymous: boolean;
+}
+
 export interface ActivityItem {
   id: string;
   type: ActivityType;
@@ -46,6 +55,7 @@ export interface ActivityItem {
   book: ActivityBook | null;
   wanted: ActivityWanted | null;
   event: ActivityEvent | null;
+  manifest: ActivityManifest | null;
 }
 
 const SELECT = `
@@ -53,7 +63,8 @@ const SELECT = `
   actor:profiles_public!actor_user_id(id, full_name, username, photo_url),
   book:books(id, title, author, cover_url, status),
   wanted:wanted_requests(id, title, author),
-  event:events(id, title, starts_at, cover_url)
+  event:events(id, title, starts_at, cover_url),
+  manifest:manifests(id, body, mood, topic, is_anonymous)
 `;
 
 /**
@@ -103,6 +114,7 @@ export async function listActivity(
     book: ActivityBook | ActivityBook[] | null;
     wanted: ActivityWanted | ActivityWanted[] | null;
     event: ActivityEvent | ActivityEvent[] | null;
+    manifest: ActivityManifest | ActivityManifest[] | null;
   };
 
   // Supabase types embedded relations as arrays; flatten to single object.
@@ -118,5 +130,6 @@ export async function listActivity(
     book: flatten(r.book),
     wanted: flatten(r.wanted),
     event: flatten(r.event),
+    manifest: flatten(r.manifest),
   }));
 }

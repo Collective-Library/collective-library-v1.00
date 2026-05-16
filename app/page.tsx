@@ -7,6 +7,7 @@ import { RecentBooksStrip } from "@/components/landing/recent-books-strip";
 import { RecentMembersStrip } from "@/components/landing/recent-members-strip";
 import { RecentInstagramStrip } from "@/components/landing/recent-instagram-strip";
 import { UpcomingEventsStrip } from "@/components/landing/upcoming-events-strip";
+import { RecentManifestsStrip } from "@/components/landing/recent-manifests-strip";
 import { LoginNudgeProvider } from "@/components/landing/login-nudge";
 import { GatedLink } from "@/components/landing/gated-link";
 import { getCurrentUser } from "@/lib/auth";
@@ -107,6 +108,9 @@ export default async function HomePage() {
 
         {/* Upcoming events — horizontal scroll strip (returns null if 0) */}
         <UpcomingEventsStrip />
+
+        {/* Recent manifestos — growth-loop signal (returns null if 0) */}
+        <RecentManifestsStrip />
 
         {/* Recent activity — peek at what's happening */}
         {activity.length > 0 && (

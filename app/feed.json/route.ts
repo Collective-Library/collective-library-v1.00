@@ -41,6 +41,7 @@ function itemToJson(item: ActivityItem, base: string) {
   let url = `${base}/aktivitas`;
   if (item.book?.id) url = `${base}/book/${item.book.id}`;
   else if (item.event?.id) url = `${base}/event/${item.event.id}`;
+  else if (item.manifest?.id) url = `${base}/manifest/${item.manifest.id}`;
   else if (item.type === "WTB_POSTED") url = `${base}/wanted`;
   else if (item.type === "USER_JOINED" && item.actor?.username)
     url = `${base}/profile/${item.actor.username}`;
@@ -55,6 +56,9 @@ function itemToJson(item: ActivityItem, base: string) {
       timeZone: "Asia/Jakarta",
     });
     summaryParts.push(`${item.event.title} — ${whenLabel}`);
+  }
+  if (item.manifest) {
+    summaryParts.push(`"${item.manifest.body.slice(0, 200)}${item.manifest.body.length > 200 ? "..." : ""}"`);
   }
   if (item.wanted)
     summaryParts.push(

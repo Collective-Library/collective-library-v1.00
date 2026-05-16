@@ -416,3 +416,57 @@ export interface RsvpContextValues {
   conversation_topic?: string;
   note?: string;
 }
+
+// =============================================================================
+// Manifests (mirrors supabase/migrations/0023_manifests.sql)
+// =============================================================================
+
+export type ManifestStatus = "pending" | "approved" | "rejected";
+export type ManifestVisibility = "public" | "community";
+export type ManifestMood =
+  | "curious"
+  | "hopeful"
+  | "frustrated"
+  | "grateful"
+  | "reflective"
+  | "playful";
+
+export interface Manifest {
+  id: string;
+  author_id: string;
+  body: string;
+  mood: ManifestMood | null;
+  topic: string | null;
+  is_anonymous: boolean;
+  linked_event_id: string | null;
+  linked_book_id: string | null;
+  linked_profile_id: string | null;
+  visibility: ManifestVisibility;
+  status: ManifestStatus;
+  moderation_note: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  is_hidden: boolean;
+  discord_announced_at: string | null;
+  x_posted_url: string | null;
+  x_posted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A Manifest with author + optional linked object summaries. */
+export interface ManifestWithAuthor extends Manifest {
+  author: Pick<Profile, "id" | "full_name" | "username" | "photo_url" | "city">;
+  linked_event: Pick<Event, "id" | "title" | "starts_at" | "cover_url"> | null;
+  linked_book: Pick<Book, "id" | "title" | "author" | "cover_url"> | null;
+}
+
+export interface ManifestFormValues {
+  body: string;
+  mood?: ManifestMood;
+  topic?: string;
+  is_anonymous?: boolean;
+  visibility?: ManifestVisibility;
+  linked_event_id?: string;
+  linked_book_id?: string;
+}
