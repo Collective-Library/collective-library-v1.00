@@ -324,7 +324,7 @@ export function HamburgerMenu({ profile }: { profile: Profile | null }) {
           role="dialog"
           aria-modal="true"
           aria-label="Navigation"
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-50 flex"
         >
           {/* Backdrop — absolutely positioned INSIDE the dialog wrapper.
               Click to close. */}
@@ -335,12 +335,15 @@ export function HamburgerMenu({ profile }: { profile: Profile | null }) {
             className="absolute inset-0 bg-ink/40 backdrop-blur-sm animate-overlay-fade-in"
           />
 
-          {/* Panel — relative-positioned so it stacks above the backdrop.
-              Slides in from the left via animate-drawer-slide-in-left. */}
+          {/* Panel — flex child of the row-direction wrapper. Default
+              align-items: stretch makes it fill viewport height without
+              needing `h-full` (which is unreliable when the parent isn't
+              flex). `relative` makes it stack above the absolutely
+              positioned backdrop. */}
           <aside
             id="hamburger-panel"
             className={cn(
-              "relative h-full w-[88vw] max-w-sm bg-paper border-r border-hairline shadow-modal",
+              "relative w-[88vw] max-w-sm bg-paper border-r border-hairline shadow-modal",
               "flex flex-col animate-drawer-slide-in-left",
             )}
           >
