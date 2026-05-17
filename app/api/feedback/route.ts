@@ -49,10 +49,13 @@ const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
 interface SubmitBody {
   category: string;
   message: string;
+  name?: string | null;
   email?: string | null;
   attachments?: string | null;
   page_url?: string | null;
 }
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   let body: SubmitBody;
@@ -85,14 +88,25 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Auto-auth email (Issue #16)
-  const email = user?.email ?? null;
+  const anonName = (body.name ?? "").trim() || null;
+  if (!user?.id && !anonName) {
+    return NextResponse.json({ error: "Nama wajib diisi kalau belum login." }, { status: 400 });
+  }
+
+  const emailFromBody = (body.email ?? "").trim().toLowerCase();
+  if (!user?.id && emailFromBody && !EMAIL_PATTERN.test(emailFromBody)) {
+    return NextResponse.json({ error: "Format email belum valid." }, { status: 400 });
+  }
+
+  const email = user?.email ?? (!user?.id ? emailFromBody || null : null);
+  const name = user?.id ? null : anonName;
 
   // Insert feedback row — RLS allows insert for anyone
   const { data: inserted, error: insertErr } = await supabase
     .from("feedback")
     .insert({
       user_id: user?.id ?? null,
+      name,
       category,
       message,
       email,
@@ -122,6 +136,8 @@ export async function POST(req: NextRequest) {
       const handle = prof.username as string | null;
       userDisplay = name && handle ? `${name} (@${handle})` : (name ?? handle);
     }
+  } else {
+    userDisplay = name;
   }
 
   // Discord fan-out — AWAIT it before returning. Vercel serverless terminates

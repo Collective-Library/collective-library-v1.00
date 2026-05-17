@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 import type { FeedbackCategory } from "@/types";
 
 /**
@@ -74,10 +75,14 @@ const CATEGORIES: { slug: FeedbackCategory; label: string; emoji: string; hint: 
 
 function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [category, setCategory] = useState<FeedbackCategory>("idea");
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // Esc closes
   useEffect(() => {
@@ -97,13 +102,38 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      setIsAnonymous(!data.user);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    if (message.trim().length < 3) {
+    const trimmedMessage = message.trim();
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (isAnonymous && trimmedName.length < 1) {
+      setError("Nama wajib diisi untuk kirim masukan.");
+      return;
+    }
+    if (isAnonymous && trimmedEmail && !emailPattern.test(trimmedEmail)) {
+      setError("Format email belum valid.");
+      return;
+    }
+    if (trimmedMessage.length < 3) {
       setError("Pesan minimal 3 karakter.");
       return;
     }
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/feedback", {
@@ -111,7 +141,9 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category,
-          message: message.trim(),
+          name: isAnonymous ? trimmedName : null,
+          email: isAnonymous ? trimmedEmail || null : null,
+          message: trimmedMessage,
           attachments: attachments.trim() || null,
           page_url:
             typeof window !== "undefined"
@@ -202,6 +234,41 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
               <p className="text-caption text-muted -mt-1">{activeCategory.hint}</p>
             )}
           </div>
+
+          {isAnonymous && (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="fb-name" className="text-caption font-medium text-ink-soft">
+                  Nama kamu
+                </label>
+                <input
+                  id="fb-name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={120}
+                  autoComplete="name"
+                  placeholder="Biar tim bisa follow-up"
+                  className="w-full h-11 px-3.5 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] transition-colors"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="fb-email" className="text-caption font-medium text-ink-soft">
+                  Email <span className="text-muted">(opsional)</span>
+                </label>
+                <input
+                  id="fb-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  maxLength={200}
+                  autoComplete="email"
+                  placeholder="nama@email.com"
+                  className="w-full h-11 px-3.5 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] transition-colors"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Message */}
           <div className="flex flex-col gap-1.5">
