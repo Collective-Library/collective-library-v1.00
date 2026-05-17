@@ -14,6 +14,8 @@
 // =============================================================================
 
 import { NextResponse, type NextRequest } from "next/server";
+import { isValidEmail } from "@/lib/feedback-validation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getAppUrl } from "@/lib/url";
 import type { FeedbackCategory } from "@/types";
@@ -49,6 +51,7 @@ const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
 interface SubmitBody {
   category: string;
   message: string;
+  name?: string | null;
   email?: string | null;
   attachments?: string | null;
   page_url?: string | null;
@@ -85,14 +88,28 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Auto-auth email (Issue #16)
-  const email = user?.email ?? null;
+  const anonName = (body.name ?? "").trim() || null;
+  if (!user?.id && !anonName) {
+    return NextResponse.json({ error: "Nama wajib diisi kalau belum login." }, { status: 400 });
+  }
 
-  // Insert feedback row — RLS allows insert for anyone
-  const { data: inserted, error: insertErr } = await supabase
+  const emailFromBody = (body.email ?? "").trim().toLowerCase();
+  if (!user?.id && emailFromBody && !isValidEmail(emailFromBody)) {
+    return NextResponse.json({ error: "Format email belum valid." }, { status: 400 });
+  }
+
+  const email = user?.email ?? (emailFromBody || null);
+  const name = user?.id ? null : anonName;
+
+  // Route handler has already validated the payload. Use the server-only
+  // service-role client so anonymous submissions do not need public SELECT
+  // access just to return the inserted id.
+  const feedbackWriter = createAdminClient();
+  const { data: inserted, error: insertErr } = await feedbackWriter
     .from("feedback")
     .insert({
       user_id: user?.id ?? null,
+      name,
       category,
       message,
       email,
@@ -122,6 +139,8 @@ export async function POST(req: NextRequest) {
       const handle = prof.username as string | null;
       userDisplay = name && handle ? `${name} (@${handle})` : (name ?? handle);
     }
+  } else {
+    userDisplay = name;
   }
 
   // Discord fan-out — AWAIT it before returning. Vercel serverless terminates

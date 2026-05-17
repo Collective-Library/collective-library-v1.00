@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { isValidEmail } from "@/lib/feedback-validation";
+import { createClient } from "@/lib/supabase/client";
 import type { FeedbackCategory } from "@/types";
 
 /**
@@ -74,6 +76,9 @@ const CATEGORIES: { slug: FeedbackCategory; label: string; emoji: string; hint: 
 
 function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [category, setCategory] = useState<FeedbackCategory>("idea");
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -97,13 +102,44 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (!active) return;
+        setIsAnonymous(!data.user);
+      })
+      .catch(() => {
+        if (!active) return;
+        setIsAnonymous(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    if (message.trim().length < 3) {
+    const trimmedMessage = message.trim();
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (isAnonymous && !trimmedName) {
+      setError("Nama wajib diisi untuk kirim masukan.");
+      return;
+    }
+    if (isAnonymous && trimmedEmail && !isValidEmail(trimmedEmail)) {
+      setError("Format email belum valid.");
+      return;
+    }
+    if (trimmedMessage.length < 3) {
       setError("Pesan minimal 3 karakter.");
       return;
     }
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/feedback", {
@@ -111,7 +147,9 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category,
-          message: message.trim(),
+          name: isAnonymous ? trimmedName : null,
+          email: isAnonymous ? trimmedEmail || null : null,
+          message: trimmedMessage,
           attachments: attachments.trim() || null,
           page_url:
             typeof window !== "undefined"
@@ -139,7 +177,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="feedback-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4"
+      className="fixed inset-0 z-50 flex items-end justify-center px-4 py-4 sm:items-center"
     >
       <button
         type="button"
@@ -148,7 +186,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
         className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
       />
 
-      <div className="relative w-full max-w-md bg-parchment rounded-card-lg shadow-card-hover border border-hairline-strong p-6 md:p-8 mb-4 sm:mb-0">
+      <div className="relative flex max-h-[calc(100dvh-2rem-var(--safe-bottom))] w-full max-w-md flex-col overflow-hidden bg-parchment rounded-card-lg shadow-card-hover border border-hairline-strong mb-[var(--safe-bottom)] sm:mb-0">
         <button
           type="button"
           aria-label="Tutup"
@@ -158,106 +196,142 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
           <CloseIcon />
         </button>
 
-        <p className="text-caption text-muted uppercase tracking-wide font-semibold">
-          Kasih masukan
-        </p>
-        <h2
-          id="feedback-title"
-          className="mt-2 font-display text-display-md text-ink leading-tight"
-        >
-          Cerita ke kita.
-        </h2>
-        <p className="mt-3 text-body-sm text-ink-soft leading-relaxed">
-          Apapun — ide gila, bug ngeselin, friksi kecil, atau apresiasi yang bikin lo balik. Kita
-          baca semua. Gak janjiin instant balik, tapi setiap masukan masuk backlog product.
-        </p>
+        <div className="overflow-y-auto p-6 md:p-8">
+          <p className="text-caption text-muted uppercase tracking-wide font-semibold">
+            Kasih masukan
+          </p>
+          <h2
+            id="feedback-title"
+            className="mt-2 font-display text-display-md text-ink leading-tight"
+          >
+            Cerita ke kita.
+          </h2>
+          <p className="mt-3 text-body-sm text-ink-soft leading-relaxed">
+            Apapun — ide gila, bug ngeselin, friksi kecil, atau apresiasi yang bikin lo balik. Kita
+            baca semua. Gak janjiin instant balik, tapi setiap masukan masuk backlog product.
+          </p>
 
-        <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
-          {/* Category radio cards */}
-          <div className="flex flex-col gap-2">
-            <p className="text-caption font-medium text-ink-soft">Kategori</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-              {CATEGORIES.map((c) => {
-                const active = category === c.slug;
-                return (
-                  <button
-                    key={c.slug}
-                    type="button"
-                    onClick={() => setCategory(c.slug)}
-                    className={
-                      "inline-flex items-center justify-center gap-1 h-9 px-2 rounded-pill text-caption font-medium transition-colors " +
-                      (active
-                        ? "bg-ink text-parchment border border-ink"
-                        : "bg-paper text-ink-soft border border-hairline hover:bg-cream")
-                    }
-                    aria-pressed={active}
-                  >
-                    <span aria-hidden>{c.emoji}</span>
-                    <span>{c.label}</span>
-                  </button>
-                );
-              })}
+          <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
+            {/* Category radio cards */}
+            <div className="flex flex-col gap-2">
+              <p className="text-caption font-medium text-ink-soft">Kategori</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {CATEGORIES.map((c) => {
+                  const active = category === c.slug;
+                  return (
+                    <button
+                      key={c.slug}
+                      type="button"
+                      onClick={() => setCategory(c.slug)}
+                      className={
+                        "inline-flex items-center justify-center gap-1 h-9 px-2 rounded-pill text-caption font-medium transition-colors " +
+                        (active
+                          ? "bg-ink text-parchment border border-ink"
+                          : "bg-paper text-ink-soft border border-hairline hover:bg-cream")
+                      }
+                      aria-pressed={active}
+                    >
+                      <span aria-hidden>{c.emoji}</span>
+                      <span>{c.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {activeCategory && (
+                <p className="text-caption text-muted -mt-1">{activeCategory.hint}</p>
+              )}
             </div>
-            {activeCategory && (
-              <p className="text-caption text-muted -mt-1">{activeCategory.hint}</p>
+
+            {isAnonymous && (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="fb-name" className="text-caption font-medium text-ink-soft">
+                    Nama kamu
+                  </label>
+                  <input
+                    id="fb-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={120}
+                    autoComplete="name"
+                    placeholder="Biar tim bisa follow-up"
+                    className="w-full h-11 px-3.5 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] transition-colors"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="fb-email" className="text-caption font-medium text-ink-soft">
+                    Email <span className="text-muted">(opsional)</span>
+                  </label>
+                  <input
+                    id="fb-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    maxLength={200}
+                    autoComplete="email"
+                    placeholder="nama@email.com"
+                    className="w-full h-11 px-3.5 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] transition-colors"
+                  />
+                </div>
+              </div>
             )}
-          </div>
 
-          {/* Message */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="fb-msg" className="text-caption font-medium text-ink-soft">
-              Pesan lo
-            </label>
-            <textarea
-              id="fb-msg"
-              required
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={5}
-              maxLength={2000}
-              placeholder="Tulis sebebasnya. Spesifik > umum. Cerita pengalaman > kasih solusi."
-              className="w-full px-3.5 py-3 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] focus:py-[11px] transition-colors resize-y"
-            />
-            <p className="text-caption text-muted text-right">{message.length}/2000</p>
-          </div>
+            {/* Message */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="fb-msg" className="text-caption font-medium text-ink-soft">
+                Pesan lo
+              </label>
+              <textarea
+                id="fb-msg"
+                required
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={5}
+                maxLength={2000}
+                placeholder="Tulis sebebasnya. Spesifik > umum. Cerita pengalaman > kasih solusi."
+                className="w-full px-3.5 py-3 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink focus:border-2 focus:px-[13px] focus:py-[11px] transition-colors resize-y"
+              />
+              <p className="text-caption text-muted text-right">{message.length}/2000</p>
+            </div>
 
-          {/* Attachments (optional) */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="fb-attachments" className="text-caption font-medium text-ink-soft">
-              Link Lampiran <span className="text-muted">(opsional)</span>
-            </label>
-            <textarea
-              id="fb-attachments"
-              value={attachments}
-              onChange={(e) => setAttachments(e.target.value)}
-              rows={2}
-              placeholder="https://...&#10;https://..."
-              className="w-full px-3.5 py-2 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink text-body-sm transition-colors resize-none"
-            />
-            <p className="text-[10px] text-muted italic">
-              Pisahin pake baris baru kalau lebih dari satu.
-            </p>
-          </div>
+            {/* Attachments (optional) */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="fb-attachments" className="text-caption font-medium text-ink-soft">
+                Link Lampiran <span className="text-muted">(opsional)</span>
+              </label>
+              <textarea
+                id="fb-attachments"
+                value={attachments}
+                onChange={(e) => setAttachments(e.target.value)}
+                rows={2}
+                placeholder="https://...&#10;https://..."
+                className="w-full px-3.5 py-2 bg-paper text-ink rounded-button border border-hairline-strong focus:outline-none focus:border-ink text-body-sm transition-colors resize-none"
+              />
+              <p className="text-[10px] text-muted italic">
+                Pisahin pake baris baru kalau lebih dari satu.
+              </p>
+            </div>
 
-          {error && <p className="text-caption text-(--color-error)">{error}</p>}
+            {error && <p className="text-caption text-(--color-error)">{error}</p>}
 
-          <div className="flex gap-3 mt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center justify-center h-11 px-5 rounded-pill bg-paper text-ink-soft text-body-sm font-medium border border-hairline-strong hover:bg-cream transition-colors"
-            >
-              Tutup
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 inline-flex items-center justify-center h-11 px-5 rounded-pill bg-ink text-parchment text-body-sm font-semibold hover:bg-ink-soft transition-colors disabled:opacity-50"
-            >
-              {submitting ? "Mengirim…" : "Kirim →"}
-            </button>
-          </div>
-        </form>
+            <div className="flex gap-3 mt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center justify-center h-11 px-5 rounded-pill bg-paper text-ink-soft text-body-sm font-medium border border-hairline-strong hover:bg-cream transition-colors"
+              >
+                Tutup
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 inline-flex items-center justify-center h-11 px-5 rounded-pill bg-ink text-parchment text-body-sm font-semibold hover:bg-ink-soft transition-colors disabled:opacity-50"
+              >
+                {submitting ? "Mengirim…" : "Kirim →"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
