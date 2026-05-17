@@ -15,6 +15,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidEmail } from "@/lib/feedback-validation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getAppUrl } from "@/lib/url";
 import type { FeedbackCategory } from "@/types";
@@ -100,8 +101,11 @@ export async function POST(req: NextRequest) {
   const email = user?.email ?? (emailFromBody || null);
   const name = user?.id ? null : anonName;
 
-  // Insert feedback row — RLS allows insert for anyone
-  const { data: inserted, error: insertErr } = await supabase
+  // Route handler has already validated the payload. Use the server-only
+  // service-role client so anonymous submissions do not need public SELECT
+  // access just to return the inserted id.
+  const feedbackWriter = createAdminClient();
+  const { data: inserted, error: insertErr } = await feedbackWriter
     .from("feedback")
     .insert({
       user_id: user?.id ?? null,
