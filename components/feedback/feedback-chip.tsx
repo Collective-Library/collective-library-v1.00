@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { isValidEmail } from "@/lib/feedback-validation";
 import { createClient } from "@/lib/supabase/client";
 import type { FeedbackCategory } from "@/types";
 
@@ -82,7 +83,6 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [attachments, setAttachments] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // Esc closes
   useEffect(() => {
@@ -105,10 +105,16 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     let active = true;
     const supabase = createClient();
-    void supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      setIsAnonymous(!data.user);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (!active) return;
+        setIsAnonymous(!data.user);
+      })
+      .catch(() => {
+        if (!active) return;
+        setIsAnonymous(true);
+      });
     return () => {
       active = false;
     };
@@ -119,13 +125,13 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
     setError(null);
     const trimmedMessage = message.trim();
     const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
 
-    if (isAnonymous && trimmedName.length < 1) {
+    if (isAnonymous && !trimmedName) {
       setError("Nama wajib diisi untuk kirim masukan.");
       return;
     }
-    if (isAnonymous && trimmedEmail && !emailPattern.test(trimmedEmail)) {
+    if (isAnonymous && trimmedEmail && !isValidEmail(trimmedEmail)) {
       setError("Format email belum valid.");
       return;
     }
@@ -243,7 +249,6 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
                 </label>
                 <input
                   id="fb-name"
-                  required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={120}

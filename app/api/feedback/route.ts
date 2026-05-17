@@ -14,6 +14,7 @@
 // =============================================================================
 
 import { NextResponse, type NextRequest } from "next/server";
+import { isValidEmail } from "@/lib/feedback-validation";
 import { createClient } from "@/lib/supabase/server";
 import { getAppUrl } from "@/lib/url";
 import type { FeedbackCategory } from "@/types";
@@ -55,8 +56,6 @@ interface SubmitBody {
   page_url?: string | null;
 }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export async function POST(req: NextRequest) {
   let body: SubmitBody;
   try {
@@ -94,11 +93,11 @@ export async function POST(req: NextRequest) {
   }
 
   const emailFromBody = (body.email ?? "").trim().toLowerCase();
-  if (!user?.id && emailFromBody && !EMAIL_PATTERN.test(emailFromBody)) {
+  if (!user?.id && emailFromBody && !isValidEmail(emailFromBody)) {
     return NextResponse.json({ error: "Format email belum valid." }, { status: 400 });
   }
 
-  const email = user?.email ?? (!user?.id ? emailFromBody || null : null);
+  const email = user?.email ?? (emailFromBody || null);
   const name = user?.id ? null : anonName;
 
   // Insert feedback row — RLS allows insert for anyone
