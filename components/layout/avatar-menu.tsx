@@ -101,13 +101,11 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
               Import from Goodreads
             </MenuItem>
           </ul>
-          {!profile.is_admin && (
-            <div className="border-t border-hairline-soft py-1.5 flex flex-col gap-1">
-              <MenuItem href="/feedback/" onClick={() => setOpen(false)}>
-                My feedback
-              </MenuItem>
-            </div>
-          )}
+          <div className="border-t border-hairline-soft py-1.5 flex flex-col gap-1">
+            <MenuItem href="/feedback/" onClick={() => setOpen(false)}>
+              My feedback
+            </MenuItem>
+          </div>
           {profile.is_admin && (
             <div className="border-t border-hairline-soft py-1.5 px-1.5 flex flex-col gap-1">
               <Link
