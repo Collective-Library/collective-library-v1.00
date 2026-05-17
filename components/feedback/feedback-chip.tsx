@@ -76,7 +76,7 @@ const CATEGORIES: { slug: FeedbackCategory; label: string; emoji: string; hint: 
 
 function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [category, setCategory] = useState<FeedbackCategory>("idea");
-  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [isAnonymous, setIsAnonymous] = useState<boolean | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -127,7 +127,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
     const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
 
-    if (isAnonymous && !trimmedName) {
+    if (isAnonymous === true && !trimmedName) {
       setError("Nama wajib diisi untuk kirim masukan.");
       return;
     }
@@ -147,8 +147,8 @@ function FeedbackModal({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category,
-          name: isAnonymous ? trimmedName : null,
-          email: isAnonymous ? trimmedEmail || null : null,
+          name: isAnonymous === true ? trimmedName : null,
+          email: isAnonymous === true ? trimmedEmail || null : null,
           message: trimmedMessage,
           attachments: attachments.trim() || null,
           page_url:
