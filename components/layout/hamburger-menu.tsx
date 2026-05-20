@@ -391,7 +391,7 @@ export function HamburgerMenu({ profile }: { profile: Profile | null }) {
                 ))}
 
                 {/* Bottom links */}
-                <div className="pt-4 border-t border-hairline-soft flex flex-col gap-0.5 text-body-sm">
+                <div className="pt-4 pb-15 border-t border-hairline-soft flex flex-col gap-0.5 text-body-sm">
                   <Link
                     href="/about"
                     onClick={close}
