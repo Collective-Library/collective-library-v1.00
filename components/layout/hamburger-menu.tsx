@@ -300,6 +300,18 @@ export function HamburgerMenu({ profile }: { profile: Profile | null }) {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    function onDesktopBreakpoint(event: MediaQueryListEvent) {
+      if (event.matches) setOpen(false);
+    }
+    mediaQuery.addEventListener("change", onDesktopBreakpoint);
+    return () => {
+      mediaQuery.removeEventListener("change", onDesktopBreakpoint);
+    };
+  }, [open]);
+
   function close() {
     setOpen(false);
   }
@@ -320,12 +332,7 @@ export function HamburgerMenu({ profile }: { profile: Profile | null }) {
       </button>
 
       {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Navigation"
-          className="fixed inset-0 z-50"
-        >
+        <div role="dialog" aria-modal="true" aria-label="Navigation" className="fixed inset-0 z-50">
           {/* Backdrop — absolutely positioned INSIDE the dialog wrapper.
               Click to close. */}
           <button
@@ -340,8 +347,8 @@ export function HamburgerMenu({ profile }: { profile: Profile | null }) {
           <aside
             id="hamburger-panel"
             className={cn(
-              "relative h-full w-[88vw] max-w-sm bg-paper border-r border-hairline shadow-modal",
-              "flex flex-col animate-drawer-slide-in-left",
+              "relative h-dvh max-h-dvh min-h-0 w-[88vw] max-w-sm bg-paper border-r border-hairline shadow-modal",
+              "flex flex-col animate-drawer-slide-in-left"
             )}
           >
             {/* Header */}
@@ -366,7 +373,7 @@ export function HamburgerMenu({ profile }: { profile: Profile | null }) {
             </header>
 
             {/* Body — scrollable */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-5 py-5">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 md:px-5 py-5">
               <div className="flex flex-col gap-6">
                 {visibleGroups.map((group) => (
                   <section key={group.label}>
@@ -453,9 +460,7 @@ function NavRow({
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex items-start gap-3 px-3 py-2.5 rounded-button transition-colors",
-        active
-          ? "bg-cream text-ink"
-          : "text-ink-soft hover:bg-cream hover:text-ink",
+        active ? "bg-cream text-ink" : "text-ink-soft hover:bg-cream hover:text-ink"
       )}
     >
       <Icon size={18} />
@@ -465,7 +470,7 @@ function NavRow({
           <p
             className={cn(
               "text-caption leading-tight mt-0.5",
-              active ? "text-ink-soft" : "text-muted",
+              active ? "text-ink-soft" : "text-muted"
             )}
           >
             {item.description}
