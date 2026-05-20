@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORY_LABELS, STATUS_LABELS } from "@/lib/feedback-constants";
@@ -26,12 +27,19 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   const supabase = await createClient();
 
-  // Main data query — RLS policy feedback_select_own filters by auth.uid() = user_id
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/auth/login");
+
+  // Main data query — filter by user_id explicitly + RLS policy
   let query = supabase
     .from("feedback")
     .select("id, category, message, status, attachments, page_url, created_at", {
       count: "exact",
     })
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (status !== "all") query = query.eq("status", status);
@@ -43,7 +51,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   const { data, error, count } = await query;
 
-  // Counts for filter pill badges (also RLS-filtered to user's own)
+  // Counts for filter pill badges (also filtered by user_id)
   const counts: Record<FeedbackStatus | "all", number> = {
     all: 0,
     new: 0,
@@ -52,7 +60,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     shipped: 0,
     wontfix: 0,
   };
-  let countsQuery = supabase.from("feedback").select("status");
+  let countsQuery = supabase.from("feedback").select("status").eq("user_id", user.id);
   if (category !== "all") countsQuery = countsQuery.eq("category", category);
   const { data: countsData } = await countsQuery;
   for (const row of countsData ?? []) {
