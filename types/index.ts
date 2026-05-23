@@ -16,6 +16,7 @@ export type FeedbackStatus = "new" | "triaged" | "planned" | "shipped" | "wontfi
 export interface FeedbackItem {
   id: string;
   user_id: string | null;
+  name: string | null;
   category: FeedbackCategory;
   message: string;
   email: string | null;

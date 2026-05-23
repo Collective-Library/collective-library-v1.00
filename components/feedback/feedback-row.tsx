@@ -15,7 +15,11 @@ interface FeedbackRowProps {
 }
 
 export default function FeedbackRow({ row, isAdmin = false }: FeedbackRowProps) {
-  const userName = row.user?.full_name ?? row.user?.username ?? (row.user_id ? "anggota" : "anon");
+  const userName =
+    row.user?.full_name ??
+    row.user?.username ??
+    row.name?.trim() ??
+    (row.user_id ? "anggota" : "anon");
   const handle = row.user?.username ? `@${row.user.username}` : null;
 
   const attachmentLinks = row.attachments
