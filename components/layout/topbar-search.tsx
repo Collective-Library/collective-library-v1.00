@@ -49,8 +49,11 @@ export function TopBarSearch() {
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
   const [hits, setHits] = useState<SearchHit[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [pendingQuery, setPendingQuery] = useState<string | null>(null);
   const [highlight, setHighlight] = useState(-1);
+  const query = value.trim();
+  const hasSearchQuery = query.length >= 2;
+  const loading = pendingQuery === query;
 
   // Debounced fetch with cancelable AbortController per keystroke.
   useEffect(() => {
@@ -58,14 +61,13 @@ export function TopBarSearch() {
     if (q.length < 2) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHits([]);
-      setLoading(false);
       return;
     }
-    setLoading(true);
     const ctrl = new AbortController();
     const t = setTimeout(async () => {
+      setPendingQuery(query);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=8`, {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=8`, {
           signal: ctrl.signal,
         });
         if (!res.ok) throw new Error("search failed");
@@ -77,14 +79,15 @@ export function TopBarSearch() {
           setHits([]);
         }
       } finally {
-        setLoading(false);
+        setPendingQuery(null);
       }
     }, 200);
     return () => {
       ctrl.abort();
       clearTimeout(t);
     };
-  }, [value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasSearchQuery, query]);
 
   // Outside click + Escape close
   useEffect(() => {
@@ -128,10 +131,10 @@ export function TopBarSearch() {
     }
   }
 
-  const showDropdown = open && (value.trim().length >= 2 || loading);
+  const showDropdown = open && hasSearchQuery;
 
   return (
-    <div ref={containerRef} className="relative flex-1 max-w-md mx-2 hidden md:flex">
+    <div ref={containerRef} className="relative flex-1 max-w-md mx-2 hidden lg:flex">
       <div className="relative w-full">
         <span
           className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
@@ -179,6 +182,7 @@ export function TopBarSearch() {
 
       {showDropdown && (
         <div
+          id="topbar-search-results"
           role="listbox"
           className="absolute top-full left-0 right-0 mt-2 z-50 bg-paper border border-hairline rounded-card-lg shadow-modal overflow-hidden animate-pop-fade-down"
         >
