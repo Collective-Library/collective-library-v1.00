@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { EventSpotPicker } from "@/components/events/event-spot-picker";
+import type { SelectableSpot } from "@/lib/spots";
 import type { ContactMethod, Event, EventFormValues, EventVisibility } from "@/types";
 
 type Step = 1 | 2 | 3;
@@ -15,6 +17,10 @@ interface Props {
   userId: string;
   mode: Mode;
   initial?: Event;
+  /** Spots available to attach (active + public + is_active=true). */
+  spots?: SelectableSpot[];
+  /** Whether the current user can inline-create a new Spot. */
+  eligibleHost?: boolean;
 }
 
 const CONTACT_OPTIONS: { value: ContactMethod; label: string }[] = [
@@ -44,7 +50,7 @@ function splitTags(input: string): string[] {
     .filter(Boolean);
 }
 
-export function EventForm({ userId, mode, initial }: Props) {
+export function EventForm({ userId, mode, initial, spots = [], eligibleHost = false }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [saving, setSaving] = useState(false);
@@ -61,6 +67,7 @@ export function EventForm({ userId, mode, initial }: Props) {
   const [locationText, setLocationText] = useState(initial?.location_text ?? "");
   const [locationUrl, setLocationUrl] = useState(initial?.location_url ?? "");
   const [isOnline, setIsOnline] = useState(initial?.is_online ?? false);
+  const [nodeId, setNodeId] = useState<string>(initial?.node_id ?? "");
 
   // Step 2: Description & vibe
   const [theme, setTheme] = useState(initial?.theme ?? "");
@@ -130,6 +137,7 @@ export function EventForm({ userId, mode, initial }: Props) {
       community_name: communityName.trim() || undefined,
       community_instagram_url: communityInstagramUrl.trim() || undefined,
       community_logo_url: communityLogoUrl.trim() || undefined,
+      node_id: nodeId || null,
     };
 
     try {
@@ -240,6 +248,27 @@ export function EventForm({ userId, mode, initial }: Props) {
               Event online
             </label>
           </div>
+
+          {!isOnline && (
+            <EventSpotPicker
+              value={nodeId}
+              onChange={(nextId, spot) => {
+                setNodeId(nextId);
+                // Auto-fill location_text only when empty so we don't trample
+                // a host's custom phrasing. Maps URL likewise.
+                if (spot) {
+                  if (!locationText.trim()) {
+                    setLocationText(`${spot.name}, ${spot.city}`);
+                  }
+                  if (!locationUrl.trim() && spot.maps_url) {
+                    setLocationUrl(spot.maps_url);
+                  }
+                }
+              }}
+              spots={spots}
+              eligibleHost={eligibleHost}
+            />
+          )}
 
           {!isOnline && (
             <div>

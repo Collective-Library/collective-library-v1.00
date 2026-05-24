@@ -57,7 +57,10 @@ export function TopBarSearch() {
 
   // Debounced fetch with cancelable AbortController per keystroke.
   useEffect(() => {
-    if (!hasSearchQuery) {
+    const q = value.trim();
+    if (q.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHits([]);
       return;
     }
     const ctrl = new AbortController();
@@ -83,6 +86,7 @@ export function TopBarSearch() {
       ctrl.abort();
       clearTimeout(t);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasSearchQuery, query]);
 
   // Outside click + Escape close
@@ -150,9 +154,6 @@ export function TopBarSearch() {
           onKeyDown={onKeyDown}
           placeholder="Cari judul, author, atau owner…"
           aria-label="Cari di rak komunitas"
-          role="combobox"
-          aria-controls="topbar-search-results"
-          aria-expanded={showDropdown}
           aria-autocomplete="list"
           autoComplete="off"
           className={cn(

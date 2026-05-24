@@ -242,10 +242,11 @@ const GROUPS: NavGroup[] = [
         match: (p) => p.startsWith("/map") || p.startsWith("/peta"),
       },
       {
-        label: "Places",
-        description: "Cafe · bookstore · reading spot",
+        label: "Spots",
+        href: "/spots",
+        description: "Cafe · rak buku publik · ruang komunitas",
         icon: PlacesIcon,
-        comingSoon: true,
+        match: (p) => p === "/spots" || p.startsWith("/spots/"),
       },
     ],
   },
@@ -300,6 +301,8 @@ export function HamburgerMenu({ profile }: { profile: Profile | null }) {
     };
   }, [open]);
 
+  // Auto-close when viewport expands to desktop (lg+) — prevents a phantom
+  // overlay after the user rotates device or resizes the window.
   useEffect(() => {
     if (!open) return;
     const mediaQuery = window.matchMedia("(min-width: 1024px)");

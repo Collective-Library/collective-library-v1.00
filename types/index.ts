@@ -330,6 +330,9 @@ export interface Event {
   community_name: string | null;
   community_instagram_url: string | null;
   community_logo_url: string | null;
+  // Spots link (migration 0025) — optional FK to library_nodes.
+  // Coexists with location_text/location_url; never replaces them.
+  node_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -349,6 +352,8 @@ export interface EventWithHost extends Event {
     | "discord"
   >;
   community: Pick<Community, "id" | "name" | "slug"> | null;
+  /** Optional embedded Spot (migration 0025). Null when event has no node_id. */
+  node: { id: string; name: string; slug: string; type: SpotType; city: string } | null;
   rsvp_count: number;
   viewer_rsvp: EventRsvpStatus | null;
 }
@@ -408,6 +413,8 @@ export interface EventFormValues {
   community_name?: string;
   community_instagram_url?: string;
   community_logo_url?: string;
+  // Optional Library Node (Spot) link — added in migration 0025.
+  node_id?: string | null;
 }
 
 /** RSVP context — optional fields collected after RSVP confirmation. */
@@ -470,4 +477,71 @@ export interface ManifestFormValues {
   visibility?: ManifestVisibility;
   linked_event_id?: string;
   linked_book_id?: string;
+}
+
+// =============================================================================
+// Library Nodes / Spots (mirrors supabase/migrations/0024_library_nodes.sql)
+//
+// Internal model: library_nodes. UI label: "Spots". Future route: /spots.
+// Public UI deferred — admin-only management in /mastermind/spots for now.
+// =============================================================================
+
+export type SpotType =
+  | "cafe"
+  | "public_shelf"
+  | "community_space"
+  | "school"
+  | "campus"
+  | "library"
+  | "coworking"
+  | "partner"
+  | "other";
+
+export type SpotStatus = "active" | "inactive" | "needs_audit";
+export type SpotVisibility = "public" | "community";
+
+export interface LibraryNode {
+  id: string;
+  name: string;
+  slug: string;
+  type: SpotType;
+  city: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  maps_url: string | null;
+  description: string | null;
+  image_url: string | null;
+  operating_hours: string | null;
+  community_id: string | null;
+  status: SpotStatus;
+  is_active: boolean;
+  visibility: SpotVisibility;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** UI-facing alias. Diverge later if the UI shape needs to drift from DB row. */
+export type Spot = LibraryNode;
+
+/** Form values — what the admin Spot create/edit form posts. */
+export interface SpotFormValues {
+  name: string;
+  slug: string;
+  type: SpotType;
+  city: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  maps_url?: string;
+  description?: string;
+  image_url?: string;
+  operating_hours?: string;
+  community_id?: string;
+  // Admin-only — UI must hide these for non-admin, and /api/admin/spots must
+  // re-check is_admin server-side before accepting writes to these fields.
+  status?: SpotStatus;
+  is_active?: boolean;
+  visibility?: SpotVisibility;
 }

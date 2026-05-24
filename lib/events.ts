@@ -12,7 +12,7 @@ import type {
 
 const HOST_SELECT = `id, full_name, username, photo_url, city, whatsapp, whatsapp_public, instagram, discord`;
 
-const EVENT_LIST_COLUMNS = `id, host_id, community_id, title, starts_at, ends_at, timezone, location_text, location_url, is_online, capacity, cover_url, visibility, status, is_hidden, discord_announced_at, created_at, updated_at`;
+const EVENT_LIST_COLUMNS = `id, host_id, community_id, title, starts_at, ends_at, timezone, location_text, location_url, is_online, capacity, cover_url, visibility, status, is_hidden, discord_announced_at, node_id, created_at, updated_at`;
 
 // Supabase returns embedded relations as arrays; flatten to single object.
 const flatten = <T,>(v: T | T[] | null): T | null =>
@@ -42,6 +42,7 @@ export async function listEvents(opts?: {
       `${EVENT_LIST_COLUMNS},
        host:profiles_public!events_host_id_fkey(${HOST_SELECT}),
        community:communities(id, name, slug),
+       node:library_nodes(id, name, slug, type, city),
        rsvps:event_rsvps(count)`,
       { count: "exact" },
     )
@@ -74,6 +75,7 @@ export async function listEvents(opts?: {
   type Row = {
     host: unknown;
     community: unknown;
+    node: unknown;
     rsvps: Array<{ count: number }> | null;
   } & Record<string, unknown>;
 
@@ -81,6 +83,7 @@ export async function listEvents(opts?: {
     ...r,
     host: flatten(r.host as never),
     community: flatten(r.community as never),
+    node: flatten(r.node as never),
     rsvp_count: r.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: null,
   })) as unknown as EventWithHost[];
@@ -102,6 +105,7 @@ export async function getUpcomingEvents(limit = 8): Promise<EventWithHost[]> {
       `${EVENT_LIST_COLUMNS},
        host:profiles_public!events_host_id_fkey(${HOST_SELECT}),
        community:communities(id, name, slug),
+       node:library_nodes(id, name, slug, type, city),
        rsvps:event_rsvps(count)`,
     )
     .eq("is_hidden", false)
@@ -118,6 +122,7 @@ export async function getUpcomingEvents(limit = 8): Promise<EventWithHost[]> {
   type Row = {
     host: unknown;
     community: unknown;
+    node: unknown;
     rsvps: Array<{ count: number }> | null;
   } & Record<string, unknown>;
 
@@ -125,6 +130,7 @@ export async function getUpcomingEvents(limit = 8): Promise<EventWithHost[]> {
     ...r,
     host: flatten(r.host as never),
     community: flatten(r.community as never),
+    node: flatten(r.node as never),
     rsvp_count: r.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: null,
   })) as unknown as EventWithHost[];
@@ -147,6 +153,7 @@ export async function getEvent(
       `*,
        host:profiles_public!events_host_id_fkey(${HOST_SELECT}),
        community:communities(id, name, slug),
+       node:library_nodes(id, name, slug, type, city),
        rsvps:event_rsvps(count)`,
     )
     .eq("id", id)
@@ -162,6 +169,7 @@ export async function getEvent(
   type Row = {
     host: unknown;
     community: unknown;
+    node: unknown;
     rsvps: Array<{ count: number }> | null;
   } & Record<string, unknown>;
 
@@ -182,6 +190,7 @@ export async function getEvent(
     ...row,
     host: flatten(row.host as never),
     community: flatten(row.community as never),
+    node: flatten(row.node as never),
     rsvp_count: row.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: viewerRsvp,
   } as unknown as EventWithHost;
@@ -221,6 +230,7 @@ export async function createEvent(
       community_name: values.community_name ?? null,
       community_instagram_url: values.community_instagram_url ?? null,
       community_logo_url: values.community_logo_url ?? null,
+      node_id: values.node_id ?? null,
     })
     .select("id")
     .single();
@@ -266,6 +276,7 @@ export async function updateEvent(
       ...(patch.community_name !== undefined && { community_name: patch.community_name }),
       ...(patch.community_instagram_url !== undefined && { community_instagram_url: patch.community_instagram_url }),
       ...(patch.community_logo_url !== undefined && { community_logo_url: patch.community_logo_url }),
+      ...(patch.node_id !== undefined && { node_id: patch.node_id }),
     })
     .eq("id", id);
 

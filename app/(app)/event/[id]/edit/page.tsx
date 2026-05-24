@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getRawEvent } from "@/lib/events";
 import { EventForm } from "@/components/events/event-form";
+import { isHostEligibleForSpotCreate, listSelectableSpots } from "@/lib/spots";
 import { DeleteEventButton } from "./delete-event-button";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,11 @@ export default async function EditEventPage({
   if (!event) notFound();
   if (event.host_id !== user.id) notFound();
 
+  const [spots, eligibleHost] = await Promise.all([
+    listSelectableSpots(),
+    isHostEligibleForSpotCreate(user.id),
+  ]);
+
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
       <div>
@@ -30,7 +36,13 @@ export default async function EditEventPage({
         </h1>
       </div>
 
-      <EventForm userId={user.id} mode="edit" initial={event} />
+      <EventForm
+        userId={user.id}
+        mode="edit"
+        initial={event}
+        spots={spots}
+        eligibleHost={eligibleHost}
+      />
 
       <div className="mt-8 pt-6 border-t border-hairline">
         <p className="text-caption text-muted uppercase tracking-wide font-semibold mb-2">
