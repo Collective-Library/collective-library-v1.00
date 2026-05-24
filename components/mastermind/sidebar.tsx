@@ -13,6 +13,7 @@ const SECTIONS: { slug: string; label: string; emoji: string; href: string; phas
   { slug: "requests",     label: "Buku Dicari (WTB)",   emoji: "🔎", href: "/mastermind/requests",   phase: 1 },
   { slug: "community",    label: "Community",           emoji: "🤝", href: "/mastermind/community",  phase: 1 },
   { slug: "data-health",  label: "Data Health",         emoji: "🩺", href: "/mastermind/data-health",phase: 1 },
+  { slug: "spots",        label: "Spots",               emoji: "📍", href: "/mastermind/spots",      phase: 1 },
   { slug: "events",       label: "Events & Knowledge",  emoji: "🎪", href: "/mastermind/events",     phase: 2 },
   { slug: "decisions",    label: "Decision Log",        emoji: "📓", href: "/mastermind/decisions",  phase: 2 },
   { slug: "product-lab",  label: "Product Lab",         emoji: "🧪", href: "/mastermind/product-lab",phase: 2 },
