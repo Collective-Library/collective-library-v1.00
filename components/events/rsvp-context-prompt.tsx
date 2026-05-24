@@ -27,8 +27,8 @@ interface Props {
 export function RsvpContextPrompt({ eventId, profileId, initialContext }: Props) {
   const hasInitial = Boolean(
     initialContext?.origin_city ||
-      initialContext?.bringing_book ||
-      initialContext?.conversation_topic,
+    initialContext?.bringing_book ||
+    initialContext?.conversation_topic
   );
 
   const [expanded, setExpanded] = useState(!hasInitial);
@@ -79,7 +79,8 @@ export function RsvpContextPrompt({ eventId, profileId, initialContext }: Props)
           Optional · Bikin kartu kamu lebih hidup
         </p>
         <p className="text-caption text-muted leading-relaxed">
-          Cuma muncul di kartu kamu di section "Hadir". Gak wajib — kosongin juga gapapa.
+          Cuma muncul di kartu kamu di section &ldquo;Hadir&rdquo;. Gak wajib — kosongin juga
+          gapapa.
         </p>
       </div>
 
@@ -139,9 +140,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-body-sm font-semibold text-ink mb-1.5">
-        {label}
-      </label>
+      <label className="block text-body-sm font-semibold text-ink mb-1.5">{label}</label>
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}

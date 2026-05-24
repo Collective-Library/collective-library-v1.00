@@ -26,7 +26,7 @@ export async function generateMetadata({
 
   const when = formatEventWhen(event.starts_at, event.ends_at, event.timezone);
   const host = event.host.full_name ?? event.host.username ?? "anggota";
-  const where = event.is_online ? "online" : event.location_text ?? "Semarang";
+  const where = event.is_online ? "online" : (event.location_text ?? "Semarang");
   const themeOrDesc = event.theme ?? event.description ?? "";
   const description = `${event.title} — ${when} di ${where}. Host: ${host}.${themeOrDesc ? ` ${themeOrDesc.slice(0, 120)}` : ""}`;
 
@@ -42,11 +42,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function EventDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [user, eventEarly] = await Promise.all([getCurrentUser(), getEvent(id)]);
   if (!eventEarly) notFound();
@@ -61,14 +57,14 @@ export default async function EventDetailPage({
   const publicUrl = `${getAppUrl()}/event/${event.id}`;
 
   // Viewer's own RSVP row — used to pre-populate context prompt
-  const viewerRsvp = user
-    ? rsvps.find((r) => r.profile_id === user.id) ?? null
-    : null;
+  const viewerRsvp = user ? (rsvps.find((r) => r.profile_id === user.id) ?? null) : null;
 
   // Registration deadline: hide CTA after deadline passes
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const registrationOpen =
     Boolean(event.registration_url) &&
-    (!event.registration_deadline || new Date(event.registration_deadline).getTime() > Date.now());
+    (!event.registration_deadline || new Date(event.registration_deadline).getTime() > now);
 
   return (
     <article className="max-w-4xl mx-auto">
@@ -127,9 +123,7 @@ export default async function EventDetailPage({
           </h1>
 
           {event.theme && (
-            <p className="text-body-lg text-ink-soft italic leading-relaxed mt-1">
-              {event.theme}
-            </p>
+            <p className="text-body-lg text-ink-soft italic leading-relaxed mt-1">{event.theme}</p>
           )}
 
           <p className="text-body text-ink-soft mt-1">
@@ -223,10 +217,13 @@ export default async function EventDetailPage({
                       📝 {event.registration_label || "Daftar via form penyelenggara"}
                     </a>
                     <p className="text-caption text-muted text-center leading-relaxed">
-                      RSVP di sini ngebantu orang lain liat siapa yang tertarik hadir. Untuk pendaftaran resmi, ikutin form di atas.
+                      RSVP di sini ngebantu orang lain liat siapa yang tertarik hadir. Untuk
+                      pendaftaran resmi, ikutin form di atas.
                       {event.registration_deadline && (
                         <>
-                          {" "}Deadline: {formatEventWhen(event.registration_deadline, null, event.timezone)}.
+                          {" "}
+                          Deadline:{" "}
+                          {formatEventWhen(event.registration_deadline, null, event.timezone)}.
                         </>
                       )}
                     </p>
