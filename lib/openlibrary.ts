@@ -11,6 +11,7 @@ export interface IsbnLookup {
   description?: string;
   cover_url?: string;
   language?: string;
+  genre?: string;
 }
 
 /** Strip everything but digits, accept ISBN-10 or ISBN-13. */
@@ -27,7 +28,7 @@ async function lookupGoogleBooks(isbn: string): Promise<IsbnLookup | null> {
   try {
     const r = await fetch(
       `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`,
-      { cache: "force-cache" },
+      { cache: "force-cache" }
     );
     if (!r.ok) return null;
     const data = (await r.json()) as {
@@ -39,6 +40,7 @@ async function lookupGoogleBooks(isbn: string): Promise<IsbnLookup | null> {
           description?: string;
           language?: string;
           imageLinks?: { thumbnail?: string; smallThumbnail?: string };
+          categories?: string[];
         };
       }>;
     };
@@ -54,6 +56,7 @@ async function lookupGoogleBooks(isbn: string): Promise<IsbnLookup | null> {
       description: v.description,
       language: v.language,
       cover_url: cover,
+      genre: v.categories?.[0],
     };
   } catch {
     return null;
@@ -64,7 +67,7 @@ async function lookupOpenLibrary(isbn: string): Promise<IsbnLookup | null> {
   try {
     const r = await fetch(
       `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`,
-      { cache: "force-cache" },
+      { cache: "force-cache" }
     );
     if (!r.ok) return null;
     const data = (await r.json()) as Record<
@@ -79,8 +82,7 @@ async function lookupOpenLibrary(isbn: string): Promise<IsbnLookup | null> {
     >;
     const v = data[`ISBN:${isbn}`];
     if (!v?.title) return null;
-    const description =
-      typeof v.notes === "string" ? v.notes : v.notes?.value;
+    const description = typeof v.notes === "string" ? v.notes : v.notes?.value;
     return {
       isbn,
       title: v.title,
@@ -107,6 +109,8 @@ export interface BookSearchResult {
   cover_url: string | null;
   /** Year published, if known. */
   year: string | null;
+  /** Genre/category, e.g. "Technology & Engineering". */
+  genre: string | null;
 }
 
 /**
@@ -115,7 +119,7 @@ export interface BookSearchResult {
  */
 async function searchOpenLibraryBooks(query: string, limit = 8): Promise<BookSearchResult[]> {
   try {
-    const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}&fields=key,title,author_name,isbn,cover_i,publisher,first_publish_year,language`;
+    const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}&fields=key,title,author_name,isbn,cover_i,publisher,first_publish_year,language,subject`;
     const r = await fetch(url, { cache: "force-cache" });
     if (!r.ok) return [];
     const data = (await r.json()) as {
@@ -128,6 +132,7 @@ async function searchOpenLibraryBooks(query: string, limit = 8): Promise<BookSea
         publisher?: string[];
         first_publish_year?: number;
         language?: string[];
+        subject?: string[];
       }>;
     };
     return (data.docs ?? [])
@@ -136,7 +141,9 @@ async function searchOpenLibraryBooks(query: string, limit = 8): Promise<BookSea
         const isbn = d.isbn?.[0] ?? null;
         const cover = d.cover_i
           ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`
-          : (isbn ? openLibraryCoverUrl(isbn, "L") : null);
+          : isbn
+            ? openLibraryCoverUrl(isbn, "L")
+            : null;
         return {
           id: d.key ?? `ol-${idx}`,
           title: d.title!,
@@ -147,6 +154,7 @@ async function searchOpenLibraryBooks(query: string, limit = 8): Promise<BookSea
           isbn,
           cover_url: cover,
           year: d.first_publish_year?.toString() ?? null,
+          genre: d.subject?.[0] ?? null,
         };
       });
   } catch {
@@ -164,7 +172,7 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
   try {
     const r = await fetch(
       `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=${limit}&printType=books`,
-      { cache: "force-cache" },
+      { cache: "force-cache" }
     );
     if (!r.ok) return [];
     const data = (await r.json()) as {
@@ -179,6 +187,7 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
           language?: string;
           imageLinks?: { thumbnail?: string; smallThumbnail?: string };
           industryIdentifiers?: { type: string; identifier: string }[];
+          categories?: string[];
         };
       }>;
     };
@@ -191,7 +200,8 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
         const isbn10 = ids.find((i) => i.type === "ISBN_10")?.identifier;
         const isbn = isbn13 ?? isbn10 ?? null;
         const rawCover = v.imageLinks?.thumbnail ?? v.imageLinks?.smallThumbnail;
-        const cover = rawCover?.replace(/^http:/, "https:") ?? (isbn ? openLibraryCoverUrl(isbn, "M") : null);
+        const cover =
+          rawCover?.replace(/^http:/, "https:") ?? (isbn ? openLibraryCoverUrl(isbn, "M") : null);
         return {
           id: it.id ?? `gb-${idx}`,
           title: v.title!,
@@ -202,6 +212,7 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
           isbn,
           cover_url: cover,
           year: v.publishedDate?.slice(0, 4) ?? null,
+          genre: v.categories?.[0] ?? null,
         };
       });
   } catch {
@@ -217,9 +228,33 @@ async function searchGoogleBooksOnly(query: string, limit = 8): Promise<BookSear
 export async function searchGoogleBooks(query: string, limit = 8): Promise<BookSearchResult[]> {
   const q = query.trim();
   if (q.length < 2) return [];
-  const ol = await searchOpenLibraryBooks(q, limit);
-  if (ol.length > 0) return ol;
-  return await searchGoogleBooksOnly(q, limit);
+
+  // Fetch Open Library (no quota) + Google Books in parallel.
+  // GB has descriptions; OL has broader results.
+  // Merge: prefer GB data for same book (keyed by ISBN), fill gaps from OL.
+  const [ol, gb] = await Promise.all([
+    searchOpenLibraryBooks(q, limit),
+    searchGoogleBooksOnly(q, limit + 3),
+  ]);
+
+  const seen = new Map<string, BookSearchResult>();
+
+  // Insert GB first so they win on conflict.
+  for (const b of gb) seen.set(b.isbn ?? b.title, b);
+
+  // Insert OL only if not already present via GB, or merge description from GB.
+  for (const b of ol) {
+    const key = b.isbn ?? b.title;
+    if (seen.has(key)) {
+      // Inherit description from GB if OL lacks it.
+      const existing = seen.get(key)!;
+      if (!existing.description && b.description) existing.description = b.description;
+    } else {
+      seen.set(key, b);
+    }
+  }
+
+  return Array.from(seen.values()).slice(0, limit);
 }
 
 /** Look up a book by ISBN. Returns null if no provider found anything. */

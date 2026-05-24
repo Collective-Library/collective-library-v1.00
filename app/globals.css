@@ -220,3 +220,12 @@ body {
 .animate-overlay-fade-in {
   animation: overlay-fade-in 200ms ease-out;
 }
+
+/* Side drawer slide-in from the left (hamburger nav). */
+@keyframes drawer-slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.animate-drawer-slide-in-left {
+  animation: drawer-slide-in-left 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}

@@ -19,7 +19,7 @@ export interface LocationResult {
   postal_code: string;
   village: string;
   district: string; // kecamatan
-  regency: string;  // kota / kabupaten
+  regency: string; // kota / kabupaten
   province: string;
   lat: number | null;
   lng: number | null;
@@ -52,7 +52,7 @@ export function LocationPicker({
           lat: null,
           lng: null,
         }
-      : null,
+      : null
   );
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -78,6 +78,7 @@ export function LocationPicker({
   useEffect(() => {
     const trimmed = query.trim();
     if (trimmed.length < 3) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       setError(null);
       return;
@@ -90,10 +91,9 @@ export function LocationPicker({
     setError(null);
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/api/postal-code/lookup?q=${encodeURIComponent(trimmed)}`,
-          { signal: ctrl.signal },
-        );
+        const res = await fetch(`/api/postal-code/lookup?q=${encodeURIComponent(trimmed)}`, {
+          signal: ctrl.signal,
+        });
         if (ctrl.signal.aborted) return;
         if (!res.ok) {
           setError("Cari gagal. Coba lagi.");
@@ -170,7 +170,17 @@ export function LocationPicker({
               aria-label="Hapus lokasi"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition-colors"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -178,20 +188,34 @@ export function LocationPicker({
           )}
         </div>
         <p className="text-caption text-muted">
-          Ketik nama kecamatan lo (bisa juga kode pos kalau apal). Kota + kode pos bakal ke-isi otomatis.
+          Ketik nama kecamatan lo (bisa juga kode pos kalau apal). Kota + kode pos bakal ke-isi
+          otomatis.
         </p>
       </div>
 
       {/* Resolved chip — shown after a pick */}
       {picked && picked.district && picked.regency && (
         <div className="flex items-start gap-2 rounded-card bg-(--color-lend-bg) border border-(--color-lend-bg) px-3 py-2.5">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-(--color-lend) shrink-0 mt-0.5" aria-hidden>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-(--color-lend) shrink-0 mt-0.5"
+            aria-hidden
+          >
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <div className="min-w-0 flex-1">
             <p className="text-body-sm font-semibold text-(--color-lend) leading-snug">
               Kecamatan {picked.district}
-              {picked.village ? <span className="font-normal opacity-80"> · Desa {picked.village}</span> : null}
+              {picked.village ? (
+                <span className="font-normal opacity-80"> · Desa {picked.village}</span>
+              ) : null}
             </p>
             <p className="text-caption text-(--color-lend) opacity-90 mt-0.5">
               {picked.regency}
@@ -206,9 +230,7 @@ export function LocationPicker({
         </div>
       )}
 
-      {error && !loading && (
-        <p className="text-caption text-(--color-error)">{error}</p>
-      )}
+      {error && !loading && <p className="text-caption text-(--color-error)">{error}</p>}
 
       {/* Dropdown */}
       {open && results.length > 0 && (

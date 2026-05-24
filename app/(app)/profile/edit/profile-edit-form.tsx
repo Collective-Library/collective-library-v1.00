@@ -7,18 +7,11 @@ import { createClient } from "@/lib/supabase/client";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
-import {
-  InterestChips,
-  SubInterestChips,
-  IntentChips,
-} from "@/components/profile/interest-chips";
+import { InterestChips, SubInterestChips, IntentChips } from "@/components/profile/interest-chips";
 import Link from "next/link";
-import {
-  LocationPicker,
-  type LocationResult,
-} from "@/components/profile/location-picker";
+import { LocationPicker, type LocationResult } from "@/components/profile/location-picker";
 import { pruneOrphanSubs } from "@/lib/interests";
-import { slugify } from "@/lib/format";
+import { slugify, normalizePhone } from "@/lib/format";
 import { compressImage, compressionPercent } from "@/lib/compress-image";
 import type { Profile } from "@/types";
 
@@ -65,7 +58,7 @@ export function ProfileEditForm({
 
   // Currently reading (W2)
   const [currentlyReading, setCurrentlyReading] = useState<string>(
-    initial.currently_reading_book_id ?? "",
+    initial.currently_reading_book_id ?? ""
   );
 
   // Photo (avatar)
@@ -240,8 +233,7 @@ export function ProfileEditForm({
             } else {
               map_lat = null;
               map_lng = null;
-              geocodeWarning =
-                "Lokasi gak ketemu — pakai kode pos di atas biar pasti.";
+              geocodeWarning = "Lokasi gak ketemu — pakai kode pos di atas biar pasti.";
             }
           } else {
             geocodeWarning = "Geocoding sementara gagal. Coba simpan lagi nanti.";
@@ -266,13 +258,16 @@ export function ProfileEditForm({
         postal_code: postalCode,
         bio: bio.trim() || null,
         favorite_genres: genres
-          ? genres.split(",").map((g) => g.trim()).filter(Boolean)
+          ? genres
+              .split(",")
+              .map((g) => g.trim())
+              .filter(Boolean)
           : null,
         photo_url,
         cover_url,
         currently_reading_book_id: currentlyReading || null,
         instagram: instagram.trim() || null,
-        whatsapp: whatsapp.replace(/\D/g, "") || null,
+        whatsapp: normalizePhone(whatsapp),
         whatsapp_public: whatsappPublic && Boolean(whatsapp),
         discord: discord.trim() || null,
         goodreads_url: goodreads.trim() || null,
@@ -318,7 +313,10 @@ export function ProfileEditForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="bg-paper border border-hairline rounded-card-lg shadow-card p-6 md:p-8 flex flex-col gap-6">
+    <form
+      onSubmit={onSubmit}
+      className="bg-paper border border-hairline rounded-card-lg shadow-card p-6 md:p-8 flex flex-col gap-6"
+    >
       {/* Banner */}
       <div className="flex flex-col gap-2">
         <p className="text-caption font-medium text-ink-soft">Banner / cover</p>
@@ -345,7 +343,9 @@ export function ProfileEditForm({
           className="hidden"
         />
         <div className="flex items-center justify-between gap-2">
-          <p className="text-caption text-muted">Klik banner buat ganti. Auto-compress ke WebP saat simpan.</p>
+          <p className="text-caption text-muted">
+            Klik banner buat ganti. Auto-compress ke WebP saat simpan.
+          </p>
           {(bannerPreview || initial.cover_url) && !removeBanner && (
             <button
               type="button"
@@ -377,16 +377,12 @@ export function ProfileEditForm({
             <Avatar name={fullName} size={80} />
           )}
         </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          onChange={onFile}
-          className="hidden"
-        />
+        <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
         <div>
           <p className="text-body-sm font-medium text-ink">Foto profil</p>
-          <p className="text-caption text-muted mt-0.5">Klik foto buat ganti. Auto-compress ke WebP saat simpan.</p>
+          <p className="text-caption text-muted mt-0.5">
+            Klik foto buat ganti. Auto-compress ke WebP saat simpan.
+          </p>
         </div>
       </div>
 
@@ -419,7 +415,8 @@ export function ProfileEditForm({
         />
         <p className="text-caption text-muted -mt-1 leading-relaxed">
           Lokasi yang akurat = lo gampang ditemuin temen sekecamatan.{" "}
-          <span className="text-ink-soft">Kecamatan-level only</span> — gak ada alamat persis. Mau muncul di{" "}
+          <span className="text-ink-soft">Kecamatan-level only</span> — gak ada alamat persis. Mau
+          muncul di{" "}
           <Link
             href="/peta"
             target="_blank"
@@ -508,11 +505,10 @@ export function ProfileEditForm({
 
       {/* Trust Profile (V2.2) — personal branding fields */}
       <div>
-        <p className="text-caption font-semibold text-ink uppercase tracking-wide">
-          Tentang lo
-        </p>
+        <p className="text-caption font-semibold text-ink uppercase tracking-wide">Tentang lo</p>
         <p className="mt-1 text-body-sm text-muted">
-          Bantu anggota lain kenal lo. Semua opsional — tapi makin lengkap, makin gampang nyambung sama yang sefrekuensi.
+          Bantu anggota lain kenal lo. Semua opsional — tapi makin lengkap, makin gampang nyambung
+          sama yang sefrekuensi.
         </p>
       </div>
 
@@ -583,11 +579,17 @@ export function ProfileEditForm({
 
       <div>
         <p className="text-caption font-semibold text-ink uppercase tracking-wide">Preferensi</p>
-        <p className="mt-1 text-body-sm text-muted">Mau buka untuk apa aja? Bisa diubah kapan saja.</p>
+        <p className="mt-1 text-body-sm text-muted">
+          Mau buka untuk apa aja? Bisa diubah kapan saja.
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">
-        <Toggle label="Available untuk pinjam-meminjam" checked={openLending} onChange={setOpenLending} />
+        <Toggle
+          label="Available untuk pinjam-meminjam"
+          checked={openLending}
+          onChange={setOpenLending}
+        />
         <Toggle label="Available untuk jual-beli" checked={openSelling} onChange={setOpenSelling} />
         <Toggle label="Available untuk tukar buku" checked={openTrade} onChange={setOpenTrade} />
       </div>
@@ -595,9 +597,12 @@ export function ProfileEditForm({
       <hr className="border-hairline" />
 
       <div>
-        <p className="text-caption font-semibold text-ink uppercase tracking-wide">Visibilitas publik</p>
+        <p className="text-caption font-semibold text-ink uppercase tracking-wide">
+          Visibilitas publik
+        </p>
         <p className="mt-1 text-body-sm text-muted">
-          Default mati. Aktivin biar anggota lain bisa nemu lo pas nyari pembaca dekat — kecamatan only, gak ada alamat persis.
+          Default mati. Aktivin biar anggota lain bisa nemu lo pas nyari pembaca dekat — kecamatan
+          only, gak ada alamat persis.
         </p>
       </div>
 
@@ -610,11 +615,19 @@ export function ProfileEditForm({
         {showOnMap && (
           <p className="text-caption text-muted -mt-1 leading-relaxed">
             Lo bakal muncul di 2 tempat:{" "}
-            <Link href="/peta" target="_blank" className="font-medium text-ink-soft underline underline-offset-4 hover:text-ink">
+            <Link
+              href="/peta"
+              target="_blank"
+              className="font-medium text-ink-soft underline underline-offset-4 hover:text-ink"
+            >
               /peta
             </Link>{" "}
             (bubble dengan foto + jumlah buku lo) dan di{" "}
-            <Link href="/" target="_blank" className="font-medium text-ink-soft underline underline-offset-4 hover:text-ink">
+            <Link
+              href="/"
+              target="_blank"
+              className="font-medium text-ink-soft underline underline-offset-4 hover:text-ink"
+            >
               landing publik
             </Link>{" "}
             (member card pengantar buat visitor baru). Pin di tengah kecamatan, bukan alamat persis.
@@ -626,11 +639,7 @@ export function ProfileEditForm({
       {info && <p className="text-caption text-(--color-success)">{info}</p>}
 
       <div className="flex gap-3 pt-2">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => router.back()}
-        >
+        <Button type="button" variant="secondary" onClick={() => router.back()}>
           Batal
         </Button>
         <Button type="submit" disabled={saving} className="flex-1">

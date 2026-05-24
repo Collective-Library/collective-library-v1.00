@@ -57,7 +57,7 @@ export function AddBookForm({ userId }: { userId: string }) {
     setIsbnLooking(false);
     if (!found) {
       return setError(
-        "ISBN gak ketemu di database publik. Lo bisa isi manual judul + author di bawah.",
+        "ISBN gak ketemu di database publik. Lo bisa isi manual judul + author di bawah."
       );
     }
     applyAutofill({
@@ -69,6 +69,7 @@ export function AddBookForm({ userId }: { userId: string }) {
       language: found.language ?? null,
       isbn: cleaned,
       cover_url: found.cover_url ?? null,
+      genre: found.genre ?? null,
       year: null,
     });
   }
@@ -80,11 +81,14 @@ export function AddBookForm({ userId }: { userId: string }) {
     if (b.author) setAuthor(b.author);
     if (b.publisher) setPublisher(b.publisher);
     if (b.description) setDescription(b.description);
+    if (b.genre) setGenre(b.genre);
     if (b.cover_url) {
       setIsbnCoverUrl(b.cover_url);
       setCoverPreview(b.cover_url);
     }
-    setIsbnInfo(`Ketemu: "${b.title}"${b.author ? ` oleh ${b.author}` : ""}. Lo bisa edit di bawah.`);
+    setIsbnInfo(
+      `Ketemu: "${b.title}"${b.author ? ` oleh ${b.author}` : ""}. Lo bisa edit di bawah.`
+    );
   }
 
   function next() {
@@ -138,11 +142,11 @@ export function AddBookForm({ userId }: { userId: string }) {
         negotiable: status === "sell" ? negotiable : false,
         lending_duration_days:
           status === "lend" && lendingDuration ? Number(lendingDuration) : null,
-        pickup_area: quickAdd ? null : (pickupArea.trim() || null),
-        genre: quickAdd ? null : (genre.trim() || null),
-        publisher: quickAdd ? null : (publisher.trim() || null),
-        description: quickAdd ? null : (description.trim() || null),
-        notes: quickAdd ? null : (notes.trim() || null),
+        pickup_area: pickupArea.trim() || null,
+        genre: genre.trim() || null,
+        publisher: publisher.trim() || null,
+        description: description.trim() || null,
+        notes: notes.trim() || null,
         cover_url: !coverFile && isbnCoverUrl ? isbnCoverUrl : null,
       })
       .select("id")
@@ -189,9 +193,13 @@ export function AddBookForm({ userId }: { userId: string }) {
       {step === 1 && (
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-caption text-muted uppercase tracking-wide font-semibold">Langkah 1 dari 2</p>
+            <p className="text-caption text-muted uppercase tracking-wide font-semibold">
+              Langkah 1 dari 2
+            </p>
             <h2 className="mt-1 font-display text-display-md text-ink">Info dasar buku</h2>
-            <p className="mt-1 text-body-sm text-muted">Cuma 3 field — bisa selesai dalam 30 detik.</p>
+            <p className="mt-1 text-body-sm text-muted">
+              Cuma 3 field — bisa selesai dalam 30 detik.
+            </p>
           </div>
 
           {/* Cara cepat — search Google Books for any title/author/ISBN, pick from list */}
@@ -200,14 +208,13 @@ export function AddBookForm({ userId }: { userId: string }) {
               Cara cepat (opsional)
             </p>
             <p className="mt-1 text-caption text-muted">
-              Cari buku — judul, author, atau ISBN. Klik dari hasil → semua otomatis keisi termasuk cover.
+              Cari buku — judul, author, atau ISBN. Klik dari hasil → semua otomatis keisi termasuk
+              cover.
             </p>
             <div className="mt-2.5">
               <BookPicker onPick={applyAutofill} />
             </div>
-            {isbnInfo && (
-              <p className="mt-2 text-caption text-(--color-success)">{isbnInfo}</p>
-            )}
+            {isbnInfo && <p className="mt-2 text-caption text-(--color-success)">{isbnInfo}</p>}
             {isbnCoverUrl && (
               <p className="mt-1 text-caption text-muted">
                 Cover ketemu — preview ada di langkah 2.
@@ -279,7 +286,12 @@ export function AddBookForm({ userId }: { userId: string }) {
           {error && <p className="text-caption text-(--color-error)">{error}</p>}
 
           <div className="flex flex-col gap-2 mt-2">
-            <Button onClick={() => publish(true)} disabled={saving} type="button" variant="secondary">
+            <Button
+              onClick={() => publish(true)}
+              disabled={saving}
+              type="button"
+              variant="secondary"
+            >
               {saving ? "Sebentar, lagi nyusun rak kamu…" : "Simpan cepat (3 field)"}
             </Button>
             <Button onClick={next} disabled={saving} type="button">
@@ -292,7 +304,9 @@ export function AddBookForm({ userId }: { userId: string }) {
       {step === 2 && (
         <div className="flex flex-col gap-5">
           <div>
-            <p className="text-caption text-muted uppercase tracking-wide font-semibold">Langkah 2 dari 2</p>
+            <p className="text-caption text-muted uppercase tracking-wide font-semibold">
+              Langkah 2 dari 2
+            </p>
             <h2 className="mt-1 font-display text-display-md text-ink">Detail tambahan</h2>
             <p className="mt-1 text-body-sm text-muted">Semua opsional — bisa dilengkapi nanti.</p>
           </div>
@@ -325,7 +339,11 @@ export function AddBookForm({ userId }: { userId: string }) {
             </div>
           </div>
 
-          <Select label="Kondisi" value={condition} onChange={(e) => setCondition(e.target.value as BookCondition)}>
+          <Select
+            label="Kondisi"
+            value={condition}
+            onChange={(e) => setCondition(e.target.value as BookCondition)}
+          >
             {(Object.keys(CONDITION_LABELS) as BookCondition[]).map((c) => (
               <option key={c} value={c}>
                 {CONDITION_LABELS[c]}
@@ -402,7 +420,12 @@ export function AddBookForm({ userId }: { userId: string }) {
             <Button variant="secondary" onClick={() => setStep(1)} type="button">
               ← Kembali
             </Button>
-            <Button onClick={() => publish(false)} disabled={saving} type="button" className="flex-1">
+            <Button
+              onClick={() => publish(false)}
+              disabled={saving}
+              type="button"
+              className="flex-1"
+            >
               {saving ? "Lagi publikasikan ke rak…" : "Publikasikan buku"}
             </Button>
           </div>

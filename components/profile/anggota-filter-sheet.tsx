@@ -55,7 +55,9 @@ export function AnggotaFilterSheet({
 
   // Re-sync draft when URL params change (e.g. after a sibling Reset link)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraft(initialFilters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     initialFilters.city,
     initialFilters.area,
@@ -109,7 +111,7 @@ export function AnggotaFilterSheet({
           "inline-flex items-center gap-2 h-10 px-4 rounded-pill text-body-sm font-medium transition-colors",
           activeCount > 0
             ? "bg-ink text-parchment hover:bg-ink-soft"
-            : "bg-paper text-ink-soft border border-hairline-strong hover:bg-cream",
+            : "bg-paper text-ink-soft border border-hairline-strong hover:bg-cream"
         )}
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -145,7 +147,7 @@ export function AnggotaFilterSheet({
               "relative w-full sm:max-w-lg bg-parchment border-t sm:border border-hairline-strong sm:rounded-card-lg sm:shadow-modal flex flex-col",
               "rounded-t-card-lg sm:rounded-t-card-lg",
               "max-h-[88vh] sm:max-h-[80vh]",
-              "animate-sheet-slide-up sm:animate-pop-fade-down",
+              "animate-sheet-slide-up sm:animate-pop-fade-down"
             )}
           >
             {/* Drag handle (mobile aesthetic) */}
@@ -294,7 +296,10 @@ export function AnggotaFilterSheet({
               </Section>
             </div>
 
-            <footer className="px-5 py-4 border-t border-hairline-soft bg-paper/50 flex items-center gap-3" style={{ paddingBottom: "max(1rem, var(--safe-bottom))" }}>
+            <footer
+              className="px-5 py-4 border-t border-hairline-soft bg-paper/50 flex items-center gap-3"
+              style={{ paddingBottom: "max(1rem, var(--safe-bottom))" }}
+            >
               <button
                 type="button"
                 onClick={() => apply(true)}
@@ -346,7 +351,7 @@ function Chip({
         "inline-flex items-center h-9 px-3.5 rounded-pill text-body-sm font-medium transition-colors",
         active
           ? "bg-ink text-parchment border border-ink"
-          : "bg-paper text-ink-soft border border-hairline hover:bg-cream",
+          : "bg-paper text-ink-soft border border-hairline hover:bg-cream"
       )}
     >
       <span>{label}</span>
@@ -354,7 +359,7 @@ function Chip({
         <span
           className={cn(
             "ml-1.5 inline-flex items-center h-5 px-1.5 rounded-pill text-[10px] font-semibold",
-            active ? "bg-parchment/20 text-parchment" : "bg-cream text-muted",
+            active ? "bg-parchment/20 text-parchment" : "bg-cream text-muted"
           )}
         >
           {count}
@@ -370,7 +375,17 @@ function countActive(f: AnggotaFilters): number {
 
 function FilterIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <line x1="4" y1="6" x2="20" y2="6" />
       <line x1="7" y1="12" x2="17" y2="12" />
       <line x1="10" y1="18" x2="14" y2="18" />
@@ -380,7 +395,17 @@ function FilterIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>

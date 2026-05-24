@@ -1,0 +1,71 @@
+name: E2E · Playwright
+
+on:
+  # Run against deployed Vercel staging on push to staging branch.
+  push:
+    branches: [staging]
+  # Allow manual runs against any deployed URL.
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Deployed URL to test against (e.g. https://staging.example.com)"
+        required: true
+        type: string
+
+jobs:
+  smoke:
+    name: Smoke tests (anonymous)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Default staging URL set as a repo VAR (Settings → Secrets & variables → Variables).
+      # Override via workflow_dispatch input.
+      PLAYWRIGHT_BASE_URL: ${{ inputs.base_url || vars.STAGING_URL }}
+      CI: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Verify base URL
+        run: |
+          if [ -z "$PLAYWRIGHT_BASE_URL" ]; then
+            echo "::error::PLAYWRIGHT_BASE_URL is empty. Set repo variable STAGING_URL or run via workflow_dispatch with base_url input."
+            exit 1
+          fi
+          echo "Testing against: $PLAYWRIGHT_BASE_URL"
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Wait for deploy to be reachable
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -sSfL --max-time 10 "$PLAYWRIGHT_BASE_URL" > /dev/null; then
+              echo "✓ Reachable"
+              exit 0
+            fi
+            echo "Attempt $i: not ready, sleeping 15s..."
+            sleep 15
+          done
+          echo "::error::Deploy never became reachable at $PLAYWRIGHT_BASE_URL"
+          exit 1
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

@@ -19,6 +19,7 @@ export interface FeedbackItem {
   category: FeedbackCategory;
   message: string;
   email: string | null;
+  attachments: string | null;
   page_url: string | null;
   user_agent: string | null;
   status: FeedbackStatus;
@@ -113,7 +114,20 @@ export interface Book {
 
 /** A Book joined with its owner profile (for shelf cards & detail). */
 export interface BookWithOwner extends Book {
-  owner: Pick<Profile, "id" | "full_name" | "username" | "photo_url" | "city" | "whatsapp" | "whatsapp_public" | "instagram" | "discord" | "goodreads_url" | "storygraph_url">;
+  owner: Pick<
+    Profile,
+    | "id"
+    | "full_name"
+    | "username"
+    | "photo_url"
+    | "city"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+    | "goodreads_url"
+    | "storygraph_url"
+  >;
   community: Pick<Community, "id" | "name" | "slug"> | null;
 }
 
@@ -135,7 +149,17 @@ export interface WantedRequest {
 export interface WantedRequestWithRequester extends WantedRequest {
   requester: Pick<
     Profile,
-    "id" | "full_name" | "username" | "photo_url" | "city" | "whatsapp" | "whatsapp_public" | "instagram" | "discord" | "goodreads_url" | "storygraph_url"
+    | "id"
+    | "full_name"
+    | "username"
+    | "photo_url"
+    | "city"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+    | "goodreads_url"
+    | "storygraph_url"
   >;
 }
 
@@ -169,9 +193,7 @@ export interface BookFormValues {
 export function isProfileComplete(p: Profile | null): p is Profile {
   if (!p) return false;
   if (!p.username) return false;
-  return Boolean(
-    p.instagram || p.whatsapp || p.discord || p.goodreads_url || p.storygraph_url,
-  );
+  return Boolean(p.instagram || p.whatsapp || p.discord || p.goodreads_url || p.storygraph_url);
 }
 
 // =============================================================================
@@ -266,4 +288,259 @@ export interface AdminNote {
 
 export interface AdminNoteWithAuthor extends AdminNote {
   author: Pick<Profile, "id" | "full_name" | "username" | "photo_url"> | null;
+}
+
+// =============================================================================
+// Events (mirrors supabase/migrations/0020_events.sql)
+// =============================================================================
+
+export type EventStatus = "scheduled" | "cancelled" | "completed";
+export type EventVisibility = "public" | "community";
+export type EventRsvpStatus = "going" | "maybe" | "declined";
+
+export interface Event {
+  id: string;
+  host_id: string;
+  community_id: string | null;
+  title: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  timezone: string;
+  location_text: string | null;
+  location_url: string | null;
+  is_online: boolean;
+  capacity: number | null;
+  cover_url: string | null;
+  contact_method: ContactMethod;
+  visibility: EventVisibility;
+  status: EventStatus;
+  is_hidden: boolean;
+  discord_announced_at: string | null;
+  // Social activation fields (added in migration 0022)
+  theme: string | null;
+  what_to_expect: string[] | null;
+  hashtags: string[] | null;
+  reminder_text: string | null;
+  registration_url: string | null;
+  registration_label: string | null;
+  registration_deadline: string | null;
+  instagram_url: string | null;
+  community_name: string | null;
+  community_instagram_url: string | null;
+  community_logo_url: string | null;
+  // Spots link (migration 0025) — optional FK to library_nodes.
+  // Coexists with location_text/location_url; never replaces them.
+  node_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** An Event joined with host profile + community + viewer-specific RSVP state. */
+export interface EventWithHost extends Event {
+  host: Pick<
+    Profile,
+    | "id"
+    | "full_name"
+    | "username"
+    | "photo_url"
+    | "city"
+    | "whatsapp"
+    | "whatsapp_public"
+    | "instagram"
+    | "discord"
+  >;
+  community: Pick<Community, "id" | "name" | "slug"> | null;
+  /** Optional embedded Spot (migration 0025). Null when event has no node_id. */
+  node: { id: string; name: string; slug: string; type: SpotType; city: string } | null;
+  rsvp_count: number;
+  viewer_rsvp: EventRsvpStatus | null;
+}
+
+export interface EventRsvp {
+  event_id: string;
+  profile_id: string;
+  status: EventRsvpStatus;
+  note: string | null;
+  // RSVP context (added in migration 0022) — optional, for social signal
+  origin_city: string | null;
+  bringing_book: string | null;
+  conversation_topic: string | null;
+  created_at: string;
+}
+
+/** Attendee profile signals for rich attendee cards. */
+export interface AttendeeProfile {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  photo_url: string | null;
+  city: string | null;
+  interests: string[] | null;
+  instagram: string | null;
+  discord: string | null;
+  book_count: number;
+}
+
+export interface EventRsvpWithProfile extends EventRsvp {
+  profile: AttendeeProfile;
+}
+
+/** Form value types — what the Event form posts. */
+export interface EventFormValues {
+  title: string;
+  description?: string;
+  starts_at: string;
+  ends_at?: string;
+  timezone?: string;
+  location_text?: string;
+  location_url?: string;
+  is_online?: boolean;
+  capacity?: number;
+  cover_url?: string;
+  contact_method?: ContactMethod;
+  visibility?: EventVisibility;
+  // Social activation
+  theme?: string;
+  what_to_expect?: string[];
+  hashtags?: string[];
+  reminder_text?: string;
+  registration_url?: string;
+  registration_label?: string;
+  registration_deadline?: string;
+  instagram_url?: string;
+  community_name?: string;
+  community_instagram_url?: string;
+  community_logo_url?: string;
+  // Optional Library Node (Spot) link — added in migration 0025.
+  node_id?: string | null;
+}
+
+/** RSVP context — optional fields collected after RSVP confirmation. */
+export interface RsvpContextValues {
+  origin_city?: string;
+  bringing_book?: string;
+  conversation_topic?: string;
+  note?: string;
+}
+
+// =============================================================================
+// Manifests (mirrors supabase/migrations/0023_manifests.sql)
+// =============================================================================
+
+export type ManifestStatus = "pending" | "approved" | "rejected";
+export type ManifestVisibility = "public" | "community";
+export type ManifestMood =
+  | "curious"
+  | "hopeful"
+  | "frustrated"
+  | "grateful"
+  | "reflective"
+  | "playful";
+
+export interface Manifest {
+  id: string;
+  author_id: string;
+  body: string;
+  mood: ManifestMood | null;
+  topic: string | null;
+  is_anonymous: boolean;
+  linked_event_id: string | null;
+  linked_book_id: string | null;
+  linked_profile_id: string | null;
+  visibility: ManifestVisibility;
+  status: ManifestStatus;
+  moderation_note: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  is_hidden: boolean;
+  discord_announced_at: string | null;
+  x_posted_url: string | null;
+  x_posted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A Manifest with author + optional linked object summaries. */
+export interface ManifestWithAuthor extends Manifest {
+  author: Pick<Profile, "id" | "full_name" | "username" | "photo_url" | "city">;
+  linked_event: Pick<Event, "id" | "title" | "starts_at" | "cover_url"> | null;
+  linked_book: Pick<Book, "id" | "title" | "author" | "cover_url"> | null;
+}
+
+export interface ManifestFormValues {
+  body: string;
+  mood?: ManifestMood;
+  topic?: string;
+  is_anonymous?: boolean;
+  visibility?: ManifestVisibility;
+  linked_event_id?: string;
+  linked_book_id?: string;
+}
+
+// =============================================================================
+// Library Nodes / Spots (mirrors supabase/migrations/0024_library_nodes.sql)
+//
+// Internal model: library_nodes. UI label: "Spots". Future route: /spots.
+// Public UI deferred — admin-only management in /mastermind/spots for now.
+// =============================================================================
+
+export type SpotType =
+  | "cafe"
+  | "public_shelf"
+  | "community_space"
+  | "school"
+  | "campus"
+  | "library"
+  | "coworking"
+  | "partner"
+  | "other";
+
+export type SpotStatus = "active" | "inactive" | "needs_audit";
+export type SpotVisibility = "public" | "community";
+
+export interface LibraryNode {
+  id: string;
+  name: string;
+  slug: string;
+  type: SpotType;
+  city: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  maps_url: string | null;
+  description: string | null;
+  image_url: string | null;
+  operating_hours: string | null;
+  community_id: string | null;
+  status: SpotStatus;
+  is_active: boolean;
+  visibility: SpotVisibility;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** UI-facing alias. Diverge later if the UI shape needs to drift from DB row. */
+export type Spot = LibraryNode;
+
+/** Form values — what the admin Spot create/edit form posts. */
+export interface SpotFormValues {
+  name: string;
+  slug: string;
+  type: SpotType;
+  city: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  maps_url?: string;
+  description?: string;
+  image_url?: string;
+  operating_hours?: string;
+  community_id?: string;
+  // Admin-only — UI must hide these for non-admin, and /api/admin/spots must
+  // re-check is_admin server-side before accepting writes to these fields.
+  status?: SpotStatus;
+  is_active?: boolean;
+  visibility?: SpotVisibility;
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -56,6 +56,7 @@ export function TopBarSearch() {
   useEffect(() => {
     const q = value.trim();
     if (q.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHits([]);
       setLoading(false);
       return;
@@ -150,14 +151,15 @@ export function TopBarSearch() {
           onKeyDown={onKeyDown}
           placeholder="Cari judul, author, atau owner…"
           aria-label="Cari di rak komunitas"
-          aria-expanded={showDropdown}
           aria-autocomplete="list"
           autoComplete="off"
           className={cn(
             "w-full h-11 pl-12 pr-10 rounded-pill bg-paper border text-body-sm placeholder:text-muted text-ink",
             "focus:outline-none focus:border-ink focus:border-2 focus:pl-[47px] focus:pr-[39px]",
             "transition-colors",
-            showDropdown ? "border-ink-soft shadow-card" : "border-hairline-strong hover:shadow-card",
+            showDropdown
+              ? "border-ink-soft shadow-card"
+              : "border-hairline-strong hover:shadow-card"
           )}
         />
         {value.length > 0 && (
@@ -245,7 +247,7 @@ function ResultRow({
       aria-selected={highlighted}
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 transition-colors",
-        highlighted ? "bg-cream" : "hover:bg-cream/60",
+        highlighted ? "bg-cream" : "hover:bg-cream/60"
       )}
     >
       <div className="shrink-0 w-9 h-12 bg-cream rounded-button border border-hairline-soft overflow-hidden">
@@ -286,14 +288,22 @@ function ResultRow({
 }
 
 function DropdownState({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="px-4 py-6 text-center text-body-sm text-muted">{children}</div>
-  );
+  return <div className="px-4 py-6 text-center text-body-sm text-muted">{children}</div>;
 }
 
 function SearchIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <circle cx="11" cy="11" r="7" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -302,7 +312,17 @@ function SearchIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>

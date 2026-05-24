@@ -26,6 +26,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               Feedback
             </Link>
             <span className="text-muted-soft">·</span>
+            <Link href="/admin/manifests" className="text-ink-soft hover:text-ink underline-offset-4 hover:underline">
+              Manifesto
+            </Link>
+            <span className="text-muted-soft">·</span>
             <Link href="/shelf" className="text-muted hover:text-ink-soft">
               ← Balik ke app
             </Link>

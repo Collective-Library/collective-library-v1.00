@@ -1,4 +1,5 @@
 import type { ActivityItem } from "@/lib/activity";
+import type { GroupedActivityItem } from "@/lib/activity-grouping";
 import type { BookStatus } from "@/types";
 
 const STATUS_VERB: Record<BookStatus, string> = {
@@ -16,26 +17,44 @@ const STATUS_LABEL_NEW: Record<BookStatus, string> = {
 };
 
 /** Returns the action verb / sentence fragment for an activity row. */
-export function activityVerb(item: ActivityItem): { text: string; bookTitleEmphasis?: boolean } {
+export function activityVerb(item: ActivityItem | GroupedActivityItem): {
+  text: string;
+  bookTitleEmphasis?: boolean;
+} {
   switch (item.type) {
     case "USER_JOINED":
       return { text: "bergabung di Collective Library" };
     case "BOOK_ADDED": {
-      const title = item.book?.title ?? "buku baru";
-      const status = item.book?.status ?? "unavailable";
+      if ("is_grouped" in item && item.is_grouped && item.books) {
+        return { text: `nambahin ${item.books.length} buku baru sekaligus` };
+      }
+      const book = item.book;
+      const title = book?.title ?? "buku baru";
+      const status = book?.status ?? "unavailable";
       return { text: `nambahin ${title} ${STATUS_VERB[status]}` };
     }
     case "BOOK_STATUS_CHANGED": {
-      const title = item.book?.title ?? "buku";
+      const book = item.book;
+      const title = book?.title ?? "buku";
       const newStatus =
-        (item.metadata?.new_status as BookStatus | undefined) ??
-        item.book?.status ??
-        "unavailable";
+        (item.metadata?.new_status as BookStatus | undefined) ?? book?.status ?? "unavailable";
       return { text: `${STATUS_LABEL_NEW[newStatus]}: ${title}` };
     }
     case "WTB_POSTED": {
       const title = item.wanted?.title ?? "buku";
       return { text: `cari buku: ${title}` };
+    }
+    case "EVENT_CREATED": {
+      const title = item.event?.title ?? "event baru";
+      return { text: `bikin event: ${title}` };
+    }
+    case "EVENT_RSVPED": {
+      const title = item.event?.title ?? "event";
+      return { text: `bakal dateng ke: ${title}` };
+    }
+    case "MANIFEST_POSTED": {
+      const topic = item.manifest?.topic;
+      return { text: topic ? `nulis manifesto soal ${topic}` : `nulis manifesto baru` };
     }
     default:
       return { text: "ada aktivitas baru" };
@@ -43,14 +62,27 @@ export function activityVerb(item: ActivityItem): { text: string; bookTitleEmpha
 }
 
 /** Returns the destination URL for an activity row, or null for non-clickable. */
-export function activityTargetUrl(item: ActivityItem): string | null {
-  if (item.book?.id && (item.type === "BOOK_ADDED" || item.type === "BOOK_STATUS_CHANGED")) {
-    return `/book/${item.book.id}`;
+export function activityTargetUrl(item: ActivityItem | GroupedActivityItem): string | null {
+  const book = item.book;
+  if (book?.id && (item.type === "BOOK_ADDED" || item.type === "BOOK_STATUS_CHANGED")) {
+    return `/book/${book.id}`;
   }
   if (item.type === "WTB_POSTED") {
     return "/wanted";
   }
+  if (
+    item.event?.id &&
+    (item.type === "EVENT_CREATED" || item.type === "EVENT_RSVPED")
+  ) {
+    return `/event/${item.event.id}`;
+  }
+  if (item.manifest?.id && item.type === "MANIFEST_POSTED") {
+    return `/manifest/${item.manifest.id}`;
+  }
   if (item.type === "USER_JOINED" && item.actor?.username) {
+    return `/profile/${item.actor.username}`;
+  }
+  if ("is_grouped" in item && item.is_grouped && item.actor?.username) {
     return `/profile/${item.actor.username}`;
   }
   return null;
