@@ -162,6 +162,20 @@ export default async function EventDetailPage({
               </>
             )}
           </p>
+
+          {/* Linked Spot chip — additive, only renders when event.node_id present */}
+          {event.node && (
+            <Link
+              href={`/spots/${event.node.slug}`}
+              className="mt-2 self-start inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-paper border border-hairline-strong text-body-sm text-ink-soft hover:bg-cream hover:text-ink transition-colors"
+            >
+              <span aria-hidden>📍</span>
+              <span>
+                Di <span className="font-medium text-ink">{event.node.name}</span>
+                <span className="text-muted"> · {event.node.city}</span>
+              </span>
+            </Link>
+          )}
         </div>
       </div>
 

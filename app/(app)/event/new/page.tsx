@@ -1,12 +1,18 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { EventForm } from "@/components/events/event-form";
+import { isHostEligibleForSpotCreate, listSelectableSpots } from "@/lib/spots";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewEventPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login?next=/event/new");
+
+  const [spots, eligibleHost] = await Promise.all([
+    listSelectableSpots(),
+    isHostEligibleForSpotCreate(user.id),
+  ]);
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
@@ -22,7 +28,12 @@ export default async function NewEventPage() {
         </p>
       </div>
 
-      <EventForm userId={user.id} mode="create" />
+      <EventForm
+        userId={user.id}
+        mode="create"
+        spots={spots}
+        eligibleHost={eligibleHost}
+      />
     </div>
   );
 }
