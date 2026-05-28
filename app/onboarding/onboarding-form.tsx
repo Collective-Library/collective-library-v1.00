@@ -98,7 +98,7 @@ export function OnboardingForm({ initial }: { initial: Profile }) {
 
     setSaving(false);
     toast.success("Selamat datang di Collective Library 👋");
-    router.replace("/shelf");
+    router.replace("/onboarding/first-contribution");
     router.refresh();
   }
 

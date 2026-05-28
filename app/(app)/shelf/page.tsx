@@ -1,12 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { listShelfBooks, getShelfCounts } from "@/lib/books";
-import { listActivity } from "@/lib/activity";
-import { getUpcomingEvents } from "@/lib/events";
 import { BookGrid } from "@/components/books/book-grid";
 import { ShelfClientWrapper } from "@/components/books/shelf-client-wrapper";
-import { ActivityFeed } from "@/components/activity/activity-feed";
-import { EventCard } from "@/components/events/event-card";
 import { ButtonLink } from "@/components/ui/button";
 import { STATUS_FILTER_OPTIONS } from "@/lib/status";
 import type { BookStatus } from "@/types";
@@ -25,17 +21,18 @@ const PAGE_SIZE = 24;
 
 export default async function ShelfPage({ searchParams }: { searchParams: Promise<SP> }) {
   const { status, q, page: pageStr } = await searchParams;
-  const filter = (STATUS_FILTER_OPTIONS.find((o) => o.value === status)?.value ?? "all") as BookStatus | "all";
+  const filter = (STATUS_FILTER_OPTIONS.find((o) => o.value === status)?.value ?? "all") as
+    | BookStatus
+    | "all";
   const page = Math.max(1, parseInt(pageStr ?? "1", 10) || 1);
 
-  const showSidePanels = filter === "all" && !q && page === 1;
-  const [{ books, total }, counts, activity, upcomingEvents] = await Promise.all([
+  // Slice 3B: ecosystem widgets (events + activity) moved to /home. /shelf is
+  // now the focused books surface. A small cross-link CTA points to /home on
+  // the default unfiltered view (same condition that gated the side panels).
+  const showHomeCta = filter === "all" && !q && page === 1;
+  const [{ books, total }, counts] = await Promise.all([
     listShelfBooks({ status: filter, search: q, page, pageSize: PAGE_SIZE }),
     getShelfCounts(),
-    // Activity widget + events strip only on the unfiltered "all" view, page 1
-    // — keeps the filtered browsing experience clean.
-    showSidePanels ? listActivity(4) : Promise.resolve([]),
-    showSidePanels ? getUpcomingEvents(4) : Promise.resolve([]),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -45,12 +42,15 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
       {/* Hero */}
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-caption text-muted uppercase tracking-wide font-semibold">Rak Kolektif</p>
+          <p className="text-caption text-muted uppercase tracking-wide font-semibold">
+            Rak Kolektif
+          </p>
           <h1 className="mt-1 font-display text-display-xl text-ink leading-tight">
             Buku-buku komunitas
           </h1>
           <p className="mt-2 text-body-lg text-ink-soft max-w-xl">
-            Jelajahi rak buku anggota Collective Library — tukar, pinjam, atau beli langsung dari pemiliknya.
+            Jelajahi rak buku anggota Collective Library — tukar, pinjam, atau beli langsung dari
+            pemiliknya.
           </p>
         </div>
         <div className="hidden md:block">
@@ -58,30 +58,26 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
         </div>
       </div>
 
-      {/* Upcoming events — only on the default unfiltered view */}
-      {upcomingEvents.length > 0 && (
-        <section aria-label="Event komunitas yang akan datang">
-          <div className="flex items-end justify-between gap-3 mb-3">
-            <h2 className="font-display text-title-lg text-ink leading-tight">
-              Event yang akan datang
-            </h2>
-            <Link
-              href="/event"
-              className="shrink-0 text-body-sm font-medium text-ink-soft hover:text-ink underline underline-offset-4"
-            >
-              Lihat semua →
-            </Link>
+      {/* Slice 3B cross-link to /home — page-1 unfiltered only, slim banner,
+          subtle treatment so /shelf doesn't feel like home again. */}
+      {showHomeCta && (
+        <Link
+          href="/home"
+          className="group flex items-center justify-between gap-3 rounded-card-lg border border-hairline-soft bg-cream/60 px-4 py-3 hover:bg-cream transition-colors"
+        >
+          <div className="min-w-0">
+            <p className="text-body-sm font-semibold text-ink leading-tight">
+              Lihat yang lagi terjadi di komunitas
+            </p>
+            <p className="text-caption text-muted leading-snug mt-0.5">
+              Activity, event, map, manifest, dan spots sekarang ada di Home.
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {upcomingEvents.map((ev) => (
-              <EventCard key={ev.id} event={ev} />
-            ))}
-          </div>
-        </section>
+          <span className="shrink-0 inline-flex items-center h-8 px-3 rounded-pill bg-ink text-parchment text-caption font-medium group-hover:bg-ink-soft transition-colors">
+            Buka Home →
+          </span>
+        </Link>
       )}
-
-      {/* Activity feed — only on the default unfiltered view */}
-      {activity.length > 0 && <ActivityFeed items={activity} />}
 
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-2 sm:gap-3">
@@ -110,17 +106,15 @@ export default async function ShelfPage({ searchParams }: { searchParams: Promis
 
       {/* Mobile add CTA fallback */}
       <div className="md:hidden mt-2">
-        <ButtonLink href="/book/add" fullWidth>+ Tambah Buku</ButtonLink>
+        <ButtonLink href="/book/add" fullWidth>
+          + Tambah Buku
+        </ButtonLink>
       </div>
     </div>
   );
 }
 
-function buildPageHref(opts: {
-  page: number;
-  status: BookStatus | "all";
-  q?: string;
-}): string {
+function buildPageHref(opts: { page: number; status: BookStatus | "all"; q?: string }): string {
   const params = new URLSearchParams();
   if (opts.status !== "all") params.set("status", opts.status);
   if (opts.q) params.set("q", opts.q);
@@ -157,8 +151,11 @@ function Pagination({
       className="flex items-center justify-between gap-3 pt-2 border-t border-hairline-soft"
     >
       <p className="text-caption text-muted">
-        Buku <span className="font-semibold text-ink-soft">{rangeStart}–{rangeEnd}</span> dari{" "}
-        <span className="font-semibold text-ink-soft">{totalBooks}</span>
+        Buku{" "}
+        <span className="font-semibold text-ink-soft">
+          {rangeStart}–{rangeEnd}
+        </span>{" "}
+        dari <span className="font-semibold text-ink-soft">{totalBooks}</span>
       </p>
       <div className="flex items-center gap-2">
         <PaginationLink
