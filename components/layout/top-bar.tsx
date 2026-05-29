@@ -17,7 +17,7 @@ export function TopBar({ profile }: { profile: Profile | null }) {
           </div>
 
           <Link
-            href="/library"
+            href="/home"
             aria-label="Collective Library — Beranda"
             className="flex items-center gap-2"
           >

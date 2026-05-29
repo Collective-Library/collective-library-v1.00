@@ -13,7 +13,10 @@ export async function getProfileByUsername(username: string): Promise<Profile | 
 }
 
 /** Check if a username is available (case-insensitive). */
-export async function isUsernameAvailable(username: string, excludeUserId?: string): Promise<boolean> {
+export async function isUsernameAvailable(
+  username: string,
+  excludeUserId?: string
+): Promise<boolean> {
   const supabase = await createClient();
   let q = supabase.from("profiles_public").select("id").ilike("username", username);
   if (excludeUserId) q = q.neq("id", excludeUserId);
@@ -37,6 +40,7 @@ export interface MemberSummary {
   open_for_lending: boolean;
   open_for_selling: boolean;
   open_for_trade: boolean;
+  open_for_discussion: boolean;
   is_admin: boolean;
   created_at: string;
   book_count: number;
@@ -83,7 +87,7 @@ export async function listAreas(): Promise<AreaOption[]> {
     (a, b) =>
       b.member_count - a.member_count ||
       a.city.localeCompare(b.city) ||
-      (a.area ?? "").localeCompare(b.area ?? ""),
+      (a.area ?? "").localeCompare(b.area ?? "")
   );
 }
 
@@ -99,7 +103,7 @@ export async function listMembers(opts?: {
   let query = supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, bio, profession, campus_or_workplace, interests, intents, open_for_lending, open_for_selling, open_for_trade, is_admin, created_at",
+      "id, full_name, username, photo_url, city, address_area, bio, profession, campus_or_workplace, interests, intents, open_for_lending, open_for_selling, open_for_trade, open_for_discussion, is_admin, created_at"
     )
     .not("username", "is", null)
     .order("created_at", { ascending: false })
@@ -179,7 +183,7 @@ export async function listMembersForMap(): Promise<MapMember[]> {
   const { data: profiles, error } = await supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, bio, profession, interests, intents, open_for_lending, open_for_selling, open_for_trade, map_lat, map_lng",
+      "id, full_name, username, photo_url, city, address_area, bio, profession, interests, intents, open_for_lending, open_for_selling, open_for_trade, map_lat, map_lng"
     )
     .eq("show_on_map", true)
     .not("map_lat", "is", null)
@@ -259,7 +263,7 @@ export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
   const { data: profiles, error } = await supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, profession, is_admin, updated_at",
+      "id, full_name, username, photo_url, city, address_area, profession, is_admin, updated_at"
     )
     .eq("show_on_map", true)
     .not("username", "is", null)
@@ -310,7 +314,7 @@ export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
 
 /** Fetch the communities a user belongs to. */
 export async function getProfileCommunities(
-  userId: string,
+  userId: string
 ): Promise<Pick<Community, "id" | "name" | "slug">[]> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -320,9 +324,14 @@ export async function getProfileCommunities(
     .order("joined_at", { ascending: true });
   // Each row is { community: {...} } — Supabase types this as an array even
   // for to-one relations, so cast through unknown and normalize either shape.
-  type Row = { community: { id: string; name: string; slug: string } | { id: string; name: string; slug: string }[] | null };
+  type Row = {
+    community:
+      | { id: string; name: string; slug: string }
+      | { id: string; name: string; slug: string }[]
+      | null;
+  };
   const rows = (data ?? []) as unknown as Row[];
   return rows
-    .map((row) => (Array.isArray(row.community) ? row.community[0] ?? null : row.community))
+    .map((row) => (Array.isArray(row.community) ? (row.community[0] ?? null) : row.community))
     .filter((c): c is { id: string; name: string; slug: string } => c !== null);
 }

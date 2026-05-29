@@ -5,7 +5,21 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import type { Profile } from "@/types";
+import { avatarMenuNavItems } from "./nav-config";
 
+/**
+ * User dropdown anchored to the avatar on the right of the TopBar.
+ *
+ * Slice 2: main nav links come from the shared `nav-config.ts`. Inline
+ * items kept hardcoded because they have unique behaviors:
+ *   - View profile (dynamic href based on `profile.username`)
+ *   - Edit profile, Quick add (multiple), Import from Goodreads, My feedback
+ *   - Sign-out form (POST)
+ *   - Admin section with prominent Mastermind pill styling
+ *
+ * Admin section now includes Manifest moderation (was previously only
+ * reachable via the Hamburger Builder group).
+ */
 export function AvatarMenu({ profile }: { profile: Profile }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,6 +70,7 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
             "absolute right-0 mt-2 w-56 rounded-card-lg bg-paper border border-hairline shadow-modal overflow-hidden z-50"
           )}
         >
+          {/* User header */}
           <div className="px-4 py-3 border-b border-hairline-soft">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-body-sm font-semibold text-ink truncate">
@@ -72,6 +87,9 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
               <p className="text-caption text-muted truncate">@{profile.username}</p>
             )}
           </div>
+
+          {/* Main nav links — View / Edit profile inline, rest from config,
+              then add-flow shortcuts inline. */}
           <ul className="py-1">
             <MenuItem href={profileHref} onClick={() => setOpen(false)}>
               View profile
@@ -79,21 +97,11 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
             <MenuItem href="/profile/edit" onClick={() => setOpen(false)}>
               Edit profile
             </MenuItem>
-            <MenuItem href="/activity" onClick={() => setOpen(false)}>
-              Activity feed
-            </MenuItem>
-            <MenuItem href="/members" onClick={() => setOpen(false)}>
-              Members
-            </MenuItem>
-            <MenuItem href="/event" onClick={() => setOpen(false)}>
-              Events
-            </MenuItem>
-            <MenuItem href="/manifest" onClick={() => setOpen(false)}>
-              Manifest
-            </MenuItem>
-            <MenuItem href="/book/add" onClick={() => setOpen(false)}>
-              Add book
-            </MenuItem>
+            {avatarMenuNavItems.map((item) => (
+              <MenuItem key={item.id} href={item.href} onClick={() => setOpen(false)}>
+                {item.label}
+              </MenuItem>
+            ))}
             <MenuItem href="/book/add/bulk" onClick={() => setOpen(false)}>
               Quick add (multiple)
             </MenuItem>
@@ -101,11 +109,16 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
               Import from Goodreads
             </MenuItem>
           </ul>
+
+          {/* My feedback — distinct section because it's the user's own feedback,
+              not a navigation surface. */}
           <div className="border-t border-hairline-soft py-1.5 flex flex-col gap-1">
             <MenuItem href="/feedback/" onClick={() => setOpen(false)}>
               My feedback
             </MenuItem>
           </div>
+
+          {/* Admin section — prominent Mastermind pill + standard admin rows. */}
           {profile.is_admin && (
             <div className="border-t border-hairline-soft py-1.5 px-1.5 flex flex-col gap-1">
               <Link
@@ -143,8 +156,21 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
                 </span>
                 <span>Feedback inbox</span>
               </Link>
+              <Link
+                href="/admin/manifests"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-button text-body-sm text-ink-soft hover:bg-cream transition-colors"
+              >
+                <span aria-hidden className="text-base leading-none">
+                  ✎
+                </span>
+                <span>Manifest moderation</span>
+              </Link>
             </div>
           )}
+
+          {/* Sign out */}
           <div className="border-t border-hairline-soft py-1">
             <form action="/auth/logout" method="POST">
               <button

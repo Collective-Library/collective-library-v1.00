@@ -11,17 +11,21 @@ import { formatRelativeID } from "@/lib/format";
 import type { ManifestWithAuthor } from "@/types";
 
 /**
- * Single row in the admin /admin/manifests queue. Shows pending manifest
- * with author, body, optional links, and approve/reject CTAs.
+ * Single row in the admin /admin/manifests moderation panel.
  *
- * Reject requires a note (so the author gets a reason; admin can DM it
- * manually for now). Approve fires the activity_log trigger (MANIFEST_POSTED).
+ * Handles two cases:
+ * - status='pending': shows Approve + Reject (legacy queue, pre-autobase).
+ * - status='approved': shows Reject retroaktif only (autobase mode — manifest
+ *   is already public; reject removes it from the feed).
+ *
+ * Reject requires a note so the author knows why.
  */
 export function ManifestModerationRow({ manifest }: { manifest: ManifestWithAuthor }) {
   const router = useRouter();
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
   const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
+  const isAlreadyApproved = manifest.status === "approved";
 
   const authorName = manifest.author.full_name ?? manifest.author.username ?? "Anggota";
   const authorHref = manifest.author.username ? `/profile/${manifest.author.username}` : null;
@@ -73,7 +77,10 @@ export function ManifestModerationRow({ manifest }: { manifest: ManifestWithAuth
         <Avatar src={manifest.author.photo_url} name={manifest.author.full_name} size={36} />
         <div className="min-w-0 flex-1">
           {authorHref ? (
-            <Link href={authorHref} className="text-body-sm font-semibold text-ink hover:underline underline-offset-4">
+            <Link
+              href={authorHref}
+              className="text-body-sm font-semibold text-ink hover:underline underline-offset-4"
+            >
               {authorName}
             </Link>
           ) : (
@@ -86,6 +93,15 @@ export function ManifestModerationRow({ manifest }: { manifest: ManifestWithAuth
         {manifest.is_anonymous && (
           <span className="text-caption bg-amber-100 text-amber-800 px-2 py-0.5 rounded-pill">
             ANON
+          </span>
+        )}
+        {isAlreadyApproved ? (
+          <span className="text-caption bg-green-100 text-green-800 px-2 py-0.5 rounded-pill">
+            PUBLIK
+          </span>
+        ) : (
+          <span className="text-caption bg-amber-100 text-amber-800 px-2 py-0.5 rounded-pill">
+            PENDING
           </span>
         )}
       </header>
@@ -131,18 +147,23 @@ export function ManifestModerationRow({ manifest }: { manifest: ManifestWithAuth
       {/* Actions */}
       {!showRejectForm ? (
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => setShowRejectForm(true)} disabled={busy !== null}>
-            Reject
+          <Button
+            variant="secondary"
+            onClick={() => setShowRejectForm(true)}
+            disabled={busy !== null}
+            className={isAlreadyApproved ? "flex-1" : undefined}
+          >
+            {isAlreadyApproved ? "Reject retroaktif" : "Reject"}
           </Button>
-          <Button onClick={approve} disabled={busy !== null} className="flex-1">
-            {busy === "approve" ? "Approving..." : "✅ Approve & publish"}
-          </Button>
+          {!isAlreadyApproved && (
+            <Button onClick={approve} disabled={busy !== null} className="flex-1">
+              {busy === "approve" ? "Approving..." : "Approve & publish"}
+            </Button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-2 p-3 rounded-card bg-red-50 border border-red-200">
-          <p className="text-caption text-red-800 font-semibold">
-            Reject — kasih catatan kenapa
-          </p>
+          <p className="text-caption text-red-800 font-semibold">Reject — kasih catatan kenapa</p>
           <Textarea
             value={rejectNote}
             onChange={(e) => setRejectNote(e.target.value)}
@@ -153,13 +174,20 @@ export function ManifestModerationRow({ manifest }: { manifest: ManifestWithAuth
           <div className="flex gap-2">
             <Button
               variant="secondary"
-              onClick={() => { setShowRejectForm(false); setRejectNote(""); }}
+              onClick={() => {
+                setShowRejectForm(false);
+                setRejectNote("");
+              }}
               disabled={busy !== null}
               className="flex-1"
             >
               Batal
             </Button>
-            <Button onClick={reject} disabled={busy !== null} className="flex-1 !bg-red-700 hover:!bg-red-800">
+            <Button
+              onClick={reject}
+              disabled={busy !== null}
+              className="flex-1 !bg-red-700 hover:!bg-red-800"
+            >
               {busy === "reject" ? "..." : "Konfirmasi reject"}
             </Button>
           </div>

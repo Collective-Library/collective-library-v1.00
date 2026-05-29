@@ -15,6 +15,7 @@ export interface ActivityActor {
   full_name: string | null;
   username: string | null;
   photo_url: string | null;
+  city: string | null;
 }
 
 export interface ActivityBook {
@@ -60,7 +61,7 @@ export interface ActivityItem {
 
 const SELECT = `
   id, type, created_at, metadata,
-  actor:profiles_public!actor_user_id(id, full_name, username, photo_url),
+  actor:profiles_public!actor_user_id(id, full_name, username, photo_url, city),
   book:books(id, title, author, cover_url, status),
   wanted:wanted_requests(id, title, author),
   event:events(id, title, starts_at, cover_url),
@@ -72,10 +73,9 @@ const SELECT = `
  * Optional `interest` filter narrows to events whose actor has that interest slug.
  */
 export async function listActivity(
-  limitOrOpts: number | { limit?: number; interest?: string } = 50,
+  limitOrOpts: number | { limit?: number; interest?: string } = 50
 ): Promise<ActivityItem[]> {
-  const opts =
-    typeof limitOrOpts === "number" ? { limit: limitOrOpts } : limitOrOpts;
+  const opts = typeof limitOrOpts === "number" ? { limit: limitOrOpts } : limitOrOpts;
   const limit = opts.limit ?? 50;
 
   const supabase = await createClient();
@@ -118,8 +118,7 @@ export async function listActivity(
   };
 
   // Supabase types embedded relations as arrays; flatten to single object.
-  const flatten = <T,>(v: T | T[] | null): T | null =>
-    Array.isArray(v) ? v[0] ?? null : v;
+  const flatten = <T>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
   return ((data ?? []) as unknown as Row[]).map((r) => ({
     id: r.id,

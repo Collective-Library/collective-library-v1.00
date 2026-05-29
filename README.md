@@ -60,6 +60,7 @@ For a complete list, see [`docs/FEATURES.md`](./docs/FEATURES.md).
 - Expanded community event workflows
 
 See:
+
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 - [`docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)
 
@@ -158,6 +159,7 @@ We welcome builders, writers, organizers, and curious learners.
 Build a contributor badge system for Collective Library users, starting with manual admin assignment and future support for Discord role sync.
 
 This feature turns community contribution into visible identity:
+
 - Inventor
 - Builder
 - Explorer
@@ -171,12 +173,14 @@ This feature turns community contribution into visible identity:
 - Pull Request Hero
 
 MVP:
+
 - define contributor role data model
 - allow role assignment to users
 - show public badges on user profile
 - document Discord sync as future integration
 
 Future:
+
 - Discord OAuth
 - Discord bot role sync
 - GitHub contribution badge sync
@@ -203,19 +207,27 @@ Template files:
 
 ## Docs index
 
+Strategic source of truth:
+
+- [`docs/BUSINESS_PROCESS.md`](./docs/BUSINESS_PROCESS.md) — the ecosystem loop, the Product Surface Matrix, Discord/X as layers, guardrails, metrics that matter
+- [`docs/BRAND_AND_VOICE.md`](./docs/BRAND_AND_VOICE.md) — design tokens, copy register, founder voice, empty-state patterns
 - [`docs/PROJECT_VISION.md`](./docs/PROJECT_VISION.md)
+- [`docs/ROADMAP.md`](./docs/ROADMAP.md)
+- [`docs/STATE.md`](./docs/STATE.md) — living handoff doc, decision log, current state snapshot
+
+Reference docs:
+
 - [`docs/FEATURES.md`](./docs/FEATURES.md)
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
-- [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 - [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
 - [`docs/DISCORD_ROLES.md`](./docs/DISCORD_ROLES.md)
+- [`docs/spots/README.md`](./docs/spots/README.md) — Spots (library_nodes) subsystem deep-dive
 - [`docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)
 
-Legacy context docs:
+Historical:
 
-- [`docs/STATE.md`](./docs/STATE.md)
-- [`docs/AUDIT.md`](./docs/AUDIT.md)
-- [`docs/PRE-DEPLOY-CHECKLIST.md`](./docs/PRE-DEPLOY-CHECKLIST.md)
+- [`docs/AUDIT.md`](./docs/AUDIT.md) — three-lens pre-launch audit (still useful for voice + strategic-secret framing)
+- [`docs/PRE-DEPLOY-CHECKLIST.md`](./docs/PRE-DEPLOY-CHECKLIST.md) — deprecated; superseded by `STATE.md` migration table
 
 ---
 

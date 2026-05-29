@@ -1,10 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type {
-  Manifest,
-  ManifestFormValues,
-  ManifestStatus,
-  ManifestWithAuthor,
-} from "@/types";
+import type { Manifest, ManifestFormValues, ManifestStatus, ManifestWithAuthor } from "@/types";
 
 const AUTHOR_SELECT = `id, full_name, username, photo_url, city`;
 
@@ -15,8 +10,7 @@ const MANIFEST_LIST_COLUMNS = `id, author_id, body, mood, topic, is_anonymous,
   created_at, updated_at`;
 
 // Supabase returns embedded relations as arrays; flatten to single object.
-const flatten = <T,>(v: T | T[] | null): T | null =>
-  Array.isArray(v) ? (v[0] ?? null) : v;
+const flatten = <T>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
 /**
  * List approved + public manifests for the /manifest page and landing strip.
@@ -41,7 +35,7 @@ export async function listManifests(opts?: {
        author:profiles_public!manifests_author_id_fkey(${AUTHOR_SELECT}),
        linked_event:events(id, title, starts_at, cover_url),
        linked_book:books(id, title, author, cover_url)`,
-      { count: "exact" },
+      { count: "exact" }
     )
     .eq("is_hidden", false)
     .eq("status", "approved")
@@ -94,7 +88,7 @@ export async function getManifest(id: string): Promise<ManifestWithAuthor | null
       `*,
        author:profiles_public!manifests_author_id_fkey(${AUTHOR_SELECT}),
        linked_event:events(id, title, starts_at, cover_url),
-       linked_book:books(id, title, author, cover_url)`,
+       linked_book:books(id, title, author, cover_url)`
     )
     .eq("id", id)
     .maybeSingle();
@@ -133,7 +127,7 @@ export async function listPendingManifests(): Promise<ManifestWithAuthor[]> {
       `${MANIFEST_LIST_COLUMNS},
        author:profiles_public!manifests_author_id_fkey(${AUTHOR_SELECT}),
        linked_event:events(id, title, starts_at, cover_url),
-       linked_book:books(id, title, author, cover_url)`,
+       linked_book:books(id, title, author, cover_url)`
     )
     .eq("status", "pending")
     .order("created_at", { ascending: true });
@@ -157,10 +151,14 @@ export async function listPendingManifests(): Promise<ManifestWithAuthor[]> {
   })) as unknown as ManifestWithAuthor[];
 }
 
-/** Submit a new manifest (status=pending). */
+/**
+ * Submit a new manifest. Autobase mode: publishes immediately (status=approved),
+ * no admin pre-approval gate. Admin can moderate retroactively via hide/reject.
+ * The activity trigger fires on INSERT with status='approved' (migration 0026).
+ */
 export async function createManifest(
   authorId: string,
-  values: ManifestFormValues,
+  values: ManifestFormValues
 ): Promise<{ id: string } | { error: string }> {
   const supabase = await createClient();
 
@@ -175,6 +173,9 @@ export async function createManifest(
       visibility: values.visibility ?? "public",
       linked_event_id: values.linked_event_id ?? null,
       linked_book_id: values.linked_book_id ?? null,
+      // Autobase mode: go live immediately.
+      status: "approved",
+      approved_at: new Date().toISOString(),
     })
     .select("id")
     .single();
@@ -190,7 +191,7 @@ export async function createManifest(
 export async function approveManifest(
   manifestId: string,
   adminProfileId: string,
-  note?: string,
+  note?: string
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
@@ -215,7 +216,7 @@ export async function approveManifest(
 export async function rejectManifest(
   manifestId: string,
   adminProfileId: string,
-  note: string,
+  note: string
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
@@ -239,7 +240,7 @@ export async function rejectManifest(
 /** Mark manifest as posted to X (records the URL for backlink). */
 export async function markManifestXPosted(
   manifestId: string,
-  xPostedUrl: string,
+  xPostedUrl: string
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
@@ -261,11 +262,7 @@ export async function markManifestXPosted(
 /** Fetch raw manifest (no joins) for ownership checks in API routes. */
 export async function getRawManifest(id: string): Promise<Manifest | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("manifests")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await supabase.from("manifests").select("*").eq("id", id).maybeSingle();
   if (error) {
     console.error("getRawManifest", error);
     return null;
@@ -273,12 +270,52 @@ export async function getRawManifest(id: string): Promise<Manifest | null> {
   return data as Manifest | null;
 }
 
+/**
+ * Admin moderation — recent public manifests for retroactive review.
+ * Autobase mode means the pending queue is empty for new manifests; admin
+ * reviews live content here instead.
+ */
+export async function listRecentManifests(limit = 20): Promise<ManifestWithAuthor[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("manifests")
+    .select(
+      `${MANIFEST_LIST_COLUMNS},
+       author:profiles_public!manifests_author_id_fkey(${AUTHOR_SELECT}),
+       linked_event:events(id, title, starts_at, cover_url),
+       linked_book:books(id, title, author, cover_url)`
+    )
+    .eq("status", "approved")
+    .eq("is_hidden", false)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("listRecentManifests", error);
+    return [];
+  }
+
+  type Row = {
+    author: unknown;
+    linked_event: unknown;
+    linked_book: unknown;
+  } & Record<string, unknown>;
+
+  return ((data ?? []) as unknown as Row[]).map((r) => ({
+    ...r,
+    author: flatten(r.author as never),
+    linked_event: flatten(r.linked_event as never),
+    linked_book: flatten(r.linked_book as never),
+  })) as unknown as ManifestWithAuthor[];
+}
+
 /** Status update helper for admin actions. */
 export async function setManifestStatus(
   manifestId: string,
   status: ManifestStatus,
   adminProfileId: string,
-  note?: string,
+  note?: string
 ): Promise<{ ok: true } | { error: string }> {
   if (status === "approved") return approveManifest(manifestId, adminProfileId, note);
   if (status === "rejected") {
