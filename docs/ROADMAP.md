@@ -10,7 +10,7 @@
 - RSS/JSON feeds, Instagram strip, public profiles, hCaptcha-gated auth (email + Google + Discord).
 - Contributor onboarding docs, issue and PR templates.
 
-## Phase 2 — Ecosystem alignment (current — see Slice 1 onward)
+## Phase 2 — Ecosystem alignment (✅ shipped — staging `8722631`)
 
 The goal of this phase is **coherence**, not features. Make every existing surface speak to every other surface. Sliced for low-risk execution:
 
@@ -28,6 +28,129 @@ The goal of this phase is **coherence**, not features. Make every existing surfa
 12. **Slice 9** — Mastermind action intelligence.
 
 Each slice ships independently with a stop-and-report gate before the next.
+
+---
+
+## Next Development: Output Layer
+
+> **Status: not implemented.** Plan only. Do not build until production from Phase 2 is stable.
+
+Collective Library should make important community activity visible outside the web app through three
+output channels: Discord, X/Twitter, and analytics. This is a distribution and visibility layer, not
+a feature layer. It does not change core user flows — it amplifies signals that already exist.
+
+### 1. Discord Output Layer
+
+**Goal:** Fan important Collective Library activities to Discord channels via incoming webhooks.
+
+Activities to announce:
+
+- New user / profile completed
+- New book added
+- New place / Spot created
+- New event created
+- New manifest published
+- New feedback submitted
+- Contributor journey milestone completed
+
+Implementation direction:
+
+- Incoming webhooks first. No full Discord bot yet.
+- All sends are server-side only.
+- Missing env vars must not crash the app — skip gracefully.
+- Discord failure must not block any core user action.
+
+Potential env vars:
+
+```
+DISCORD_ACTIVITY_WEBHOOK_URL
+DISCORD_FEEDBACK_WEBHOOK_URL
+DISCORD_EVENTS_WEBHOOK_URL
+DISCORD_MANIFEST_WEBHOOK_URL
+```
+
+Note: `DISCORD_COMMUNITY_WEBHOOK_URL` already wires `MANIFEST_POSTED` and events (shipped in Phase 2).
+The above are future channel-specific webhooks for more granular routing.
+
+---
+
+### 2. X/Twitter Output Layer
+
+**Goal:** Prepare public distribution through X, starting manual-first.
+
+Phase 1 (manual):
+
+- Admin social-output page at `/mastermind/social` or similar
+- Suggested X post copy generated from manifest/event data
+- Copy-to-clipboard button
+- "Open in X compose" intent URL (already shipped for events + manifests)
+
+Phase 2 (future — do not build yet):
+
+- X API posting via server-side route
+- Autobase-style account management
+
+Do not build real X API posting in the next development cycle. Manual-first stays the strategy
+until there is clear demand and proper API key management in place.
+
+Future env placeholders (reserve now, do not wire yet):
+
+```
+X_API_KEY
+X_API_SECRET
+X_ACCESS_TOKEN
+X_ACCESS_TOKEN_SECRET
+X_BEARER_TOKEN
+X_AUTOBOT_ENABLED=false
+```
+
+---
+
+### 3. Analytics Layer
+
+**Goal:** Behavior visibility without overbuilding. Understand what users actually do.
+
+**Microsoft Clarity (priority):**
+
+- Load only in production
+- Do not load if `NEXT_PUBLIC_CLARITY_PROJECT_ID` env var is missing
+- Respect privacy — no PII in event names
+
+```
+NEXT_PUBLIC_CLARITY_PROJECT_ID
+```
+
+**Custom event tracking via `lib/analytics.ts`:**
+
+```ts
+trackEvent(name: string, properties?: Record<string, unknown>): void
+```
+
+Events to track:
+
+- `sign_up_started`
+- `profile_completed`
+- `book_added`
+- `place_added`
+- `event_created`
+- `manifest_viewed`
+- `discord_join_clicked`
+- `journey_started`
+- `journey_completed`
+- `invite_clicked`
+
+---
+
+### Output Layer guardrails
+
+- No unnecessary dependencies added to the bundle
+- No secrets or API keys exposed to the client
+- No Discord bot — incoming webhooks only for now
+- No X auto-posting — manual intent URLs until explicit decision
+- No user flow blocked if an output channel fails
+- Manual-first at every layer: observe behavior before automating
+
+---
 
 ## Phase 3 — Contributor identity
 
