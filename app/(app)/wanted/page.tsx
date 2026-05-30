@@ -6,10 +6,7 @@ import { ButtonLink } from "@/components/ui/button";
 export const dynamic = "force-dynamic";
 
 export default async function WantedPage() {
-  const [wanted, viewerProfile] = await Promise.all([
-    listWantedRequests(),
-    getCurrentProfile(),
-  ]);
+  const [wanted, viewerProfile] = await Promise.all([listWantedRequests(), getCurrentProfile()]);
   const viewer = viewerProfile
     ? { full_name: viewerProfile.full_name, username: viewerProfile.username }
     : null;
@@ -36,12 +33,10 @@ export default async function WantedPage() {
       {/* Feed */}
       {wanted.length === 0 ? (
         <div className="rounded-card-lg border border-hairline bg-paper p-10 text-center">
-          <p className="font-display text-title-lg text-ink">
-            Belum ada yang nyari buku.
-          </p>
+          <p className="font-display text-title-lg text-ink">Belum ada yang nyari buku.</p>
           <p className="mt-2 text-body text-muted max-w-md mx-auto">
-            Kalau lo punya wishlist yang belum kebeli, mungkin sekarang waktunya
-            bilang ke komunitas — siapa tau ada yang lagi mau lepas.
+            Kalau lo punya wishlist yang belum kebeli, mungkin sekarang waktunya bilang ke komunitas
+            — siapa tau ada yang lagi mau lepas.
           </p>
           <div className="mt-5">
             <ButtonLink href="/wanted/add">+ Buat WTB Pertama</ButtonLink>
@@ -50,14 +45,21 @@ export default async function WantedPage() {
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
           {wanted.map((w) => (
-            <WantedCard key={w.id} wanted={w} viewer={viewer} />
+            <WantedCard
+              key={w.id}
+              wanted={w}
+              viewer={viewer}
+              isOwner={viewerProfile?.id === w.requester_id}
+            />
           ))}
         </div>
       )}
 
       {/* Mobile CTA fallback */}
       <div className="md:hidden">
-        <ButtonLink href="/wanted/add" fullWidth>+ Buat WTB Request</ButtonLink>
+        <ButtonLink href="/wanted/add" fullWidth>
+          + Buat WTB Request
+        </ButtonLink>
       </div>
     </div>
   );

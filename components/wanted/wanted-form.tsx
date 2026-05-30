@@ -12,22 +12,33 @@ import type { BookCondition } from "@/types";
 
 export function WantedForm({
   userId,
+  mode = "create",
+  wantedId,
   defaultCity = "Semarang",
   defaultTitle = "",
   defaultAuthor = "",
+  defaultBudget = "",
+  defaultCondition = "",
+  defaultNotes = "",
 }: {
   userId: string;
+  /** "create" inserts a new request; "edit" updates `wantedId` in place. */
+  mode?: "create" | "edit";
+  wantedId?: string;
   defaultCity?: string;
   defaultTitle?: string;
   defaultAuthor?: string;
+  defaultBudget?: string;
+  defaultCondition?: BookCondition | "";
+  defaultNotes?: string;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(defaultTitle);
   const [author, setAuthor] = useState(defaultAuthor);
-  const [budget, setBudget] = useState<string>("");
-  const [condition, setCondition] = useState<BookCondition | "">("");
+  const [budget, setBudget] = useState<string>(defaultBudget);
+  const [condition, setCondition] = useState<BookCondition | "">(defaultCondition);
   const [city, setCity] = useState(defaultCity);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(defaultNotes);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +49,36 @@ export function WantedForm({
     if (!title.trim()) return setError("Judul wajib diisi.");
 
     setSaving(true);
+    const supabase = createClient();
 
-    // Best-effort cover lookup so the WTB card has a visual. Always passes
-    // through even if lookup fails — we don't block the post on cover.
+    // Edit mode: update in place via RLS wanted_update_own. Cover is preserved
+    // as-is (no re-lookup) so a quick text edit doesn't swap the artwork.
+    if (mode === "edit" && wantedId) {
+      const { error: err } = await supabase
+        .from("wanted_requests")
+        .update({
+          title: title.trim(),
+          author: author.trim() || null,
+          max_budget: budget ? Number(budget) : null,
+          desired_condition: condition || null,
+          city: city.trim() || "Semarang",
+          notes: notes.trim() || null,
+        })
+        .eq("id", wantedId);
+
+      setSaving(false);
+      if (err) {
+        toast.error("Gagal update WTB — coba lagi.");
+        return setError(err.message);
+      }
+      toast.success("WTB request diupdate ✓");
+      router.replace("/wanted");
+      router.refresh();
+      return;
+    }
+
+    // Create mode: best-effort cover lookup so the WTB card has a visual.
+    // Always passes through even if lookup fails — we don't block the post.
     let cover_url: string | null = null;
     try {
       const q = author.trim() ? `${title.trim()} ${author.trim()}` : title.trim();
@@ -50,7 +88,6 @@ export function WantedForm({
       // Silent — empty cover is fine
     }
 
-    const supabase = createClient();
     const { error: err } = await supabase.from("wanted_requests").insert({
       requester_id: userId,
       title: title.trim(),
@@ -137,7 +174,13 @@ export function WantedForm({
           Batal
         </Button>
         <Button type="submit" disabled={saving} className="flex-1">
-          {saving ? "Lagi kirim ke komunitas…" : "Posting WTB request"}
+          {saving
+            ? mode === "edit"
+              ? "Lagi nyimpen…"
+              : "Lagi kirim ke komunitas…"
+            : mode === "edit"
+              ? "Simpan perubahan"
+              : "Posting WTB request"}
         </Button>
       </div>
     </form>
