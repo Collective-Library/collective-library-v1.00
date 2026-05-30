@@ -1,31 +1,40 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAppUrl } from "@/lib/url";
+import {
+  sendToChannels,
+  truncateDiscordField,
+  type DiscordChannel,
+  type DiscordEmbed,
+} from "@/lib/discord";
 
 /**
  * Supabase Database Webhook → Discord channel relay.
  *
  * Setup:
- * 1. Create a Discord webhook URL in your community channel
- *    (Channel → Edit → Integrations → Webhooks → Copy URL)
- * 2. Vercel env: DISCORD_COMMUNITY_WEBHOOK_URL=<discord webhook>
- *    (and a shared secret: DISCORD_WEBHOOK_SECRET=<random string>)
- * 3. Supabase Dashboard → Database → Webhooks → Create:
- *    - Table: activity_log
- *    - Events: INSERT
- *    - HTTP method: POST
+ * 1. Create Discord webhooks per channel (Channel → Edit → Integrations → Webhooks → Copy URL)
+ * 2. Vercel env: DISCORD_ACTIVITY_WEBHOOK_URL, DISCORD_BOOKS_WEBHOOK_URL,
+ *    DISCORD_MAP_WEBHOOK_URL, DISCORD_EVENTS_WEBHOOK_URL
+ *    (legacy: DISCORD_COMMUNITY_WEBHOOK_URL also accepted for "activity")
+ * 3. Vercel env: DISCORD_WEBHOOK_SECRET=<random string>
+ * 4. Supabase Dashboard → Database → Webhooks → Create:
+ *    - Table: activity_log  |  Events: INSERT
  *    - URL: https://<your-app>/api/discord-webhook
  *    - HTTP headers: Authorization=Bearer <DISCORD_WEBHOOK_SECRET>
- *    - Save → enable
  *
- * On every new activity row, Supabase POSTs the row here. We enrich it with
- * actor + book + wanted via service-role, format a Discord embed, and POST
- * to the Discord webhook.
+ * Per-event routing:
+ *   USER_JOINED        → activity
+ *   BOOK_ADDED         → books + activity
+ *   BOOK_STATUS_CHANGED→ books + activity
+ *   WTB_POSTED         → activity
+ *   MANIFEST_POSTED    → activity
+ *   EVENT_CREATED      → events + activity
+ *   EVENT_RSVPED       → events
+ *   NODE_CREATED       → map + activity
  */
 
 export const runtime = "nodejs";
 
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_COMMUNITY_WEBHOOK_URL;
 const SHARED_SECRET = process.env.DISCORD_WEBHOOK_SECRET;
 
 const STATUS_LABEL: Record<string, string> = {
@@ -35,12 +44,19 @@ const STATUS_LABEL: Record<string, string> = {
   unavailable: "Koleksi",
 };
 
-const TYPE_COPY: Record<string, { label: string; color: number }> = {
-  USER_JOINED: { label: "Anggota baru", color: 0xc2410c },
-  BOOK_ADDED: { label: "Buku baru di rak", color: 0x166534 },
-  BOOK_STATUS_CHANGED: { label: "Update status buku", color: 0x6d28d9 },
-  WTB_POSTED: { label: "Buku dicari", color: 0xb45309 },
-  MANIFEST_POSTED: { label: "Manifest baru", color: 0x92400e },
+const TYPE_COPY: Record<string, { label: string; color: number; channels: DiscordChannel[] }> = {
+  USER_JOINED: { label: "Anggota baru", color: 0xc2410c, channels: ["activity"] },
+  BOOK_ADDED: { label: "Buku baru di rak", color: 0x166534, channels: ["books", "activity"] },
+  BOOK_STATUS_CHANGED: {
+    label: "Update status buku",
+    color: 0x6d28d9,
+    channels: ["books", "activity"],
+  },
+  WTB_POSTED: { label: "Buku dicari", color: 0xb45309, channels: ["activity"] },
+  MANIFEST_POSTED: { label: "Manifest baru", color: 0x92400e, channels: ["activity"] },
+  EVENT_CREATED: { label: "Event baru", color: 0x4338ca, channels: ["events", "activity"] },
+  EVENT_RSVPED: { label: "Bakal hadir event", color: 0x16a34a, channels: ["events"] },
+  NODE_CREATED: { label: "Spot baru aktif", color: 0x7c3aed, channels: ["map", "activity"] },
 };
 
 interface SupabaseWebhookPayload {
@@ -54,6 +70,8 @@ interface SupabaseWebhookPayload {
     book_id: string | null;
     wanted_id: string | null;
     manifest_id: string | null;
+    event_id: string | null;
+    node_id: string | null;
     metadata: { old_status?: string; new_status?: string } | null;
     created_at: string;
   };
@@ -61,17 +79,11 @@ interface SupabaseWebhookPayload {
 }
 
 export async function POST(request: NextRequest) {
-  // Auth check — only accept requests carrying our shared secret
   if (SHARED_SECRET) {
     const auth = request.headers.get("authorization");
     if (auth !== `Bearer ${SHARED_SECRET}`) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
-  }
-
-  if (!DISCORD_WEBHOOK_URL) {
-    // Webhook not configured — accept but no-op
-    return NextResponse.json({ ok: true, skipped: "no webhook configured" });
   }
 
   let payload: SupabaseWebhookPayload;
@@ -86,9 +98,14 @@ export async function POST(request: NextRequest) {
   }
 
   const row = payload.record;
+  const cfg = TYPE_COPY[row.type];
+  if (!cfg) {
+    return NextResponse.json({ ok: true, skipped: "no handler for type" });
+  }
+
   const supabase = createAdminClient();
 
-  // Enrich actor (any logged-in profile)
+  // Enrich actor
   let actorName = "Anggota";
   let actorUsername: string | null = null;
   let actorPhoto: string | null = null;
@@ -99,15 +116,15 @@ export async function POST(request: NextRequest) {
       .eq("id", row.actor_user_id)
       .maybeSingle();
     if (actor) {
-      actorName = actor.full_name ?? actor.username ?? "Anggota";
+      actorName =
+        (actor.full_name as string | null) ?? (actor.username as string | null) ?? "Anggota";
       actorUsername = actor.username as string | null;
       actorPhoto = actor.photo_url as string | null;
     }
   }
 
-  // Enrich book / wanted
+  // Enrich book
   type BookCtx = { title: string; author: string; cover_url: string | null; status: string };
-  type WantedCtx = { title: string; author: string | null };
   let book: BookCtx | null = null;
   if (row.book_id) {
     const { data: b } = await supabase
@@ -117,6 +134,9 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
     if (b) book = b as unknown as BookCtx;
   }
+
+  // Enrich wanted
+  type WantedCtx = { title: string; author: string | null };
   let wanted: WantedCtx | null = null;
   if (row.wanted_id) {
     const { data: w } = await supabase
@@ -127,7 +147,7 @@ export async function POST(request: NextRequest) {
     if (w) wanted = w as unknown as WantedCtx;
   }
 
-  // Enrich manifest for MANIFEST_POSTED
+  // Enrich manifest
   type ManifestCtx = { body: string; topic: string | null; mood: string | null };
   let manifest: ManifestCtx | null = null;
   if (row.manifest_id) {
@@ -139,55 +159,88 @@ export async function POST(request: NextRequest) {
     if (mf) manifest = mf as unknown as ManifestCtx;
   }
 
-  const embed = buildEmbed(row, actorName, actorUsername, actorPhoto, book, wanted, manifest);
+  // Enrich event
+  type EventCtx = {
+    title: string;
+    starts_at: string;
+    location_text: string | null;
+    is_online: boolean;
+    timezone: string | null;
+  };
+  let event: EventCtx | null = null;
+  if (row.event_id) {
+    const { data: ev } = await supabase
+      .from("events")
+      .select("title, starts_at, location_text, is_online, timezone")
+      .eq("id", row.event_id)
+      .maybeSingle();
+    if (ev) event = ev as unknown as EventCtx;
+  }
+
+  // Enrich node (Spot)
+  type NodeCtx = { name: string; slug: string; type: string; city: string | null };
+  let node: NodeCtx | null = null;
+  if (row.node_id) {
+    const { data: nd } = await supabase
+      .from("library_nodes")
+      .select("name, slug, type, city")
+      .eq("id", row.node_id)
+      .maybeSingle();
+    if (nd) node = nd as unknown as NodeCtx;
+  }
+
+  const base = getAppUrl();
+  const profileUrl = actorUsername ? `${base}/profile/${actorUsername}` : null;
+
+  const embed = buildEmbed(
+    row,
+    cfg,
+    base,
+    actorName,
+    actorUsername,
+    actorPhoto,
+    profileUrl,
+    book,
+    wanted,
+    manifest,
+    event,
+    node
+  );
+
   if (!embed) {
-    return NextResponse.json({ ok: true, skipped: "no embed for type" });
+    return NextResponse.json({ ok: true, skipped: "no embed built" });
   }
 
-  // POST to Discord
-  const r = await fetch(DISCORD_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      username: "Collective Library",
-      avatar_url: `${getAppUrl()}/logo.svg`,
-      embeds: [embed],
-    }),
-  });
+  await sendToChannels(cfg.channels, embed);
 
-  if (!r.ok) {
-    const text = await r.text();
-    console.error("Discord webhook failed", r.status, text);
-    return NextResponse.json(
-      { error: "discord webhook failed", status: r.status },
-      { status: 502 }
-    );
-  }
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, channels: cfg.channels });
 }
 
 function buildEmbed(
   row: SupabaseWebhookPayload["record"],
+  cfg: { label: string; color: number },
+  base: string,
   actorName: string,
   actorUsername: string | null,
   actorPhoto: string | null,
+  profileUrl: string | null,
   book: { title: string; author: string; cover_url: string | null; status: string } | null,
   wanted: { title: string; author: string | null } | null,
-  manifest: { body: string; topic: string | null; mood: string | null } | null
-) {
-  const cfg = TYPE_COPY[row.type];
-  if (!cfg) return null;
-  const base = getAppUrl();
-  const profileUrl = actorUsername ? `${base}/profile/${actorUsername}` : null;
-
+  manifest: { body: string; topic: string | null; mood: string | null } | null,
+  event: {
+    title: string;
+    starts_at: string;
+    location_text: string | null;
+    is_online: boolean;
+    timezone: string | null;
+  } | null,
+  node: { name: string; slug: string; type: string; city: string | null } | null
+): DiscordEmbed | null {
   let title = "";
   let description = "";
   let url = `${base}/aktivitas`;
   let thumbnail: string | null = null;
 
-  // Voice: Seth-Godin-flavored. Specific, anticipatory, invitational. Each
-  // event becomes a tiny community moment, not a bot log.
   switch (row.type) {
     case "USER_JOINED":
       title = `${actorName} baru gabung.`;
@@ -196,6 +249,7 @@ function buildEmbed(
         : "Kasih sambutan, kenalan dulu sebelum mereka tenggelam di scroll.";
       url = profileUrl ?? url;
       break;
+
     case "BOOK_ADDED": {
       const verb = book ? (STATUS_LABEL[book.status]?.toLowerCase() ?? "koleksi") : "rak";
       title = book
@@ -208,6 +262,7 @@ function buildEmbed(
       url = row.book_id ? `${base}/book/${row.book_id}` : url;
       break;
     }
+
     case "BOOK_STATUS_CHANGED": {
       const newStatus = row.metadata?.new_status ?? book?.status ?? "unavailable";
       const verb = STATUS_LABEL[newStatus]?.toLowerCase() ?? newStatus;
@@ -221,6 +276,7 @@ function buildEmbed(
       url = row.book_id ? `${base}/book/${row.book_id}` : url;
       break;
     }
+
     case "WTB_POSTED": {
       title = wanted ? `${actorName} lagi cari **${wanted.title}**.` : `${actorName} cari buku.`;
       description = wanted
@@ -229,12 +285,9 @@ function buildEmbed(
       url = `${base}/wanted`;
       break;
     }
+
     case "MANIFEST_POSTED": {
-      const preview = manifest
-        ? manifest.body.length > 180
-          ? manifest.body.slice(0, 177) + "..."
-          : manifest.body
-        : null;
+      const preview = manifest ? truncateDiscordField(manifest.body, 180) : null;
       const manifestUrl = row.manifest_id
         ? `${base}/manifest/${row.manifest_id}`
         : `${base}/manifest`;
@@ -245,6 +298,51 @@ function buildEmbed(
       url = manifestUrl;
       break;
     }
+
+    case "EVENT_CREATED": {
+      const eventUrl = row.event_id ? `${base}/event/${row.event_id}` : `${base}/event`;
+      title = event ? `🗓️ ${event.title}` : `${actorName} bikin event baru.`;
+      if (event) {
+        const whenLabel = new Date(event.starts_at).toLocaleString("id-ID", {
+          timeZone: event.timezone ?? "Asia/Jakarta",
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        const whereLabel = event.is_online ? "Online" : (event.location_text ?? "TBD");
+        description = `${actorName} bikin event baru. Cek dan RSVP di Collective Library.\n\n📅 ${whenLabel}\n📍 ${whereLabel.slice(0, 100)}\n\n[RSVP →](${eventUrl})`;
+      } else {
+        description = `[Lihat event →](${eventUrl})`;
+      }
+      url = eventUrl;
+      break;
+    }
+
+    case "EVENT_RSVPED": {
+      const eventUrl = row.event_id ? `${base}/event/${row.event_id}` : `${base}/event`;
+      title = event
+        ? `${actorName} bakal hadir di **${event.title}**.`
+        : `${actorName} RSVP ke event.`;
+      description = `[Lihat event →](${eventUrl})`;
+      url = eventUrl;
+      break;
+    }
+
+    case "NODE_CREATED": {
+      const spotUrl = node ? `${base}/spots/${node.slug}` : `${base}/spots`;
+      title = node ? `🗺️ ${node.name} sekarang ada di peta.` : `${actorName} aktifkan spot baru.`;
+      description = node
+        ? `${actorName} buka **${node.name}** sebagai spot baca${node.city ? ` di ${node.city}` : ""}.\n\n[Lihat spot →](${spotUrl})`
+        : `[Lihat spots →](${base}/spots)`;
+      url = spotUrl;
+      break;
+    }
+
+    default:
+      return null;
   }
 
   return {
@@ -261,11 +359,17 @@ function buildEmbed(
   };
 }
 
-// Optional GET for sanity check
 export async function GET() {
   return NextResponse.json({
     ok: true,
-    configured: Boolean(DISCORD_WEBHOOK_URL),
+    configured: {
+      activity: Boolean(
+        process.env.DISCORD_ACTIVITY_WEBHOOK_URL ?? process.env.DISCORD_COMMUNITY_WEBHOOK_URL
+      ),
+      books: Boolean(process.env.DISCORD_BOOKS_WEBHOOK_URL),
+      map: Boolean(process.env.DISCORD_MAP_WEBHOOK_URL),
+      events: Boolean(process.env.DISCORD_EVENTS_WEBHOOK_URL),
+    },
     secret: Boolean(SHARED_SECRET),
   });
 }
