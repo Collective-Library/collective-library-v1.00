@@ -67,7 +67,7 @@ export function AvatarMenu({ profile }: { profile: Profile }) {
         <div
           role="menu"
           className={cn(
-            "absolute right-0 mt-2 w-56 rounded-card-lg bg-paper border border-hairline shadow-modal overflow-hidden z-50"
+            "absolute right-0 mt-2 w-56 rounded-card-lg bg-paper border border-hairline shadow-modal max-h-[calc(100dvh-5rem)] overflow-y-auto overflow-x-hidden overscroll-contain z-50"
           )}
         >
           {/* User header */}
