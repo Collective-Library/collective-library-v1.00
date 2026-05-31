@@ -19,6 +19,12 @@ test("WantedForm supports an edit mode that updates in place", () => {
   assert.match(form, /\.eq\("id", wantedId\)/);
 });
 
+test("WantedForm edit mode always resets status to open so the card stays visible", () => {
+  // A WTB with a stale non-open status would be filtered out of listWantedRequests()
+  // which defaults to status="open". Editing must force it back to open.
+  assert.match(form, /status: "open"/);
+});
+
 test("DeleteWantedButton hard-deletes and detects the not-owner case", () => {
   assert.match(deleteBtn, /\.delete\(\)/);
   assert.match(deleteBtn, /data\.length === 0/);

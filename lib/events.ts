@@ -293,15 +293,22 @@ export async function updateEvent(
  * Hard delete via the events_delete_own RLS policy. FK cascades remove the
  * event's RSVPs and its activity_log row, so a deleted event no longer lingers
  * in the activity feed / landing strips.
+ *
+ * `.select("id")` is intentional: RLS silently deletes 0 rows for non-owners
+ * without raising an error, so we check the row count to distinguish a real
+ * delete from an unauthorised no-op and return a clear error to the caller.
  */
 export async function deleteEvent(id: string): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
-  const { error } = await supabase.from("events").delete().eq("id", id);
+  const { data, error } = await supabase.from("events").delete().eq("id", id).select("id");
 
   if (error) {
     console.error("deleteEvent", error);
     return { error: error.message };
+  }
+  if (!data || data.length === 0) {
+    return { error: "Unauthorized or not found" };
   }
   return { ok: true };
 }

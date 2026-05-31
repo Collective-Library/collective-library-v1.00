@@ -18,6 +18,16 @@ test("DeleteEventButton detects the not-owner / zero-row case", () => {
 });
 
 test("deleteEvent lib helper also hard-deletes (no soft-delete update)", () => {
-  assert.match(eventsLib, /\.from\("events"\)\.delete\(\)/);
+  // Prettier splits the chain across lines so we match each method separately.
+  assert.match(eventsLib, /\.from\("events"\)/);
+  assert.match(eventsLib, /\.delete\(\)/);
   assert.doesNotMatch(eventsLib, /update\(\{ is_hidden: true, status: "cancelled" \}\)/);
+});
+
+test("deleteEvent lib helper detects RLS no-op via row count, not just error", () => {
+  // Without .select("id") the function returned {ok:true} even when RLS silently
+  // deleted 0 rows. The guard prevents false success for non-owner callers.
+  assert.match(eventsLib, /\.select\("id"\)/);
+  assert.match(eventsLib, /data\.length === 0/);
+  assert.match(eventsLib, /Unauthorized or not found/);
 });

@@ -63,6 +63,9 @@ export function WantedForm({
           desired_condition: condition || null,
           city: city.trim() || "Semarang",
           notes: notes.trim() || null,
+          // Always reset to "open" on edit — if the user is editing their WTB
+          // they're still looking, and a stale status would hide it from the feed.
+          status: "open" as const,
         })
         .eq("id", wantedId);
 
