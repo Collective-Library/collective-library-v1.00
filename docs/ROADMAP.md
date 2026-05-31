@@ -152,6 +152,23 @@ Events to track:
 
 ---
 
+## Collective Maps — `/peta` spatial discovery
+
+> **Status: Slice 1 shipped (docs only).** Full audit + design in [`MAPS_AUDIT.md`](./MAPS_AUDIT.md) and [`MAPS_ROADMAP.md`](./MAPS_ROADMAP.md). Subsequent slices gated behind explicit per-slice approval.
+
+Evolve `/peta` from a members-only map into the ecosystem's spatial discovery surface — _"where is the knowledge network around me?"_ Layered, additive, no rewrite. Formula: **Object + Location + Activity = Discovery**.
+
+- **Slice 1** — Audit + roadmap docs (✅ shipped).
+- **Slice 2** — `CollectiveMapItem` discriminated union (`lib/map.ts`) + `MapView` refactor to typed items, members only, **zero behavior change**.
+- **Slice 3** — Spots layer + "Tampilkan" chip row (`listSpotsForMap`, public+active+coords).
+- **Slice 4** — Events layer + Event chip (`listEventsForMap`, public+upcoming, coords inherited from linked Spot).
+- **Slice 5** — Mobile full-bleed UX (sticky filters, bottom sheet, floating Add, legend).
+- **Slice 6** — Map-activity panel + Discord/X output prep (manual-first, per Output Layer above).
+
+Guardrails: keep Leaflet + Carto Positron (no Google Maps / paid tiles), keep the `/peta` route, members stay approximate (kecamatan + jitter) while Spots/events use exact public coords, no book-level pins, no new route, no clustering infra until overlap demands it.
+
+---
+
 ## Phase 3 — Contributor identity
 
 - Contributor role model (data design exists in [`features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)).

@@ -88,6 +88,95 @@ export async function listEvents(opts?: {
   return { events, total: count ?? 0 };
 }
 
+/* =============================================================================
+ * Map loader (Collective Maps / Slice 4). Upcoming public events anchored to a
+ * coord-bearing, public+active Spot. Events have no coordinates of their own,
+ * so the linked Spot supplies them. A DEDICATED loader (not the shared `node`
+ * join above) keeps `EventWithHost` and every existing event surface untouched.
+ * Fails soft.
+ * ============================================================================= */
+
+/** Display-safe upcoming-event shape for /peta. Coordinates come from the linked Spot. */
+export interface EventForMap {
+  id: string;
+  title: string;
+  starts_at: string;
+  timezone: string;
+  cover_url: string | null;
+  spot: { name: string; slug: string; city: string | null };
+  latitude: number;
+  longitude: number;
+}
+
+export async function listEventsForMap(): Promise<EventForMap[]> {
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("events")
+    .select(
+      `id, title, starts_at, timezone, cover_url, node_id,
+       node:library_nodes(name, slug, city, latitude, longitude, status, is_active, visibility)`
+    )
+    .eq("is_hidden", false)
+    .eq("visibility", "public")
+    .eq("status", "scheduled")
+    .not("node_id", "is", null)
+    .gte("starts_at", now)
+    .order("starts_at", { ascending: true })
+    .limit(200);
+
+  if (error || !data) {
+    if (error) console.error("listEventsForMap", error);
+    return [];
+  }
+
+  type NodeRow = {
+    name: string;
+    slug: string;
+    city: string | null;
+    latitude: number | string | null;
+    longitude: number | string | null;
+    status: string | null;
+    is_active: boolean | null;
+    visibility: string | null;
+  };
+  type Row = {
+    id: string;
+    title: string;
+    starts_at: string;
+    timezone: string;
+    cover_url: string | null;
+    node: NodeRow | NodeRow[] | null;
+  };
+
+  return (data as unknown as Row[]).flatMap((r) => {
+    const node = flatten(r.node);
+    if (!node) return [];
+    // Defensive privacy gate: only surface events whose linked Spot is itself
+    // publicly visible. (Online-only / location-text-only events are already
+    // excluded by the node_id filter; this also blocks an owner/admin's RLS
+    // from leaking a non-public Spot's coordinate onto the map.)
+    if (node.status !== "active" || node.is_active !== true || node.visibility !== "public") {
+      return [];
+    }
+    const latitude = Number(node.latitude);
+    const longitude = Number(node.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
+    return [
+      {
+        id: r.id,
+        title: r.title,
+        starts_at: r.starts_at,
+        timezone: r.timezone,
+        cover_url: r.cover_url ?? null,
+        spot: { name: node.name, slug: node.slug, city: node.city ?? null },
+        latitude,
+        longitude,
+      },
+    ];
+  });
+}
+
 /**
  * Upcoming events for the landing strip and shelf widget.
  * Skips pagination — returns just the first N events.
