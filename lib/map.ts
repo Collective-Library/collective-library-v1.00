@@ -6,8 +6,8 @@
  * each variant carries its full typed row in `data`, so popups stay strongly
  * typed (no `metadata: Record<string, unknown>` escape hatch).
  *
- * Slices 2–3 ship the member + Spot adapters. `EventMapItem` is a typed
- * placeholder for Slice 4; no loader or renderer produces it yet.
+ * Slices 2–4 ship the member + Spot + event adapters — `/peta` renders all
+ * three layers.
  *
  * Kept free of any Supabase / server / React runtime imports (only type-only
  * imports of source row shapes, which are erased at runtime) so it stays
@@ -19,6 +19,7 @@
  */
 import type { MapMember } from "@/lib/profile";
 import type { SpotForMap } from "@/lib/spots";
+import type { EventForMap } from "@/lib/events";
 import type { SpotType } from "@/types";
 
 export type MapItemType = "member" | "spot" | "event";
@@ -59,9 +60,10 @@ export interface SpotMapItem extends MapItemBase {
 }
 
 /**
- * Placeholder for the Events layer (Slice 4). Events inherit their coordinate
- * from a linked public Spot, so they also render at `coordPrecision: "exact"`.
- * Not produced by any loader yet.
+ * Events layer (Slice 4). Events have no coordinates of their own — they
+ * inherit them from a linked public Spot, so they render at
+ * `coordPrecision: "exact"` (never jittered). Coordless / online-only events
+ * are dropped by the loader, so `spot` is always present here.
  */
 export interface EventMapItem extends MapItemBase {
   type: "event";
@@ -69,13 +71,9 @@ export interface EventMapItem extends MapItemBase {
     id: string;
     title: string;
     starts_at: string;
-    timezone?: string | null;
-    cover_url?: string | null;
-    spot?: {
-      name: string;
-      slug: string;
-      city: string | null;
-    } | null;
+    timezone: string;
+    cover_url: string | null;
+    spot: { name: string; slug: string; city: string | null };
   };
 }
 
@@ -118,6 +116,29 @@ export function spotToMapItem(s: SpotForMap): SpotMapItem {
       image_url: s.image_url,
       description: s.description,
       maps_url: s.maps_url,
+    },
+  };
+}
+
+/**
+ * Adapt an upcoming event into a map item. Events borrow their coordinate from
+ * a linked public Spot — `coordPrecision: "exact"`, so the renderer never
+ * jitters them. Pure — no I/O, safe to unit-test.
+ */
+export function eventToMapItem(e: EventForMap): EventMapItem {
+  return {
+    type: "event",
+    key: `event:${e.id}`,
+    lat: e.latitude,
+    lng: e.longitude,
+    coordPrecision: "exact",
+    data: {
+      id: e.id,
+      title: e.title,
+      starts_at: e.starts_at,
+      timezone: e.timezone,
+      cover_url: e.cover_url,
+      spot: e.spot,
     },
   };
 }

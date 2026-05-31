@@ -6,8 +6,9 @@ import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import Link from "next/link";
 import type { MapMember } from "@/lib/profile";
-import type { CollectiveMapItem, SpotMapItem } from "@/lib/map";
+import type { CollectiveMapItem, SpotMapItem, EventMapItem } from "@/lib/map";
 import { SPOT_TYPE_OPTIONS } from "@/lib/spots-constants";
+import { formatEventWhen } from "@/lib/format";
 import type { SpotType } from "@/types";
 
 const SEMARANG_CENTER: [number, number] = [-6.9932, 110.4203];
@@ -63,7 +64,16 @@ export function MapView({ items }: { items: CollectiveMapItem[] }) {
               </Marker>
             );
           }
-          // Events (Slice 4) are typed in the union but not yet rendered.
+          if (item.type === "event") {
+            const [lat, lng] = markerPosition(item); // exact (linked Spot coord) — no jitter
+            return (
+              <Marker key={item.key} position={[lat, lng]} icon={buildEventIcon()}>
+                <Popup className="cl-popup" closeButton={false}>
+                  <EventPopup event={item.data} />
+                </Popup>
+              </Marker>
+            );
+          }
           return null;
         })}
       </MapContainer>
@@ -170,6 +180,28 @@ function SpotPopup({ spot }: { spot: SpotMapItem["data"] }) {
   );
 }
 
+function EventPopup({ event }: { event: EventMapItem["data"] }) {
+  const when = formatEventWhen(event.starts_at, null, event.timezone);
+  const where = [event.spot.name, event.spot.city].filter(Boolean).join(" · ");
+  return (
+    <div className="w-[240px] flex flex-col gap-2">
+      <div className="min-w-0">
+        <p className="font-display text-title-sm text-ink">{event.title}</p>
+        <p className="text-caption text-muted">{when}</p>
+      </div>
+
+      <p className="text-caption text-ink-soft">📍 {where}</p>
+
+      <Link
+        href={`/event/${event.id}`}
+        className="inline-flex items-center justify-center h-9 px-4 rounded-pill bg-ink text-parchment text-caption font-semibold hover:bg-ink-soft"
+      >
+        Lihat event
+      </Link>
+    </div>
+  );
+}
+
 // =============================================================================
 // Avatar marker — Snapchat-style bubble (photo + ring + book-count badge)
 // =============================================================================
@@ -214,6 +246,23 @@ function buildSpotIcon(spotType: SpotType): L.DivIcon {
     <div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#F8F1DF;border:2px solid #3D2E1F;border-radius:10px;box-shadow:0 2px 6px rgba(61,46,31,0.28);font-size:17px">${escapeHtml(
       emoji
     )}</div>
+  `;
+  return L.divIcon({
+    html,
+    className: "cl-marker",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -18],
+  });
+}
+
+// =============================================================================
+// Event marker — walnut "time dot" with a calendar glyph. Distinct from the
+// parchment Spot tile and the circular member avatar. Exact location (no jitter).
+// =============================================================================
+function buildEventIcon(): L.DivIcon {
+  const html = `
+    <div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#3D2E1F;border:2px solid #F8F1DF;border-radius:9999px;box-shadow:0 2px 6px rgba(61,46,31,0.30);font-size:16px">🗓️</div>
   `;
   return L.divIcon({
     html,

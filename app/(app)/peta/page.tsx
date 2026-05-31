@@ -2,9 +2,10 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { listMembersForMap, type MapMember } from "@/lib/profile";
 import { listSpotsForMap, type SpotForMap } from "@/lib/spots";
+import { listEventsForMap, type EventForMap } from "@/lib/events";
 import { getCurrentProfile } from "@/lib/auth";
 import { PetaClient } from "@/components/map/peta-client";
-import { memberToMapItem, spotToMapItem } from "@/lib/map";
+import { memberToMapItem, spotToMapItem, eventToMapItem } from "@/lib/map";
 import { INTENTS } from "@/lib/interests";
 import { cn } from "@/lib/cn";
 
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     "Sebaran anggota Collective Library di kecamatan masing-masing. Klik bubble buat lihat siapa & rak buku mereka.",
 };
 
-type Layer = "members" | "spots";
+type Layer = "members" | "spots" | "events";
 
 type SP = {
   intent?: string;
@@ -28,13 +29,15 @@ export default async function PetaPage({ searchParams }: { searchParams: Promise
   const { intent, open, layer } = await searchParams;
   const showMembers = !layer || layer === "members";
   const showSpots = !layer || layer === "spots";
+  const showEvents = !layer || layer === "events";
 
   // Fetch only the layers in view (parallel — no waterfall). `me` is always
   // needed for the "Tampilin gue / Edit lokasi" CTA.
-  const [allMembers, me, spots] = await Promise.all([
+  const [allMembers, me, spots, events] = await Promise.all([
     showMembers ? listMembersForMap() : Promise.resolve<MapMember[]>([]),
     getCurrentProfile(),
     showSpots ? listSpotsForMap() : Promise.resolve<SpotForMap[]>([]),
+    showEvents ? listEventsForMap() : Promise.resolve<EventForMap[]>([]),
   ]);
 
   // Member intent/mode filters apply to the members layer only. Filtered
@@ -53,14 +56,16 @@ export default async function PetaPage({ searchParams }: { searchParams: Promise
   const hasFilter = Boolean(intent || open);
 
   // Adapt each source into the typed map-item union. Members render exactly as
-  // before (approximate + jitter); Spots are exact public-place pins.
+  // before (approximate + jitter); Spots and events are exact public-place pins.
   const memberItems = filteredMembers.map(memberToMapItem);
   const spotItems = spots.map(spotToMapItem);
-  const items = [...memberItems, ...spotItems];
+  const eventItems = events.map(eventToMapItem);
+  const items = [...memberItems, ...spotItems, ...eventItems];
 
   const memberCount = memberItems.length;
   const spotCount = spotItems.length;
-  const countLine = mapCountLine({ layer, memberCount, spotCount, hasFilter });
+  const eventCount = eventItems.length;
+  const countLine = mapCountLine({ layer, memberCount, spotCount, eventCount, hasFilter });
 
   return (
     <div className="flex flex-col gap-4">
@@ -95,6 +100,11 @@ export default async function PetaPage({ searchParams }: { searchParams: Promise
             href={buildHref({ layer: "spots" })}
             active={layer === "spots"}
             label="Spots"
+          />
+          <FilterPill
+            href={buildHref({ layer: "events" })}
+            active={layer === "events"}
+            label="Event"
           />
         </FilterRow>
 
@@ -181,12 +191,17 @@ function mapCountLine(opts: {
   layer?: Layer;
   memberCount: number;
   spotCount: number;
+  eventCount: number;
   hasFilter: boolean;
 }): string {
-  const { layer, memberCount, spotCount, hasFilter } = opts;
+  const { layer, memberCount, spotCount, eventCount, hasFilter } = opts;
   if (layer === "spots") {
     if (spotCount === 0) return "Belum ada Spot publik yang aktif di peta.";
     return `${spotCount} Spot aktif. Klik buat lihat tempat baca & komunitasnya.`;
+  }
+  if (layer === "events") {
+    if (eventCount === 0) return "Belum ada event publik mendatang di peta.";
+    return `${eventCount} event mendatang. Klik buat lihat detail & lokasinya.`;
   }
   if (layer === "members") {
     if (memberCount === 0) {
@@ -196,10 +211,10 @@ function mapCountLine(opts: {
     }
     return `${memberCount} anggota visible${hasFilter ? " (filter aktif)" : ""}. Pin di kecamatan, bukan alamat persis.`;
   }
-  if (memberCount + spotCount === 0) {
+  if (memberCount + spotCount + eventCount === 0) {
     return "Belum ada yang muncul di peta. Lo bisa jadi yang pertama.";
   }
-  return `${memberCount} anggota + ${spotCount} Spot. Pin anggota di kecamatan, bukan alamat persis.`;
+  return `${memberCount} anggota + ${spotCount} Spot + ${eventCount} event. Pin anggota di kecamatan, bukan alamat persis.`;
 }
 
 function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
