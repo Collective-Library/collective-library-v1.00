@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { bucketMemberBooks } from "@/lib/member-books";
 import type { Community, Profile } from "@/types";
 
 /** Get a profile by username. Uses the public view (whatsapp masked unless public/self). */
@@ -278,25 +279,19 @@ export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
   const ids = profiles.map((p) => p.id as string);
   if (ids.length === 0) return [];
 
-  // Fetch covers — one trip, bucket client-side (cap 3 per owner)
+  // Fetch books for this opt-in cohort (≤12 members), newest-first, then bucket
+  // client-side. No global row cap: a per-cohort `.limit()` previously starved
+  // members whose books weren't among the most-recent rows, showing them as
+  // "0 buku" despite owning many. Counting must see the full row set.
   const { data: books } = await supabase
     .from("books")
-    .select("owner_id, cover_url, created_at")
+    .select("owner_id, cover_url")
     .in("owner_id", ids)
     .eq("is_hidden", false)
     .eq("visibility", "public")
-    .order("created_at", { ascending: false })
-    .limit(ids.length * 6);
+    .order("created_at", { ascending: false });
 
-  const coversByOwner = new Map<string, string[]>();
-  const countByOwner = new Map<string, number>();
-  for (const b of books ?? []) {
-    const owner = b.owner_id as string;
-    countByOwner.set(owner, (countByOwner.get(owner) ?? 0) + 1);
-    const arr = coversByOwner.get(owner) ?? [];
-    if (arr.length < 3 && b.cover_url) arr.push(b.cover_url as string);
-    coversByOwner.set(owner, arr);
-  }
+  const { countByOwner, coversByOwner } = bucketMemberBooks(books ?? []);
 
   return profiles.map((p) => ({
     id: p.id as string,
