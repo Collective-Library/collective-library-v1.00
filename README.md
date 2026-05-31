@@ -222,6 +222,9 @@ Reference docs:
 - [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
 - [`docs/DISCORD_ROLES.md`](./docs/DISCORD_ROLES.md)
 - [`docs/spots/README.md`](./docs/spots/README.md) — Spots (library_nodes) subsystem deep-dive
+- [`docs/MAPS_PRODUCT_NORTH_STAR.md`](./docs/MAPS_PRODUCT_NORTH_STAR.md) — Collective Maps product vision: the killer-feature north star (V1 → V3), differentiation, user loop, privacy, metrics
+- [`docs/MAPS_AUDIT.md`](./docs/MAPS_AUDIT.md) — Collective Maps audit: the `/peta`, profile-location, Spots, and Events stacks today
+- [`docs/MAPS_ROADMAP.md`](./docs/MAPS_ROADMAP.md) — Collective Maps design + sliced plan for evolving `/peta` into the spatial discovery surface
 - [`docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)
 
 Historical:

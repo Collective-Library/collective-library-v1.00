@@ -18,13 +18,7 @@ import type {
 
 // Re-export so existing callers (admin pages, API routes, components that
 // already import these from "@/lib/spots") keep working.
-export {
-  SLUG_REGEX,
-  SPOT_STATUS_OPTIONS,
-  SPOT_TYPE_OPTIONS,
-  SPOT_VISIBILITY_OPTIONS,
-  slugify,
-};
+export { SLUG_REGEX, SPOT_STATUS_OPTIONS, SPOT_TYPE_OPTIONS, SPOT_VISIBILITY_OPTIONS, slugify };
 
 /**
  * Admin-side CRUD for Library Nodes (UI label: "Spots").
@@ -47,8 +41,7 @@ export {
  * - `{ ok: true, ... } | { error: string }` return type for writes
  */
 
-const SPOT_LIST_COLUMNS =
-  `id, name, slug, type, city, address, latitude, longitude, maps_url, description, image_url, operating_hours, community_id, status, is_active, visibility, created_by, created_at, updated_at`;
+const SPOT_LIST_COLUMNS = `id, name, slug, type, city, address, latitude, longitude, maps_url, description, image_url, operating_hours, community_id, status, is_active, visibility, created_by, created_at, updated_at`;
 
 /** Trim → null helper for optional text fields. */
 function nullable(v: string | null | undefined): string | null {
@@ -88,9 +81,7 @@ export async function listSpotsAdmin(opts?: {
 }
 
 /** Count Spots by status — powers the filter-pill count badges. */
-export async function countSpotsByStatus(): Promise<
-  Record<SpotStatus | "all", number>
-> {
+export async function countSpotsByStatus(): Promise<Record<SpotStatus | "all", number>> {
   const supabase = createAdminClient();
   const { data } = await supabase.from("library_nodes").select("status");
   const counts: Record<SpotStatus | "all", number> = {
@@ -140,7 +131,7 @@ export async function isSlugTaken(slug: string, exceptId?: string): Promise<bool
  */
 export async function createSpotAdmin(
   adminId: string,
-  values: SpotFormValues,
+  values: SpotFormValues
 ): Promise<{ ok: true; id: string; slug: string } | { error: string }> {
   // Validate slug format early (matches DB CHECK).
   if (!SLUG_REGEX.test(values.slug)) {
@@ -209,7 +200,7 @@ export async function updateSpotAdmin(
   id: string,
   patch: Partial<Omit<SpotFormValues, "slug" | "status" | "is_active" | "visibility">> & {
     slug?: string;
-  },
+  }
 ): Promise<{ ok: true } | { error: string }> {
   if (patch.slug !== undefined) {
     if (!SLUG_REGEX.test(patch.slug)) {
@@ -264,13 +255,10 @@ export async function updateSpotAdmin(
 /** Admin-only status setter — triggers emit_node_created when promoting → active. */
 export async function setSpotStatusAdmin(
   id: string,
-  status: SpotStatus,
+  status: SpotStatus
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("library_nodes")
-    .update({ status })
-    .eq("id", id);
+  const { error } = await supabase.from("library_nodes").update({ status }).eq("id", id);
   if (error) {
     console.error("setSpotStatusAdmin", error);
     return { error: error.message };
@@ -281,13 +269,10 @@ export async function setSpotStatusAdmin(
 /** Admin-only hard kill-switch — independent of `status` lifecycle. */
 export async function setSpotActiveAdmin(
   id: string,
-  is_active: boolean,
+  is_active: boolean
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("library_nodes")
-    .update({ is_active })
-    .eq("id", id);
+  const { error } = await supabase.from("library_nodes").update({ is_active }).eq("id", id);
   if (error) {
     console.error("setSpotActiveAdmin", error);
     return { error: error.message };
@@ -298,13 +283,10 @@ export async function setSpotActiveAdmin(
 /** Admin-only visibility setter (public ↔ community). */
 export async function setSpotVisibilityAdmin(
   id: string,
-  visibility: SpotVisibility,
+  visibility: SpotVisibility
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("library_nodes")
-    .update({ visibility })
-    .eq("id", id);
+  const { error } = await supabase.from("library_nodes").update({ visibility }).eq("id", id);
   if (error) {
     console.error("setSpotVisibilityAdmin", error);
     return { error: error.message };
@@ -381,11 +363,7 @@ export async function listSelectableSpots(): Promise<SelectableSpot[]> {
  */
 export async function isHostEligibleForSpotCreate(userId: string): Promise<boolean> {
   const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("events")
-    .select("id")
-    .eq("host_id", userId)
-    .limit(1);
+  const { data, error } = await supabase.from("events").select("id").eq("host_id", userId).limit(1);
   if (error) {
     console.error("isHostEligibleForSpotCreate", error);
     return false;
@@ -410,7 +388,7 @@ export interface HostSpotCreateInput {
  */
 export async function createSpotAsHost(
   userId: string,
-  input: HostSpotCreateInput,
+  input: HostSpotCreateInput
 ): Promise<{ ok: true; id: string; slug: string; name: string; city: string } | { error: string }> {
   const name = input.name.trim();
   if (name.length < 3 || name.length > 140) return { error: "Nama harus 3–140 karakter." };
@@ -457,8 +435,7 @@ export async function createSpotAsHost(
  * (only active + public + is_active=true rows visible to anon).
  * ============================================================================= */
 
-const PUBLIC_SPOT_COLUMNS =
-  `id, name, slug, type, city, address, latitude, longitude, maps_url, description, image_url, operating_hours, community_id, status, is_active, visibility, created_by, created_at, updated_at`;
+const PUBLIC_SPOT_COLUMNS = `id, name, slug, type, city, address, latitude, longitude, maps_url, description, image_url, operating_hours, community_id, status, is_active, visibility, created_by, created_at, updated_at`;
 
 /** Public Spot listing with optional filters. Anon-safe — RLS gates rows. */
 export async function listPublicSpots(opts?: {
@@ -531,6 +508,76 @@ export async function listSpotCities(): Promise<string[]> {
   return Array.from(set).sort();
 }
 
+/* =============================================================================
+ * Map loader (Collective Maps / Slice 3). Returns a display-safe, coord-bearing
+ * subset for /peta pins. RLS-safe server client only — never service-role on
+ * the public map. Projects only display-safe columns (no created_by, no
+ * community_id, no operating_hours), exact public-place coordinates.
+ * ============================================================================= */
+
+/** Display-safe Spot shape for the /peta map. Coordinates are guaranteed non-null. */
+export interface SpotForMap {
+  id: string;
+  name: string;
+  slug: string;
+  type: SpotType;
+  city: string | null;
+  image_url: string | null;
+  description: string | null;
+  maps_url: string | null;
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Active, public, coord-bearing Spots for the map. Mirrors `listPublicSpots`
+ * gating (status=active AND is_active AND visibility=public) plus a NOT NULL
+ * coordinate filter, and projects only display-safe fields. Fails soft — a
+ * query error logs server-side and yields an empty layer, never a thrown page.
+ */
+export async function listSpotsForMap(): Promise<SpotForMap[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("library_nodes")
+    .select("id, name, slug, type, city, image_url, description, maps_url, latitude, longitude")
+    .eq("status", "active")
+    .eq("is_active", true)
+    .eq("visibility", "public")
+    .not("latitude", "is", null)
+    .not("longitude", "is", null)
+    .limit(500);
+
+  if (error || !data) {
+    if (error) console.error("listSpotsForMap", error);
+    return [];
+  }
+
+  return (data as Array<Record<string, unknown>>).flatMap((r) => {
+    const latitude = Number(r.latitude);
+    const longitude = Number(r.longitude);
+    // Defensive: the NOT NULL filter can't catch a non-numeric value, and a row
+    // could lose coords between filter and read. Keeps `latitude/longitude:
+    // number` honest by dropping anything non-finite.
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
+    const description = (r.description as string | null) ?? null;
+    return [
+      {
+        id: r.id as string,
+        name: r.name as string,
+        slug: r.slug as string,
+        type: r.type as SpotType,
+        city: (r.city as string | null) ?? null,
+        image_url: (r.image_url as string | null) ?? null,
+        description:
+          description && description.length > 160 ? `${description.slice(0, 159)}…` : description,
+        maps_url: (r.maps_url as string | null) ?? null,
+        latitude,
+        longitude,
+      },
+    ];
+  });
+}
+
 /**
  * Upcoming public events at a given Spot. Reused on /spots/[slug] to render
  * the "Event mendatang" section. Joins host minimally so we can render a
@@ -549,7 +596,7 @@ export interface SpotUpcomingEvent {
 
 export async function listUpcomingEventsForSpot(
   nodeId: string,
-  limit = 8,
+  limit = 8
 ): Promise<SpotUpcomingEvent[]> {
   const supabase = await createServerClient();
   const now = new Date().toISOString();
@@ -557,7 +604,7 @@ export async function listUpcomingEventsForSpot(
     .from("events")
     .select(
       `id, title, starts_at, ends_at, timezone, is_online, cover_url,
-       host:profiles_public!events_host_id_fkey(full_name, username)`,
+       host:profiles_public!events_host_id_fkey(full_name, username)`
     )
     .eq("node_id", nodeId)
     .eq("is_hidden", false)
@@ -576,7 +623,7 @@ export async function listUpcomingEventsForSpot(
   } & Record<string, unknown>;
   return ((data ?? []) as unknown as Row[]).map((r) => ({
     ...r,
-    host: Array.isArray(r.host) ? (r.host[0] as never) ?? null : (r.host as never),
+    host: Array.isArray(r.host) ? ((r.host[0] as never) ?? null) : (r.host as never),
   })) as unknown as SpotUpcomingEvent[];
 }
 
