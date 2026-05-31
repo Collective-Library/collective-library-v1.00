@@ -6,7 +6,9 @@ import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import Link from "next/link";
 import type { MapMember } from "@/lib/profile";
-import type { CollectiveMapItem } from "@/lib/map";
+import type { CollectiveMapItem, SpotMapItem } from "@/lib/map";
+import { SPOT_TYPE_OPTIONS } from "@/lib/spots-constants";
+import type { SpotType } from "@/types";
 
 const SEMARANG_CENTER: [number, number] = [-6.9932, 110.4203];
 const DEFAULT_ZOOM = 12;
@@ -51,6 +53,17 @@ export function MapView({ items }: { items: CollectiveMapItem[] }) {
               </Marker>
             );
           }
+          if (item.type === "spot") {
+            const [lat, lng] = markerPosition(item); // exact — no jitter
+            return (
+              <Marker key={item.key} position={[lat, lng]} icon={buildSpotIcon(item.data.spotType)}>
+                <Popup className="cl-popup" closeButton={false}>
+                  <SpotPopup spot={item.data} />
+                </Popup>
+              </Marker>
+            );
+          }
+          // Events (Slice 4) are typed in the union but not yet rendered.
           return null;
         })}
       </MapContainer>
@@ -123,6 +136,40 @@ function MemberPopup({ member }: { member: MapMember }) {
   );
 }
 
+function SpotPopup({ spot }: { spot: SpotMapItem["data"] }) {
+  const typeLabel = SPOT_TYPE_OPTIONS.find((o) => o.value === spot.spotType)?.label ?? "Spot";
+  const meta = [typeLabel, spot.city].filter(Boolean).join(" · ");
+  return (
+    <div className="w-[240px] flex flex-col gap-2">
+      <div className="min-w-0">
+        <p className="font-display text-title-sm text-ink">{spot.name}</p>
+        <p className="text-caption text-muted">{meta || "Spot"}</p>
+      </div>
+
+      {spot.description && <p className="text-caption text-ink-soft">{spot.description}</p>}
+
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href={`/spots/${spot.slug}`}
+          className="inline-flex items-center justify-center h-9 px-4 rounded-pill bg-ink text-parchment text-caption font-semibold hover:bg-ink-soft"
+        >
+          Lihat Spot
+        </Link>
+        {spot.maps_url && (
+          <a
+            href={spot.maps_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center h-9 px-4 rounded-pill bg-paper border border-hairline text-ink-soft text-caption font-medium hover:bg-cream"
+          >
+            Buka di Maps
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // =============================================================================
 // Avatar marker — Snapchat-style bubble (photo + ring + book-count badge)
 // =============================================================================
@@ -154,6 +201,26 @@ function buildAvatarIcon(member: MapMember): L.DivIcon {
     iconSize: [48, 48],
     iconAnchor: [24, 24],
     popupAnchor: [0, -24],
+  });
+}
+
+// =============================================================================
+// Spot marker — place-based square tile with the Spot's type emoji. Visually
+// distinct from the circular member avatar bubble. Exact location (no jitter).
+// =============================================================================
+function buildSpotIcon(spotType: SpotType): L.DivIcon {
+  const emoji = SPOT_TYPE_OPTIONS.find((o) => o.value === spotType)?.emoji ?? "📍";
+  const html = `
+    <div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#F8F1DF;border:2px solid #3D2E1F;border-radius:10px;box-shadow:0 2px 6px rgba(61,46,31,0.28);font-size:17px">${escapeHtml(
+      emoji
+    )}</div>
+  `;
+  return L.divIcon({
+    html,
+    className: "cl-marker",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -18],
   });
 }
 

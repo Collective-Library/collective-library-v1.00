@@ -6,19 +6,20 @@
  * each variant carries its full typed row in `data`, so popups stay strongly
  * typed (no `metadata: Record<string, unknown>` escape hatch).
  *
- * Slice 2 ships the union + the member adapter only — members render exactly as
- * before. `SpotMapItem` / `EventMapItem` are typed placeholders for Slices 3/4;
- * no loader or renderer produces them yet.
+ * Slices 2–3 ship the member + Spot adapters. `EventMapItem` is a typed
+ * placeholder for Slice 4; no loader or renderer produces it yet.
  *
- * Kept free of any Supabase / server / React imports (only a type-only import
- * of `MapMember`, which is erased at runtime) so it stays unit-testable with
- * `node --test`, mirroring `lib/member-books.ts`.
+ * Kept free of any Supabase / server / React runtime imports (only type-only
+ * imports of source row shapes, which are erased at runtime) so it stays
+ * unit-testable with `node --test`, mirroring `lib/member-books.ts`.
  *
  * `coordPrecision` is load-bearing: members are placed at an approximate
  * (kecamatan-level) coordinate and get deterministic jitter; Spots/events are
  * public places shown at exact coordinates and must NOT be jittered.
  */
 import type { MapMember } from "@/lib/profile";
+import type { SpotForMap } from "@/lib/spots";
+import type { SpotType } from "@/types";
 
 export type MapItemType = "member" | "spot" | "event";
 
@@ -39,8 +40,9 @@ export interface MemberMapItem extends MapItemBase {
 }
 
 /**
- * Placeholder for the Spots layer (Slice 3). Spots are public places, so they
- * render at `coordPrecision: "exact"`. Not produced by any loader yet.
+ * Spots layer (Slice 3). Spots are public places, so they render at
+ * `coordPrecision: "exact"` — never jittered. `spotType` drives the marker
+ * emoji + popup label via `SPOT_TYPE_OPTIONS`.
  */
 export interface SpotMapItem extends MapItemBase {
   type: "spot";
@@ -48,10 +50,11 @@ export interface SpotMapItem extends MapItemBase {
     id: string;
     name: string;
     slug: string;
+    spotType: SpotType;
     city: string | null;
-    image_url?: string | null;
-    description?: string | null;
-    maps_url?: string | null;
+    image_url: string | null;
+    description: string | null;
+    maps_url: string | null;
   };
 }
 
@@ -91,5 +94,30 @@ export function memberToMapItem(m: MapMember): MemberMapItem {
     lng: m.map_lng,
     coordPrecision: "approximate",
     data: m,
+  };
+}
+
+/**
+ * Adapt a public Spot into a map item. Spots are public places shown at exact
+ * coordinates — `coordPrecision: "exact"`, so the renderer never jitters them.
+ * Pure — no I/O, safe to unit-test.
+ */
+export function spotToMapItem(s: SpotForMap): SpotMapItem {
+  return {
+    type: "spot",
+    key: `spot:${s.id}`,
+    lat: s.latitude,
+    lng: s.longitude,
+    coordPrecision: "exact",
+    data: {
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      spotType: s.type,
+      city: s.city,
+      image_url: s.image_url,
+      description: s.description,
+      maps_url: s.maps_url,
+    },
   };
 }
