@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { MapMember } from "@/lib/profile";
+import type { CollectiveMapItem } from "@/lib/map";
 
 // Leaflet uses window/document — must be client-only. Wrapped in a Client
 // Component because Next 16 disallows ssr:false in Server Components.
@@ -14,6 +14,6 @@ const MapView = dynamic(() => import("./map-view").then((m) => m.MapView), {
   ),
 });
 
-export function PetaClient({ members }: { members: MapMember[] }) {
-  return <MapView members={members} />;
+export function PetaClient({ items }: { items: CollectiveMapItem[] }) {
+  return <MapView items={items} />;
 }

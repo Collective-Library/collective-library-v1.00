@@ -6,21 +6,22 @@ import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import Link from "next/link";
 import type { MapMember } from "@/lib/profile";
+import type { CollectiveMapItem } from "@/lib/map";
 
 const SEMARANG_CENTER: [number, number] = [-6.9932, 110.4203];
 const DEFAULT_ZOOM = 12;
 
-export function MapView({ members }: { members: MapMember[] }) {
+export function MapView({ items }: { items: CollectiveMapItem[] }) {
   const view = useMemo(() => {
-    if (members.length === 0) return { center: SEMARANG_CENTER, zoom: DEFAULT_ZOOM };
-    if (members.length === 1) {
-      return { center: [members[0].map_lat, members[0].map_lng] as [number, number], zoom: 13 };
+    if (items.length === 0) return { center: SEMARANG_CENTER, zoom: DEFAULT_ZOOM };
+    if (items.length === 1) {
+      return { center: [items[0].lat, items[0].lng] as [number, number], zoom: 13 };
     }
     // Center = arithmetic mean. Zoom stays at 11 unless we want fitBounds.
-    const lat = members.reduce((s, m) => s + m.map_lat, 0) / members.length;
-    const lng = members.reduce((s, m) => s + m.map_lng, 0) / members.length;
+    const lat = items.reduce((s, it) => s + it.lat, 0) / items.length;
+    const lng = items.reduce((s, it) => s + it.lng, 0) / items.length;
     return { center: [lat, lng] as [number, number], zoom: 11 };
-  }, [members]);
+  }, [items]);
 
   return (
     <div className="rounded-card-lg overflow-hidden border border-hairline-strong shadow-card">
@@ -36,22 +37,39 @@ export function MapView({ members }: { members: MapMember[] }) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-        {members.map((m) => {
-          const { dlat, dlng } = deterministicJitter(m.id);
-          const lat = m.map_lat + dlat;
-          const lng = m.map_lng + dlng;
-          const icon = buildAvatarIcon(m);
-          return (
-            <Marker key={m.id} position={[lat, lng]} icon={icon}>
-              <Popup className="cl-popup" closeButton={false}>
-                <MemberPopup member={m} />
-              </Popup>
-            </Marker>
-          );
+        {items.map((item) => {
+          // Members are the only rendered layer in this slice. Spots (Slice 3)
+          // and events (Slice 4) are typed in the union but not yet rendered.
+          if (item.type === "member") {
+            const member = item.data;
+            const [lat, lng] = markerPosition(item);
+            return (
+              <Marker key={item.key} position={[lat, lng]} icon={buildAvatarIcon(member)}>
+                <Popup className="cl-popup" closeButton={false}>
+                  <MemberPopup member={member} />
+                </Popup>
+              </Marker>
+            );
+          }
+          return null;
         })}
       </MapContainer>
     </div>
   );
+}
+
+// =============================================================================
+// Marker position — approximate items (members at a kecamatan centroid) get a
+// deterministic per-item jitter so same-area pins don't perfectly overlap. The
+// seed stays the member id, so a pin never moves between loads — identical to
+// the original members-only behaviour. Exact items (public Spots/events, future
+// slices) are placed verbatim and never jittered.
+// =============================================================================
+function markerPosition(item: CollectiveMapItem): [number, number] {
+  if (item.coordPrecision === "exact") return [item.lat, item.lng];
+  const seed = item.type === "member" ? item.data.id : item.key;
+  const { dlat, dlng } = deterministicJitter(seed);
+  return [item.lat + dlat, item.lng + dlng];
 }
 
 function MemberPopup({ member }: { member: MapMember }) {
@@ -113,10 +131,10 @@ function buildAvatarIcon(member: MapMember): L.DivIcon {
   const initial = (member.full_name ?? member.username ?? "?").trim().charAt(0).toUpperCase();
   const photo = member.photo_url
     ? `<div style="width:100%;height:100%;background-image:url('${escapeAttr(
-        member.photo_url,
+        member.photo_url
       )}');background-size:cover;background-position:center;border-radius:9999px"></div>`
     : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#F0E8D8;color:#3D2E1F;font-weight:600;font-size:18px;border-radius:9999px">${escapeHtml(
-        initial,
+        initial
       )}</div>`;
   const badge =
     member.book_count > 0

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { listMembersForMap } from "@/lib/profile";
 import { getCurrentProfile } from "@/lib/auth";
 import { PetaClient } from "@/components/map/peta-client";
+import { memberToMapItem } from "@/lib/map";
 import { INTENTS } from "@/lib/interests";
 import { cn } from "@/lib/cn";
 
@@ -19,16 +20,9 @@ type SP = {
   open?: "lending" | "selling" | "trade";
 };
 
-export default async function PetaPage({
-  searchParams,
-}: {
-  searchParams: Promise<SP>;
-}) {
+export default async function PetaPage({ searchParams }: { searchParams: Promise<SP> }) {
   const { intent, open } = await searchParams;
-  const [allMembers, me] = await Promise.all([
-    listMembersForMap(),
-    getCurrentProfile(),
-  ]);
+  const [allMembers, me] = await Promise.all([listMembersForMap(), getCurrentProfile()]);
 
   // Apply filter client-side over the already-fetched set. /peta caps at
   // ~all opt-in users (small), so filtering in-memory is fine.
@@ -42,6 +36,10 @@ export default async function PetaPage({
 
   const meOnMap = me?.show_on_map === true && me.map_lat != null && me.map_lng != null;
   const hasFilter = Boolean(intent || open);
+
+  // Adapt members into the typed map-item union. Members render exactly as
+  // before; the Spots/events layers arrive in later slices.
+  const items = filteredMembers.map(memberToMapItem);
 
   return (
     <div className="flex flex-col gap-4">
@@ -72,9 +70,7 @@ export default async function PetaPage({
       {/* Filter rows */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <p className="text-caption font-semibold text-ink-soft uppercase tracking-wide">
-            Filter
-          </p>
+          <p className="text-caption font-semibold text-ink-soft uppercase tracking-wide">Filter</p>
           {hasFilter && (
             <Link
               href="/peta"
@@ -86,11 +82,7 @@ export default async function PetaPage({
         </div>
 
         <FilterRow label="Available untuk">
-          <FilterPill
-            href={buildHref({ open })}
-            active={!intent}
-            label="Apa aja"
-          />
+          <FilterPill href={buildHref({ open })} active={!intent} label="Apa aja" />
           {INTENTS.map((i) => (
             <FilterPill
               key={i.slug}
@@ -102,11 +94,7 @@ export default async function PetaPage({
         </FilterRow>
 
         <FilterRow label="Mode">
-          <FilterPill
-            href={buildHref({ intent })}
-            active={!open}
-            label="Semua mode"
-          />
+          <FilterPill href={buildHref({ intent })} active={!open} label="Semua mode" />
           <FilterPill
             href={buildHref({ intent, open: "lending" })}
             active={open === "lending"}
@@ -125,12 +113,14 @@ export default async function PetaPage({
         </FilterRow>
       </div>
 
-      <PetaClient members={filteredMembers} />
+      <PetaClient items={items} />
 
       <div className="rounded-card-lg border border-hairline bg-cream/40 p-4 text-caption text-muted">
         <p className="font-medium text-ink-soft mb-1">Tentang visibilitas</p>
-        Pin di-tempatin di tengah <span className="text-ink-soft">kecamatan</span>, bukan alamat persis lo. Toggle yang sama juga nampilin lo di{" "}
-        <span className="text-ink-soft">landing publik</span> sebagai member card. Default mati — atur di{" "}
+        Pin di-tempatin di tengah <span className="text-ink-soft">kecamatan</span>, bukan alamat
+        persis lo. Toggle yang sama juga nampilin lo di{" "}
+        <span className="text-ink-soft">landing publik</span> sebagai member card. Default mati —
+        atur di{" "}
         <Link href="/profile/edit" className="text-ink-soft underline underline-offset-4">
           profile lo
         </Link>
@@ -161,15 +151,7 @@ function FilterRow({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-function FilterPill({
-  href,
-  active,
-  label,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-}) {
+function FilterPill({ href, active, label }: { href: string; active: boolean; label: string }) {
   return (
     <Link
       href={href}
@@ -177,7 +159,7 @@ function FilterPill({
         "shrink-0 inline-flex items-center h-9 px-4 rounded-pill text-body-sm font-medium transition-colors",
         active
           ? "bg-ink text-parchment"
-          : "bg-paper text-ink-soft border border-hairline hover:bg-cream",
+          : "bg-paper text-ink-soft border border-hairline hover:bg-cream"
       )}
     >
       {label}
