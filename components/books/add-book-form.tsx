@@ -26,6 +26,7 @@ export function AddBookForm({ userId }: { userId: string }) {
   const [isbnLooking, setIsbnLooking] = useState(false);
   const [isbnCoverUrl, setIsbnCoverUrl] = useState<string | null>(null);
   const [isbnInfo, setIsbnInfo] = useState<string | null>(null);
+  const [enriching, setEnriching] = useState(false);
 
   // Step 1
   const [title, setTitle] = useState("");
@@ -75,7 +76,7 @@ export function AddBookForm({ userId }: { userId: string }) {
   }
 
   /** Single autofill path used by both BookPicker (search) and ISBN lookup. */
-  function applyAutofill(b: BookSearchResult) {
+  async function applyAutofill(b: BookSearchResult) {
     if (b.isbn) setIsbn(b.isbn);
     if (b.title) setTitle(b.title);
     if (b.author) setAuthor(b.author);
@@ -89,6 +90,29 @@ export function AddBookForm({ userId }: { userId: string }) {
     setIsbnInfo(
       `Ketemu: "${b.title}"${b.author ? ` oleh ${b.author}` : ""}. Lo bisa edit di bawah.`
     );
+
+    // Open Library search omits the synopsis (description is always null there)
+    // and Google Books often lacks it per-volume, so "cara cepat" picks would
+    // leave the synopsis empty. When we have an ISBN but no description yet,
+    // fetch the fuller record to fill it. Best-effort — never blocks the add
+    // flow; functional updates avoid clobbering anything the user typed while
+    // the lookup was in flight.
+    if (!b.description && b.isbn) {
+      setEnriching(true);
+      try {
+        const full = await lookupIsbn(b.isbn);
+        const desc = full?.description;
+        const pub = full?.publisher;
+        const gen = full?.genre;
+        if (desc) setDescription((prev) => prev || desc);
+        if (pub) setPublisher((prev) => prev || pub);
+        if (gen) setGenre((prev) => prev || gen);
+      } catch {
+        // best-effort enrichment
+      } finally {
+        setEnriching(false);
+      }
+    }
   }
 
   function next() {
@@ -159,7 +183,8 @@ export function AddBookForm({ userId }: { userId: string }) {
       return;
     }
 
-    // 2. Upload cover if present
+    // 2. Upload cover if present. The book row is already saved, so a cover
+    // failure must not be silent — warn the user they can retry from edit.
     if (!quickAdd && coverFile) {
       const ext = coverFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
       const path = `${userId}/${book.id}/cover.${ext}`;
@@ -169,7 +194,15 @@ export function AddBookForm({ userId }: { userId: string }) {
 
       if (!upErr) {
         const { data: pub } = supabase.storage.from("book-covers").getPublicUrl(path);
-        await supabase.from("books").update({ cover_url: pub.publicUrl }).eq("id", book.id);
+        const { error: coverUpdateErr } = await supabase
+          .from("books")
+          .update({ cover_url: pub.publicUrl })
+          .eq("id", book.id);
+        if (coverUpdateErr) {
+          toast.warning("Buku tersimpan, tapi cover gagal kepasang. Bisa diatur lagi dari edit.");
+        }
+      } else {
+        toast.warning("Buku tersimpan, tapi upload cover gagal. Bisa coba lagi dari edit.");
       }
     }
 
@@ -215,6 +248,7 @@ export function AddBookForm({ userId }: { userId: string }) {
               <BookPicker onPick={applyAutofill} />
             </div>
             {isbnInfo && <p className="mt-2 text-caption text-(--color-success)">{isbnInfo}</p>}
+            {enriching && <p className="mt-1 text-caption text-muted">Ngambil sinopsis…</p>}
             {isbnCoverUrl && (
               <p className="mt-1 text-caption text-muted">
                 Cover ketemu — preview ada di langkah 2.

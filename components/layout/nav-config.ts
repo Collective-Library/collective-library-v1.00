@@ -378,29 +378,12 @@ export const bottomNavItems: BottomNavItem[] = [
 // multiple, Goodreads import, My feedback, Sign out) stay hardcoded
 // in AvatarMenu because they have unique behaviors.
 
+// Feedback F17: the profile dropdown overflowed on mobile and buried Sign out.
+// Activity / Members / Events / Manifest are all reachable from the persistent
+// nav (DesktopNav + ExploreDropdown on lg; BottomNav + HamburgerMenu on md-),
+// so they're dropped here. "Add book" stays — it has no other persistent
+// desktop entry point. AvatarMenu also gains a max-height + scroll for safety.
 export const avatarMenuNavItems: NavSurface[] = [
-  {
-    id: "a-activity",
-    label: "Activity feed",
-    href: "/activity",
-    icon: ActivityIcon,
-    match: matchers.activity,
-  },
-  {
-    id: "a-members",
-    label: "Members",
-    href: "/members",
-    icon: MemberIcon,
-    match: matchers.members,
-  },
-  { id: "a-events", label: "Events", href: "/event", icon: EventIcon, match: matchers.events },
-  {
-    id: "a-manifest",
-    label: "Manifest",
-    href: "/manifest",
-    icon: ManifestIcon,
-    match: matchers.manifest,
-  },
   { id: "a-addbook", label: "Add book", href: "/book/add", icon: AddIcon, match: matchers.addBook },
 ];
 

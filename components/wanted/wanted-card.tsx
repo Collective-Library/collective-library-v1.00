@@ -11,14 +11,17 @@ import { CoverImage } from "@/components/books/cover-image";
 export function WantedCard({
   wanted,
   viewer = null,
+  isOwner = false,
 }: {
   wanted: WantedRequestWithRequester;
   viewer?: Viewer;
+  /** When true, show the owner-only edit/delete affordance. */
+  isOwner?: boolean;
 }) {
   const links = getRequesterContactLinks(
     wanted.requester,
     { title: wanted.title, author: wanted.author },
-    viewer,
+    viewer
   );
   const conditionLabel =
     wanted.desired_condition && wanted.desired_condition in CONDITION_LABELS
@@ -41,13 +44,21 @@ export function WantedCard({
             {wanted.requester.city ?? "Semarang"} · {formatRelativeID(wanted.created_at)}
           </p>
         </div>
-        <Badge tone="muted" className="ml-auto">DICARI</Badge>
+        <Badge tone="muted" className="ml-auto">
+          DICARI
+        </Badge>
       </Link>
 
       {/* Body — cover thumb + title + meta */}
       <div className="flex gap-4">
         <div className="relative w-[72px] h-[100px] shrink-0 rounded-card overflow-hidden bg-cream border border-hairline">
-          <CoverImage src={wanted.cover_url} alt={wanted.title} title={wanted.title} author={wanted.author ?? ""} className="object-cover w-full h-full" />
+          <CoverImage
+            src={wanted.cover_url}
+            alt={wanted.title}
+            title={wanted.title}
+            author={wanted.author ?? ""}
+            className="object-cover w-full h-full"
+          />
         </div>
 
         <div className="min-w-0 flex-1 flex flex-col gap-1.5">
@@ -84,6 +95,16 @@ export function WantedCard({
         <blockquote className="text-body-sm text-ink-soft whitespace-pre-wrap rounded-card bg-cream/60 border-l-2 border-hairline-strong px-3 py-2.5 italic">
           &ldquo;{wanted.notes}&rdquo;
         </blockquote>
+      )}
+
+      {/* Owner-only — edit/delete their own request. */}
+      {isOwner && (
+        <Link
+          href={`/wanted/${wanted.id}/edit`}
+          className="self-start text-caption font-medium text-ink-soft underline underline-offset-2 hover:text-ink"
+        >
+          Edit / hapus WTB ini
+        </Link>
       )}
 
       {/* CTA — Gue punya! */}
