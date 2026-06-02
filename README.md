@@ -220,6 +220,7 @@ Reference docs:
 - [`docs/FEATURES.md`](./docs/FEATURES.md)
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 - [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
+- [`docs/AGENT_WORKFLOW.md`](./docs/AGENT_WORKFLOW.md) — how AI agents build here: small slices, validation ladder, timeout rules, stop conditions, map-safety guards
 - [`docs/DISCORD_ROLES.md`](./docs/DISCORD_ROLES.md)
 - [`docs/spots/README.md`](./docs/spots/README.md) — Spots (library_nodes) subsystem deep-dive
 - [`docs/MAPS_PRODUCT_NORTH_STAR.md`](./docs/MAPS_PRODUCT_NORTH_STAR.md) — Collective Maps product vision: the killer-feature north star (V1 → V3), differentiation, user loop, privacy, metrics
