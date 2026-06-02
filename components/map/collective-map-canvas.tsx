@@ -21,6 +21,12 @@ export interface CollectiveMapCanvasProps {
    * valid CSS length string ("100dvh", "100%") for fullscreen usage.
    */
   height?: number | string;
+  /**
+   * Show Leaflet's default +/- zoom control. Default true (preserves the /peta
+   * card). The fullscreen /maps surface passes false so its floating chrome
+   * owns the corners; the map stays zoomable via scroll wheel / pinch.
+   */
+  zoomControl?: boolean;
 }
 
 /**
@@ -35,7 +41,11 @@ export interface CollectiveMapCanvasProps {
  * peta-client.tsx already does this through map-view.tsx; future /maps will do
  * the same directly.
  */
-export function CollectiveMapCanvas({ items, height = 480 }: CollectiveMapCanvasProps) {
+export function CollectiveMapCanvas({
+  items,
+  height = 480,
+  zoomControl = true,
+}: CollectiveMapCanvasProps) {
   const view = useMemo(() => {
     if (items.length === 0) return { center: SEMARANG_CENTER, zoom: DEFAULT_ZOOM };
     if (items.length === 1) {
@@ -55,6 +65,7 @@ export function CollectiveMapCanvas({ items, height = 480 }: CollectiveMapCanvas
         zoom={view.zoom}
         style={{ height, width: "100%" }}
         scrollWheelZoom
+        zoomControl={zoomControl}
       >
         {/* Carto Positron — soft, light, parchment-friendly */}
         <TileLayer
