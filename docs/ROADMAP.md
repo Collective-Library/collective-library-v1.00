@@ -152,20 +152,38 @@ Events to track:
 
 ---
 
-## Collective Maps — `/peta` spatial discovery
+## Collective Maps V1 — `/peta` spatial discovery (✅ shipped)
 
-> **Status: Slice 1 shipped (docs only).** Full audit + design in [`MAPS_AUDIT.md`](./MAPS_AUDIT.md) and [`MAPS_ROADMAP.md`](./MAPS_ROADMAP.md). Subsequent slices gated behind explicit per-slice approval.
+> **Status: V1 shipped to production (2026-06-01).** Full audit + design in [`MAPS_AUDIT.md`](./MAPS_AUDIT.md) and [`MAPS_ROADMAP.md`](./MAPS_ROADMAP.md).
 
-Evolve `/peta` from a members-only map into the ecosystem's spatial discovery surface — _"where is the knowledge network around me?"_ Layered, additive, no rewrite. Formula: **Object + Location + Activity = Discovery**.
+Evolved `/peta` from a members-only map into the ecosystem's spatial discovery surface. Formula: **Object + Location + Activity = Discovery**.
 
-- **Slice 1** — Audit + roadmap docs (✅ shipped).
-- **Slice 2** — `CollectiveMapItem` discriminated union (`lib/map.ts`) + `MapView` refactor to typed items, members only, **zero behavior change**.
-- **Slice 3** — Spots layer + "Tampilkan" chip row (`listSpotsForMap`, public+active+coords).
-- **Slice 4** — Events layer + Event chip (`listEventsForMap`, public+upcoming, coords inherited from linked Spot).
-- **Slice 5** — Mobile full-bleed UX (sticky filters, bottom sheet, floating Add, legend).
-- **Slice 6** — Map-activity panel + Discord/X output prep (manual-first, per Output Layer above).
+- **Slice 1** — Audit + roadmap docs ✅
+- **Slice 2** — `CollectiveMapItem` typed union + `MapView` refactor (zero visual change) ✅
+- **Slice 3** — Spots layer + Tampilkan chip row ✅
+- **Slice 4** — Events layer + Event chip ✅
 
-Guardrails: keep Leaflet + Carto Positron (no Google Maps / paid tiles), keep the `/peta` route, members stay approximate (kecamatan + jitter) while Spots/events use exact public coords, no book-level pins, no new route, no clustering infra until overlap demands it.
+Guardrails: keep Leaflet + Carto Positron (no Google Maps), keep `/peta` route, members approximate (kecamatan + jitter), Spots/events exact public coords, no book-level pins, no clustering until needed.
+
+---
+
+## Collective Maps V1.5→V2 — `/maps` fullscreen + admin + Google Places
+
+> **Status: Slice A (planning docs) shipped.** Full 15-section plan in [`MAPS_V15_V2_PLAN.md`](./MAPS_V15_V2_PLAN.md). Each slice gated behind explicit approval.
+
+Build `/maps` as an immersive, Google-Maps/Zenly-like discovery surface — the map IS the page (fullscreen canvas, floating chrome, no `PageShell` shell). `/peta` stays untouched.
+
+- **Slice A** — Planning docs ✅
+- **Slice B** — Canvas extraction (`collective-map-canvas.tsx`), zero visual change to `/peta`.
+- **Slice C** — New `/maps` fullscreen route (existing data, same pins, floating layer chips, search → `/search`).
+- **Slice D** — Selected-pin panel (mobile bottom sheet, desktop side panel).
+- **Slice E** — Floating Add button (Tambah buku / Buat event / Edit lokasi gue; Spot-add disabled initially).
+- **Slice F** — Map feedback entry point (reuse existing `feedback` system).
+- **Slice G** — Admin map-health dashboard (`/mastermind/maps`).
+- **Slice H** — Google Places admin import (V2, flag-gated, backend-only, cached; requires `0027`+`0028` migrations).
+- **Slice I** — User Spot suggestion from Google (V2, pending-until-approved; requires `0029` migration).
+
+Key guardrails: no Google Maps renderer (Leaflet stays); no live GPS; no book pins; no Google API calls on map load; `GOOGLE_PLACES_API_KEY` + `MAPS_GOOGLE_IMPORT_ENABLED` flag; all Google work server-side only; all suggestions pending until admin approves.
 
 ---
 
