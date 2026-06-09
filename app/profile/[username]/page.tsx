@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProfileByUsername, getProfileCommunities } from "@/lib/profile";
 import { getBooksByOwnerUsername } from "@/lib/books";
+import { listUserSignals } from "@/lib/signals";
 import { getCurrentUser } from "@/lib/auth";
 import { getContactLinks } from "@/lib/contact";
 import { profileUrl } from "@/lib/url";
@@ -12,12 +14,9 @@ import { CommunityBadge } from "@/components/ui/community-badge";
 import { SecondaryContactRow } from "@/components/books/contact-pills";
 import { MyShelfManager } from "@/components/books/my-shelf-manager";
 import { CoverImage } from "@/components/books/cover-image";
-import {
-  InterestList,
-  SubInterestList,
-  IntentList,
-} from "@/components/profile/interest-chips";
+import { InterestList, SubInterestList, IntentList } from "@/components/profile/interest-chips";
 import { ShareProfileButton } from "@/components/profile/share-profile-button";
+import { SignalList } from "@/components/signals/signal-list";
 import type { BookStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -50,19 +49,16 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProfilePage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
 
-  const [books, communities, currentUser] = await Promise.all([
+  const [books, communities, currentUser, signals] = await Promise.all([
     getBooksByOwnerUsername(username),
     getProfileCommunities(profile.id),
     getCurrentUser(),
+    listUserSignals(profile.id),
   ]);
   const isOwner = currentUser?.id === profile.id;
   const links = getContactLinks(profile);
@@ -71,7 +67,7 @@ export default async function ProfilePage({
       acc[b.status] = (acc[b.status] ?? 0) + 1;
       return acc;
     },
-    { sell: 0, lend: 0, trade: 0, unavailable: 0 },
+    { sell: 0, lend: 0, trade: 0, unavailable: 0 }
   );
 
   // Currently reading book — fetched separately to keep type clean
@@ -107,11 +103,13 @@ export default async function ProfilePage({
       {/* Banner — only when present */}
       {profile.cover_url && (
         <div className="relative -mx-4 md:-mx-6 mb-6 overflow-hidden md:rounded-card-lg h-32 md:h-48">
-          <img
+          <Image
             src={profile.cover_url}
             alt=""
+            fill
             className="object-cover"
-           loading="lazy" />
+            sizes="(max-width: 768px) 100vw, 1152px"
+          />
         </div>
       )}
 
@@ -156,9 +154,7 @@ export default async function ProfilePage({
               ))}
             </div>
           )}
-          {profile.bio && (
-            <p className="mt-3 text-body text-ink-soft max-w-2xl">{profile.bio}</p>
-          )}
+          {profile.bio && <p className="mt-3 text-body text-ink-soft max-w-2xl">{profile.bio}</p>}
           {profile.interests && profile.interests.length > 0 && (
             <div className="mt-3">
               <InterestList slugs={profile.interests} />
@@ -186,9 +182,17 @@ export default async function ProfilePage({
           href={`/book/${currentlyReading.id}`}
           className="mb-7 flex items-center gap-3 p-3 -ml-1 -mr-1 rounded-card bg-paper border border-hairline hover:bg-cream transition-colors"
         >
-          <span className="text-[20px]" aria-hidden>📖</span>
+          <span className="text-[20px]" aria-hidden>
+            📖
+          </span>
           <div className="relative w-10 h-14 shrink-0 rounded-[4px] overflow-hidden bg-cream border border-hairline">
-            <CoverImage src={currentlyReading.cover_url} alt={currentlyReading.title} title={currentlyReading.title} author={currentlyReading.author} className="object-cover" />
+            <CoverImage
+              src={currentlyReading.cover_url}
+              alt={currentlyReading.title}
+              title={currentlyReading.title}
+              author={currentlyReading.author}
+              className="object-cover"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-caption text-muted uppercase tracking-wide font-semibold">
@@ -197,9 +201,7 @@ export default async function ProfilePage({
             <p className="text-body-sm font-semibold text-ink line-clamp-1">
               {currentlyReading.title}
             </p>
-            <p className="text-caption text-muted line-clamp-1">
-              {currentlyReading.author}
-            </p>
+            <p className="text-caption text-muted line-clamp-1">{currentlyReading.author}</p>
           </div>
         </Link>
       )}
@@ -248,6 +250,9 @@ export default async function ProfilePage({
         <Stat label="Dipinjamkan" value={counts.lend} />
         <Stat label="Ditukar" value={counts.trade} />
       </div>
+
+      {/* Collective Signals — auto-unlocked achievements */}
+      <SignalList signals={signals} />
 
       {/* Books grid — owner gets bulk-management toggle, visitors see read-only */}
       <MyShelfManager books={books} isOwner={isOwner} />
