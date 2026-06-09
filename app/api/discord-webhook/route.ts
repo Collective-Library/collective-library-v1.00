@@ -40,6 +40,7 @@ const TYPE_COPY: Record<string, { label: string; color: number }> = {
   BOOK_ADDED: { label: "Buku baru di rak", color: 0x166534 },
   BOOK_STATUS_CHANGED: { label: "Update status buku", color: 0x6d28d9 },
   WTB_POSTED: { label: "Buku dicari", color: 0xb45309 },
+  SIGNAL_UNLOCKED: { label: "✦ Signal Drop", color: 0xd4a853 },
 };
 
 interface SupabaseWebhookPayload {
@@ -52,6 +53,7 @@ interface SupabaseWebhookPayload {
     type: keyof typeof TYPE_COPY;
     book_id: string | null;
     wanted_id: string | null;
+    user_signal_id: string | null;
     metadata: { old_status?: string; new_status?: string } | null;
     created_at: string;
   };
@@ -125,7 +127,21 @@ export async function POST(request: NextRequest) {
     if (w) wanted = w as unknown as WantedCtx;
   }
 
-  const embed = buildEmbed(row, actorName, actorUsername, actorPhoto, book, wanted);
+  type SignalCtx = { name: string; emoji: string | null; card_subcopy: string | null };
+  let signal: SignalCtx | null = null;
+  if (row.user_signal_id) {
+    const { data: us } = await supabase
+      .from("user_signals")
+      .select("definition:signal_definitions!signal_slug(name, emoji, card_subcopy)")
+      .eq("id", row.user_signal_id)
+      .maybeSingle();
+    if (us) {
+      const def = Array.isArray(us.definition) ? us.definition[0] : us.definition;
+      if (def) signal = def as unknown as SignalCtx;
+    }
+  }
+
+  const embed = buildEmbed(row, actorName, actorUsername, actorPhoto, book, wanted, signal);
   if (!embed) {
     return NextResponse.json({ ok: true, skipped: "no embed for type" });
   }
@@ -144,7 +160,10 @@ export async function POST(request: NextRequest) {
   if (!r.ok) {
     const text = await r.text();
     console.error("Discord webhook failed", r.status, text);
-    return NextResponse.json({ error: "discord webhook failed", status: r.status }, { status: 502 });
+    return NextResponse.json(
+      { error: "discord webhook failed", status: r.status },
+      { status: 502 }
+    );
   }
 
   return NextResponse.json({ ok: true });
@@ -157,6 +176,7 @@ function buildEmbed(
   actorPhoto: string | null,
   book: { title: string; author: string; cover_url: string | null; status: string } | null,
   wanted: { title: string; author: string | null } | null,
+  signal: { name: string; emoji: string | null; card_subcopy: string | null } | null
 ) {
   const cfg = TYPE_COPY[row.type];
   if (!cfg) return null;
@@ -167,6 +187,7 @@ function buildEmbed(
   let description = "";
   let url = `${base}/aktivitas`;
   let thumbnail: string | null = null;
+  let imageUrl: string | null = null;
 
   // Voice: Seth-Godin-flavored. Specific, anticipatory, invitational. Each
   // event becomes a tiny community moment, not a bot log.
@@ -179,7 +200,7 @@ function buildEmbed(
       url = profileUrl ?? url;
       break;
     case "BOOK_ADDED": {
-      const verb = book ? STATUS_LABEL[book.status]?.toLowerCase() ?? "koleksi" : "rak";
+      const verb = book ? (STATUS_LABEL[book.status]?.toLowerCase() ?? "koleksi") : "rak";
       title = book
         ? `${actorName} taro buku baru di rak komunitas.`
         : `${actorName} taro buku baru.`;
@@ -204,13 +225,28 @@ function buildEmbed(
       break;
     }
     case "WTB_POSTED": {
-      title = wanted
-        ? `${actorName} lagi cari **${wanted.title}**.`
-        : `${actorName} cari buku.`;
+      title = wanted ? `${actorName} lagi cari **${wanted.title}**.` : `${actorName} cari buku.`;
       description = wanted
         ? `${wanted.author ? `oleh ${wanted.author}\n\n` : ""}Ada yang punya, atau tau di mana ada? Tap kasih tau.\n\n[Lihat WTB →](${base}/wanted)`
         : `Ada permintaan buku baru.\n\n[Lihat WTB →](${base}/wanted)`;
       url = `${base}/wanted`;
+      break;
+    }
+    case "SIGNAL_UNLOCKED": {
+      const sigName = signal?.name ?? "Signal";
+      const sigEmoji = signal?.emoji ?? "✦";
+      title = `${sigEmoji} ${actorName} unlock **${sigName}**.`;
+      const signalUrl = row.user_signal_id ? `${base}/signal/${row.user_signal_id}` : null;
+      description = [
+        signal?.card_subcopy ?? "",
+        signalUrl ? `\n[Lihat Signal →](${signalUrl})` : "",
+      ]
+        .filter(Boolean)
+        .join("");
+      if (signalUrl) {
+        url = signalUrl;
+        imageUrl = `${base}/api/og/signal/${row.user_signal_id}?format=preview`;
+      }
       break;
     }
   }
@@ -225,6 +261,7 @@ function buildEmbed(
       ? { name: actorName, url: profileUrl, icon_url: actorPhoto ?? undefined }
       : { name: actorName, icon_url: actorPhoto ?? undefined },
     thumbnail: thumbnail ? { url: thumbnail } : undefined,
+    image: imageUrl ? { url: imageUrl } : undefined,
     footer: { text: cfg.label },
   };
 }
