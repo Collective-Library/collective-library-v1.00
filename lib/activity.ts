@@ -8,7 +8,9 @@ export type ActivityType =
   | "WTB_POSTED"
   | "EVENT_CREATED"
   | "EVENT_RSVPED"
-  | "MANIFEST_POSTED";
+  | "MANIFEST_POSTED"
+  | "NODE_CREATED"
+  | "SIGNAL_UNLOCKED";
 
 export interface ActivityActor {
   id: string;
@@ -72,10 +74,9 @@ const SELECT = `
  * Optional `interest` filter narrows to events whose actor has that interest slug.
  */
 export async function listActivity(
-  limitOrOpts: number | { limit?: number; interest?: string } = 50,
+  limitOrOpts: number | { limit?: number; interest?: string } = 50
 ): Promise<ActivityItem[]> {
-  const opts =
-    typeof limitOrOpts === "number" ? { limit: limitOrOpts } : limitOrOpts;
+  const opts = typeof limitOrOpts === "number" ? { limit: limitOrOpts } : limitOrOpts;
   const limit = opts.limit ?? 50;
 
   const supabase = await createClient();
@@ -118,8 +119,7 @@ export async function listActivity(
   };
 
   // Supabase types embedded relations as arrays; flatten to single object.
-  const flatten = <T,>(v: T | T[] | null): T | null =>
-    Array.isArray(v) ? v[0] ?? null : v;
+  const flatten = <T>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
   return ((data ?? []) as unknown as Row[]).map((r) => ({
     id: r.id,
