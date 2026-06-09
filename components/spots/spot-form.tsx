@@ -45,17 +45,17 @@ export function SpotForm({ mode, initial, communities, spotId }: SpotFormProps) 
   const [address, setAddress] = useState(initial?.address ?? "");
   const [mapsUrl, setMapsUrl] = useState(initial?.maps_url ?? "");
   const [latitude, setLatitude] = useState<string>(
-    initial?.latitude != null ? String(initial.latitude) : "",
+    initial?.latitude != null ? String(initial.latitude) : ""
   );
   const [longitude, setLongitude] = useState<string>(
-    initial?.longitude != null ? String(initial.longitude) : "",
+    initial?.longitude != null ? String(initial.longitude) : ""
   );
   const [description, setDescription] = useState(initial?.description ?? "");
   const [imageUrl, setImageUrl] = useState(initial?.image_url ?? "");
   const [operatingHours, setOperatingHours] = useState(initial?.operating_hours ?? "");
   const [communityId, setCommunityId] = useState<string>(initial?.community_id ?? "");
   const [visibility, setVisibility] = useState<SpotVisibility>(
-    (initial?.visibility as SpotVisibility) ?? "public",
+    (initial?.visibility as SpotVisibility) ?? "public"
   );
 
   const handleNameChange = (next: string) => {
@@ -110,10 +110,7 @@ export function SpotForm({ mode, initial, communities, spotId }: SpotFormProps) 
     };
 
     startTransition(async () => {
-      const url =
-        mode === "create"
-          ? "/api/mastermind/spots"
-          : `/api/mastermind/spots/${spotId}`;
+      const url = mode === "create" ? "/api/mastermind/spots" : `/api/mastermind/spots/${spotId}`;
       const method = mode === "create" ? "POST" : "PATCH";
 
       const res = await fetch(url, {
@@ -154,7 +151,10 @@ export function SpotForm({ mode, initial, communities, spotId }: SpotFormProps) 
         />
       </FieldRow>
 
-      <FieldRow label="Slug" hint="a-z, 0-9, tanda hubung. Auto-derived dari Nama; klik untuk override.">
+      <FieldRow
+        label="Slug"
+        hint="a-z, 0-9, tanda hubung. Auto-derived dari Nama; klik untuk override."
+      >
         <input
           required
           value={slug}
@@ -273,13 +273,17 @@ export function SpotForm({ mode, initial, communities, spotId }: SpotFormProps) 
           <option value="">— Tidak ada —</option>
           {communities.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}{c.city ? ` · ${c.city}` : ""}
+              {c.name}
+              {c.city ? ` · ${c.city}` : ""}
             </option>
           ))}
         </select>
       </FieldRow>
 
-      <FieldRow label="Visibility" hint="Public = bisa muncul di future /spots; community = scoped.">
+      <FieldRow
+        label="Visibility"
+        hint="Public = bisa muncul di future /spots; community = scoped."
+      >
         <select
           value={visibility}
           onChange={(e) => setVisibility(e.target.value as SpotVisibility)}
@@ -306,7 +310,8 @@ export function SpotForm({ mode, initial, communities, spotId }: SpotFormProps) 
       {mode === "create" && (
         <p className="text-caption text-muted">
           Spot baru otomatis lahir dengan status <code className="font-mono">needs_audit</code>.
-          Promosi ke <code className="font-mono">active</code> dilakukan dari halaman edit Spot setelah review.
+          Promosi ke <code className="font-mono">active</code> dilakukan dari halaman edit Spot
+          setelah review.
         </p>
       )}
     </form>

@@ -19,11 +19,7 @@ type SP = {
   type?: SpotType | "all";
 };
 
-export default async function SpotsAdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<SP>;
-}) {
+export default async function SpotsAdminPage({ searchParams }: { searchParams: Promise<SP> }) {
   const { q, status = "all", type = "all" } = await searchParams;
 
   const [rows, counts] = await Promise.all([
@@ -49,11 +45,11 @@ export default async function SpotsAdminPage({
           </Link>
         </div>
         <p className="text-body text-ink-soft max-w-2xl">
-          Tempat fisik tempat buku, event, dan komunitas hidup di dunia nyata —
-          cafe, rak buku publik (Nawala-style), ruang komunitas, kampus, partner.
-          Default <code className="font-mono text-caption">needs_audit</code>;
-          admin promote ke <code className="font-mono text-caption">active</code>{" "}
-          biar muncul di future surface. Public <code className="font-mono text-caption">/spots</code> belum dibuild.
+          Tempat fisik tempat buku, event, dan komunitas hidup di dunia nyata — cafe, rak buku
+          publik (Nawala-style), ruang komunitas, kampus, partner. Default{" "}
+          <code className="font-mono text-caption">needs_audit</code>; admin promote ke{" "}
+          <code className="font-mono text-caption">active</code> biar muncul di future surface.
+          Public <code className="font-mono text-caption">/spots</code> belum dibuild.
         </p>
       </header>
 
@@ -117,8 +113,8 @@ export default async function SpotsAdminPage({
         <div className="bg-paper border border-hairline rounded-card-lg shadow-card p-10 text-center">
           <p className="font-display text-title-lg text-ink">Belum ada Spot.</p>
           <p className="mt-2 text-body text-muted max-w-md mx-auto">
-            Mulai dengan satu cafe atau rak buku publik yang lo udah kenal.
-            Anti-empty-state: target 3 Spot real sebelum public surface dibuka.
+            Mulai dengan satu cafe atau rak buku publik yang lo udah kenal. Anti-empty-state: target
+            3 Spot real sebelum public surface dibuka.
           </p>
           <Link
             href="/mastermind/spots/new"
@@ -136,7 +132,7 @@ export default async function SpotsAdminPage({
                 <div
                   className={cn(
                     "bg-paper border border-hairline rounded-card hover:bg-cream/40 hover:shadow-card transition-colors p-4",
-                    "flex flex-col sm:flex-row sm:items-center gap-3",
+                    "flex flex-col sm:flex-row sm:items-center gap-3"
                   )}
                 >
                   <Link
@@ -158,8 +154,10 @@ export default async function SpotsAdminPage({
                       </p>
                       <p className="text-caption text-muted truncate">
                         {typeOpt?.label ?? r.type}
-                        {" · "}{r.city}
-                        {" · "}{formatRelativeID(r.created_at)}
+                        {" · "}
+                        {r.city}
+                        {" · "}
+                        {formatRelativeID(r.created_at)}
                       </p>
                     </div>
                   </Link>
@@ -177,7 +175,11 @@ export default async function SpotsAdminPage({
   );
 }
 
-function hrefWith(opts: { q?: string; status: SpotStatus | "all"; type: SpotType | "all" }): string {
+function hrefWith(opts: {
+  q?: string;
+  status: SpotStatus | "all";
+  type: SpotType | "all";
+}): string {
   const params = new URLSearchParams();
   if (opts.q) params.set("q", opts.q);
   if (opts.status !== "all") params.set("status", opts.status);

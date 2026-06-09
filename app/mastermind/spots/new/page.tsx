@@ -24,10 +24,10 @@ export default async function NewSpotPage() {
           Bikin Spot baru
         </h1>
         <p className="mt-2 text-body text-ink-soft">
-          Spot lahir dengan status <code className="font-mono">needs_audit</code>.
-          Promosi ke <code className="font-mono">active</code> dilakukan setelah review
-          di halaman edit Spot. Activity feed (<code className="font-mono">NODE_CREATED</code>)
-          fires hanya pada transisi <em>→ active</em>, jadi nyiapin data dulu aman.
+          Spot lahir dengan status <code className="font-mono">needs_audit</code>. Promosi ke{" "}
+          <code className="font-mono">active</code> dilakukan setelah review di halaman edit Spot.
+          Activity feed (<code className="font-mono">NODE_CREATED</code>) fires hanya pada transisi{" "}
+          <em>→ active</em>, jadi nyiapin data dulu aman.
         </p>
       </header>
 

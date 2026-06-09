@@ -20,9 +20,12 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json().catch(() => null)) as
-    | { name?: string; type?: string; city?: string; maps_url?: string }
-    | null;
+  const body = (await request.json().catch(() => null)) as {
+    name?: string;
+    type?: string;
+    city?: string;
+    maps_url?: string;
+  } | null;
   if (!body) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
   if (!body.name || typeof body.name !== "string") {
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
     if (msg.includes("row-level security") || msg.includes("policy")) {
       return NextResponse.json(
         { error: "Belum bisa bikin Spot — host minimal harus pernah bikin 1 event dulu." },
-        { status: 403 },
+        { status: 403 }
       );
     }
     return NextResponse.json({ error: res.error }, { status: 400 });

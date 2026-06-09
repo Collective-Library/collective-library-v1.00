@@ -11,15 +11,15 @@
 import type { SpotStatus, SpotType, SpotVisibility } from "@/types";
 
 export const SPOT_TYPE_OPTIONS: { value: SpotType; label: string; emoji: string }[] = [
-  { value: "cafe",            label: "Cafe",                emoji: "☕" },
-  { value: "public_shelf",    label: "Public bookshelf",    emoji: "📚" },
-  { value: "community_space", label: "Community space",     emoji: "🤝" },
-  { value: "school",          label: "Sekolah",             emoji: "🏫" },
-  { value: "campus",          label: "Kampus",              emoji: "🎓" },
-  { value: "library",         label: "Library",             emoji: "🏛️" },
-  { value: "coworking",       label: "Coworking",           emoji: "💼" },
-  { value: "partner",         label: "Partner space",       emoji: "🤲" },
-  { value: "other",           label: "Lainnya",             emoji: "✨" },
+  { value: "cafe", label: "Cafe", emoji: "☕" },
+  { value: "public_shelf", label: "Public bookshelf", emoji: "📚" },
+  { value: "community_space", label: "Community space", emoji: "🤝" },
+  { value: "school", label: "Sekolah", emoji: "🏫" },
+  { value: "campus", label: "Kampus", emoji: "🎓" },
+  { value: "library", label: "Library", emoji: "🏛️" },
+  { value: "coworking", label: "Coworking", emoji: "💼" },
+  { value: "partner", label: "Partner space", emoji: "🤲" },
+  { value: "other", label: "Lainnya", emoji: "✨" },
 ];
 
 export const SPOT_STATUS_OPTIONS: {
@@ -28,12 +28,12 @@ export const SPOT_STATUS_OPTIONS: {
   tone: "positive" | "warning" | "neutral";
 }[] = [
   { value: "needs_audit", label: "Needs audit", tone: "warning" },
-  { value: "active",      label: "Active",      tone: "positive" },
-  { value: "inactive",    label: "Inactive",    tone: "neutral" },
+  { value: "active", label: "Active", tone: "positive" },
+  { value: "inactive", label: "Inactive", tone: "neutral" },
 ];
 
 export const SPOT_VISIBILITY_OPTIONS: { value: SpotVisibility; label: string }[] = [
-  { value: "public",    label: "Public" },
+  { value: "public", label: "Public" },
   { value: "community", label: "Community only" },
 ];
 

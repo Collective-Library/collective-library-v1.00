@@ -545,3 +545,80 @@ export interface SpotFormValues {
   is_active?: boolean;
   visibility?: SpotVisibility;
 }
+
+// =============================================================================
+// Collective Signals (mirrors supabase/migrations/0027_collective_signals.sql)
+// =============================================================================
+
+export type SignalCategory = "books" | "events" | "community" | "voice" | "places";
+
+export type SignalMetric =
+  | "any_activity"
+  | "books_added"
+  | "lendable_books"
+  | "events_hosted"
+  | "events_rsvped"
+  | "manifests_posted"
+  | "wtb_posted"
+  | "spots_created"
+  | "feedback_submitted"
+  | "referrals"
+  | "curations";
+
+export interface SignalDefinition {
+  slug: string;
+  name: string;
+  description: string | null;
+  emoji: string | null;
+  category: SignalCategory;
+  announce: boolean;
+  card_headline: string | null;
+  card_subcopy: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface SignalRule {
+  id: string;
+  signal_slug: string;
+  metric: SignalMetric;
+  threshold: number;
+  window_kind: "all_time";
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserSignal {
+  id: string;
+  user_id: string;
+  signal_slug: string;
+  unlocked_at: string;
+  source_activity_id: string | null;
+}
+
+/** A UserSignal joined with its definition — what the profile + cards render. */
+export interface UserSignalWithDefinition extends UserSignal {
+  definition: SignalDefinition | null;
+}
+
+// =============================================================================
+// Notifications (mirrors supabase/migrations/0028_user_notifications.sql)
+// =============================================================================
+
+export type NotificationType = "SIGNAL_UNLOCKED";
+
+export interface UserNotification {
+  id: string;
+  recipient_user_id: string;
+  actor_user_id: string | null;
+  type: string;
+  object_type: string;
+  object_id: string | null;
+  title: string;
+  body: string | null;
+  url: string | null;
+  image_url: string | null;
+  metadata: Record<string, unknown>;
+  read_at: string | null;
+  created_at: string;
+}

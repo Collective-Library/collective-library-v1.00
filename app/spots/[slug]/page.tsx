@@ -4,11 +4,7 @@ import type { Metadata } from "next";
 import { Logo } from "@/components/layout/logo";
 import { Footer } from "@/components/layout/footer";
 import { getCurrentUser } from "@/lib/auth";
-import {
-  SPOT_TYPE_OPTIONS,
-  getSpotBySlug,
-  listUpcomingEventsForSpot,
-} from "@/lib/spots";
+import { SPOT_TYPE_OPTIONS, getSpotBySlug, listUpcomingEventsForSpot } from "@/lib/spots";
 import { formatEventWhen } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CopyToClipboardButton } from "@/components/spots/copy-to-clipboard-button";
@@ -106,11 +102,7 @@ export default async function PublicSpotDetailPage({
             <div className="aspect-[16/7] bg-cream relative">
               {spot.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={spot.image_url}
-                  alt={spot.name}
-                  className="w-full h-full object-cover"
-                />
+                <img src={spot.image_url} alt={spot.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-7xl md:text-8xl opacity-70">
                   {typeOpt?.emoji ?? "📍"}
@@ -149,9 +141,7 @@ export default async function PublicSpotDetailPage({
           {/* Description */}
           {spot.description && (
             <section className="bg-paper border border-hairline rounded-card-lg shadow-card p-5 md:p-7">
-              <h2 className="font-display text-title-lg text-ink mb-2">
-                Tentang tempat ini
-              </h2>
+              <h2 className="font-display text-title-lg text-ink mb-2">Tentang tempat ini</h2>
               <p className="text-body text-ink-soft leading-relaxed whitespace-pre-wrap">
                 {spot.description}
               </p>
@@ -170,9 +160,7 @@ export default async function PublicSpotDetailPage({
 
           {/* Upcoming events */}
           <section className="bg-paper border border-hairline rounded-card-lg shadow-card p-5 md:p-7">
-            <h2 className="font-display text-title-lg text-ink mb-3">
-              Event mendatang di sini
-            </h2>
+            <h2 className="font-display text-title-lg text-ink mb-3">Event mendatang di sini</h2>
             {events.length === 0 ? (
               <div className="text-body-sm text-muted">
                 Belum ada event yang dijadwalkan di Spot ini.{" "}
@@ -206,19 +194,13 @@ export default async function PublicSpotDetailPage({
                       >
                         {ev.cover_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={ev.cover_url}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={ev.cover_url} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <span className="text-xl">🎪</span>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-body-sm font-medium text-ink truncate">
-                          {ev.title}
-                        </p>
+                        <p className="text-body-sm font-medium text-ink truncate">{ev.title}</p>
                         <p className="text-caption text-muted truncate">
                           {formatEventWhen(ev.starts_at, ev.ends_at, ev.timezone)}
                           {ev.host?.full_name || ev.host?.username
@@ -240,9 +222,9 @@ export default async function PublicSpotDetailPage({
               Buku & aktivitas di Spot ini
             </h2>
             <p className="text-body-sm text-muted leading-relaxed">
-              Belum kebuka. Slice berikutnya: list buku yang tersedia di Spot ini
-              + activity feed (visit, donate, check-in). Untuk sekarang, fokusnya
-              di event yang ke-host di tempat ini.
+              Belum kebuka. Slice berikutnya: list buku yang tersedia di Spot ini + activity feed
+              (visit, donate, check-in). Untuk sekarang, fokusnya di event yang ke-host di tempat
+              ini.
             </p>
           </section>
 
@@ -252,14 +234,16 @@ export default async function PublicSpotDetailPage({
               Punya tempat ini atau lagi di sana?
             </h2>
             <p className="text-body-sm text-ink-soft leading-relaxed">
-              URL Spot ini stabil dan QR-ready — copy aja kalau mau tempelin di
-              meja kafe atau di rak buku publik. Pengunjung scan, langsung
-              mendarat di halaman ini.
+              URL Spot ini stabil dan QR-ready — copy aja kalau mau tempelin di meja kafe atau di
+              rak buku publik. Pengunjung scan, langsung mendarat di halaman ini.
             </p>
             <CopyLinkRow slug={spot.slug} />
             <p className="text-caption text-muted">
               Mau report info Spot ini gak akurat?{" "}
-              <Link href="/feedback" className="text-ink-soft underline underline-offset-4 hover:text-ink">
+              <Link
+                href="/feedback"
+                className="text-ink-soft underline underline-offset-4 hover:text-ink"
+              >
                 Kirim via feedback
               </Link>
               .
@@ -281,7 +265,7 @@ function CopyLinkRow({ slug }: { slug: string }) {
   return (
     <div
       className={cn(
-        "flex items-stretch gap-2 rounded-button border border-hairline-strong bg-cream/60 overflow-hidden",
+        "flex items-stretch gap-2 rounded-button border border-hairline-strong bg-cream/60 overflow-hidden"
       )}
     >
       <span className="flex-1 min-w-0 px-3.5 py-2.5 font-mono text-body-sm text-ink-soft truncate">

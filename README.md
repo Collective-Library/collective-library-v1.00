@@ -220,11 +220,13 @@ Reference docs:
 - [`docs/FEATURES.md`](./docs/FEATURES.md)
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 - [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
+- [`docs/AGENT_WORKFLOW.md`](./docs/AGENT_WORKFLOW.md) — how AI agents build here: small slices, validation ladder, timeout rules, stop conditions, map-safety guards
 - [`docs/DISCORD_ROLES.md`](./docs/DISCORD_ROLES.md)
 - [`docs/spots/README.md`](./docs/spots/README.md) — Spots (library_nodes) subsystem deep-dive
 - [`docs/MAPS_PRODUCT_NORTH_STAR.md`](./docs/MAPS_PRODUCT_NORTH_STAR.md) — Collective Maps product vision: the killer-feature north star (V1 → V3), differentiation, user loop, privacy, metrics
 - [`docs/MAPS_AUDIT.md`](./docs/MAPS_AUDIT.md) — Collective Maps audit: the `/peta`, profile-location, Spots, and Events stacks today
 - [`docs/MAPS_ROADMAP.md`](./docs/MAPS_ROADMAP.md) — Collective Maps design + sliced plan for evolving `/peta` into the spatial discovery surface
+- [`docs/MAPS_V15_V2_PLAN.md`](./docs/MAPS_V15_V2_PLAN.md) — Collective Maps V1.5→V2 full plan: `/maps` fullscreen route, Add flow, feedback loop, admin tooling, Google Places future layer
 - [`docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)
 
 Historical:

@@ -15,6 +15,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidEmail } from "@/lib/feedback-validation";
+import { evaluateUser } from "@/lib/signals/engine";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getAppUrl } from "@/lib/url";
@@ -161,6 +162,18 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.warn("[feedback] discord fan-out failed", err instanceof Error ? err.message : err);
+  }
+
+  // Signal evaluation — feedback_submitted metric is not in activity_log,
+  // so the DB webhook won't fire for this action. Evaluate here for authed
+  // users. Awaited (not fire-and-forget) because Vercel terminates lambdas
+  // post-response; swallowed so the user still sees success either way.
+  if (user?.id) {
+    try {
+      await evaluateUser(user.id, { announce: true, notify: true });
+    } catch (err) {
+      console.warn("[feedback] signal evaluation failed", err instanceof Error ? err.message : err);
+    }
   }
 
   return NextResponse.json({ ok: true, id: inserted.id }, { status: 201 });

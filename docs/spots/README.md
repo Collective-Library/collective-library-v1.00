@@ -35,14 +35,14 @@ A Spot can connect (over future slices) to:
 
 Two vocabularies live side-by-side. Don't unify them — each has a job.
 
-| Surface | Term | Why |
-| --- | --- | --- |
-| Database table | `library_nodes` | Builders, the foundation doc, and partnership pitches talk in "Library Nodes" (graph-theory framing — nodes in a network of places, books, people). |
-| UI label | **Spots** | End users see this everywhere. Concrete, casual, matches how JP members already say "ada spot baru di Tembalang." |
-| TypeScript DB-row type | `LibraryNode` | Mirrors the DB. |
-| TypeScript UI alias | `Spot` | What components import. Currently `type Spot = LibraryNode`; will diverge if the UI shape ever drifts. |
-| Public route (reserved) | `/spots` | Consistent with existing English-primary routes (`/library`, `/activity`, `/wanted`). Indonesian alias `/tempat` reserved. |
-| Activity log type | `NODE_CREATED` (later: `NODE_VISITED`) | Internal — matches `EVENT_CREATED`, `MANIFEST_POSTED`. |
+| Surface                 | Term                                   | Why                                                                                                                                                 |
+| ----------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database table          | `library_nodes`                        | Builders, the foundation doc, and partnership pitches talk in "Library Nodes" (graph-theory framing — nodes in a network of places, books, people). |
+| UI label                | **Spots**                              | End users see this everywhere. Concrete, casual, matches how JP members already say "ada spot baru di Tembalang."                                   |
+| TypeScript DB-row type  | `LibraryNode`                          | Mirrors the DB.                                                                                                                                     |
+| TypeScript UI alias     | `Spot`                                 | What components import. Currently `type Spot = LibraryNode`; will diverge if the UI shape ever drifts.                                              |
+| Public route (reserved) | `/spots`                               | Consistent with existing English-primary routes (`/library`, `/activity`, `/wanted`). Indonesian alias `/tempat` reserved.                          |
+| Activity log type       | `NODE_CREATED` (later: `NODE_VISITED`) | Internal — matches `EVENT_CREATED`, `MANIFEST_POSTED`.                                                                                              |
 
 If you find yourself wanting to rename `library_nodes` → `spots` in the DB to "match the UI," resist. Renaming a table after rows exist costs a migration, breaks every existing query, and confuses anyone reading the strategic doc. The two-vocabulary rule is cheap.
 
@@ -50,15 +50,15 @@ If you find yourself wanting to rename `library_nodes` → `spots` in the DB to 
 
 ## Permission model
 
-| Operation | Who | How enforced |
-| --- | --- | --- |
-| SELECT public Spots | Anyone (anon + auth) | RLS `spots_select_public` — `status='active' AND visibility='public' AND is_active=true`. |
-| SELECT own / pending Spots | Owner + admin | Same policy, `created_by = auth.uid()` or `is_admin = true` branch. |
-| INSERT (host inline-create) | Auth user with ≥1 prior hosted event | RLS `spots_insert_host_eligible`. Server check in `isHostEligibleForSpotCreate` mirrors the policy for friendly UI gating. |
-| INSERT (admin curated) | Admin | Service-role client bypasses RLS, gated by `requireAdmin` in `/mastermind/spots/new` + `getAdminProfileOrNull` in API. |
-| UPDATE editable fields | Owner or admin | RLS `spots_update_owner_or_admin`. |
-| UPDATE `status` / `is_active` / `visibility` | Admin only | **Application-layer gate.** RLS allows owner writes; the admin gate lives in `/api/mastermind/spots/[id]` (server-side `getAdminProfileOrNull`) and the UI hides the controls from non-admins. Known column-level RLS gap, intentionally accepted — hardenable in a future migration with a `BEFORE UPDATE` trigger if abuse appears. |
-| DELETE | Owner or admin | RLS `spots_delete_owner_or_admin`. |
+| Operation                                    | Who                                  | How enforced                                                                                                                                                                                                                                                                                                                          |
+| -------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SELECT public Spots                          | Anyone (anon + auth)                 | RLS `spots_select_public` — `status='active' AND visibility='public' AND is_active=true`.                                                                                                                                                                                                                                             |
+| SELECT own / pending Spots                   | Owner + admin                        | Same policy, `created_by = auth.uid()` or `is_admin = true` branch.                                                                                                                                                                                                                                                                   |
+| INSERT (host inline-create)                  | Auth user with ≥1 prior hosted event | RLS `spots_insert_host_eligible`. Server check in `isHostEligibleForSpotCreate` mirrors the policy for friendly UI gating.                                                                                                                                                                                                            |
+| INSERT (admin curated)                       | Admin                                | Service-role client bypasses RLS, gated by `requireAdmin` in `/mastermind/spots/new` + `getAdminProfileOrNull` in API.                                                                                                                                                                                                                |
+| UPDATE editable fields                       | Owner or admin                       | RLS `spots_update_owner_or_admin`.                                                                                                                                                                                                                                                                                                    |
+| UPDATE `status` / `is_active` / `visibility` | Admin only                           | **Application-layer gate.** RLS allows owner writes; the admin gate lives in `/api/mastermind/spots/[id]` (server-side `getAdminProfileOrNull`) and the UI hides the controls from non-admins. Known column-level RLS gap, intentionally accepted — hardenable in a future migration with a `BEFORE UPDATE` trigger if abuse appears. |
+| DELETE                                       | Owner or admin                       | RLS `spots_delete_owner_or_admin`.                                                                                                                                                                                                                                                                                                    |
 
 A future `node_host` / `partner` role is reserved (mentioned in the migration header) but not built. Today "host-event-creator" is the closest practical proxy for a partner.
 
@@ -88,25 +88,25 @@ The activity row records `actor_user_id = coalesce(new.created_by, auth.uid())` 
 
 Full schema lives in `supabase/migrations/0024_library_nodes.sql`. Quick reference:
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | uuid PK | gen_random_uuid() |
-| `name` | text NOT NULL | length 3–140 |
-| `slug` | text UNIQUE | regex `^[a-z0-9]+(?:-[a-z0-9]+)*$` |
-| `type` | text NOT NULL | enum: `cafe`, `public_shelf`, `community_space`, `school`, `campus`, `library`, `coworking`, `partner`, `other` |
-| `city` | text NOT NULL | length 1–120 |
-| `address` | text | optional |
-| `latitude`, `longitude` | numeric | optional |
-| `maps_url` | text | optional |
-| `description` | text | ≤2000 chars |
-| `image_url` | text | optional |
-| `operating_hours` | text | ≤500 chars, free-form |
-| `community_id` | uuid FK | → `communities(id) on delete set null` |
-| `status` | text NOT NULL | enum: `needs_audit` (default), `active`, `inactive` |
-| `is_active` | boolean NOT NULL | default true, admin kill-switch |
-| `visibility` | text NOT NULL | enum: `public`, `community`, default `public` |
-| `created_by` | uuid FK | → `profiles(id) on delete set null` |
-| `created_at`, `updated_at` | timestamptz | `set_updated_at` trigger |
+| Column                     | Type             | Notes                                                                                                           |
+| -------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| `id`                       | uuid PK          | gen_random_uuid()                                                                                               |
+| `name`                     | text NOT NULL    | length 3–140                                                                                                    |
+| `slug`                     | text UNIQUE      | regex `^[a-z0-9]+(?:-[a-z0-9]+)*$`                                                                              |
+| `type`                     | text NOT NULL    | enum: `cafe`, `public_shelf`, `community_space`, `school`, `campus`, `library`, `coworking`, `partner`, `other` |
+| `city`                     | text NOT NULL    | length 1–120                                                                                                    |
+| `address`                  | text             | optional                                                                                                        |
+| `latitude`, `longitude`    | numeric          | optional                                                                                                        |
+| `maps_url`                 | text             | optional                                                                                                        |
+| `description`              | text             | ≤2000 chars                                                                                                     |
+| `image_url`                | text             | optional                                                                                                        |
+| `operating_hours`          | text             | ≤500 chars, free-form                                                                                           |
+| `community_id`             | uuid FK          | → `communities(id) on delete set null`                                                                          |
+| `status`                   | text NOT NULL    | enum: `needs_audit` (default), `active`, `inactive`                                                             |
+| `is_active`                | boolean NOT NULL | default true, admin kill-switch                                                                                 |
+| `visibility`               | text NOT NULL    | enum: `public`, `community`, default `public`                                                                   |
+| `created_by`               | uuid FK          | → `profiles(id) on delete set null`                                                                             |
+| `created_at`, `updated_at` | timestamptz      | `set_updated_at` trigger                                                                                        |
 
 **Two-field public gate.** A Spot only surfaces publicly when `status='active' AND visibility='public' AND is_active=true`. Both `status` and `is_active` exist on purpose:
 
@@ -177,17 +177,17 @@ Activity emit guard requires all three flags. The "Public-ready?" pill on the ed
 
 Each item is intentional. The rationale matters more than the list.
 
-| Item | Status | Why deferred |
-| --- | --- | --- |
-| QR generation utility (image / PNG) | Not built | URL is already QR-able (`/spots/<slug>` stable); copy-to-clipboard ships in Slice 5. Build the image generator only when a partner specifically asks for printable assets. |
-| `/peta` Spot layer (marker rendering for Spots) | Not built | `MapView` is hard-coded to `MapMember[]`. Needs a generic marker abstraction first. Skip until at least 5 Spots exist with `latitude`/`longitude` populated. |
-| `node_visits` table + check-in activity (`NODE_VISITED`) | Reserved | Adds engagement loop. Land after QR usage proves people are actually scanning. |
-| `books.node_id` + book ↔ Spot linking | Reserved | Higher cognitive load (book status × location × owner). Wait until the simple Spot → events linkage proves itself. |
-| `node_host` / `partner` role | Reserved | Today "host-event-creator" is the proxy. Introduce a real role only when a real partner asks (e.g., Omah Baca Nawala wanting volunteer accounts). |
-| Partner dashboard | Reserved | Premature. Earliest signal would be a partner asking "where do I see visits to my Spot." |
-| Map clustering / geo-search / Google Maps clone | Won't build | Out of scope. Use Leaflet + Carto tiles + light filters when the map layer ships. |
-| `BEFORE UPDATE` trigger hardening for `status` / `is_active` / `visibility` writes | Optional | Application-layer admin gate is sufficient today. Promote to DB-level if RLS column-gap is ever exploited. |
-| Seed script `scripts/seed-spots.mjs` for 3–5 JP-adjacent Spots | Not written | Anti-empty-state requirement before any public surface. Write before slice 5, don't auto-run in CI. |
+| Item                                                                               | Status      | Why deferred                                                                                                                                                               |
+| ---------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| QR generation utility (image / PNG)                                                | Not built   | URL is already QR-able (`/spots/<slug>` stable); copy-to-clipboard ships in Slice 5. Build the image generator only when a partner specifically asks for printable assets. |
+| `/peta` Spot layer (marker rendering for Spots)                                    | Not built   | `MapView` is hard-coded to `MapMember[]`. Needs a generic marker abstraction first. Skip until at least 5 Spots exist with `latitude`/`longitude` populated.               |
+| `node_visits` table + check-in activity (`NODE_VISITED`)                           | Reserved    | Adds engagement loop. Land after QR usage proves people are actually scanning.                                                                                             |
+| `books.node_id` + book ↔ Spot linking                                              | Reserved    | Higher cognitive load (book status × location × owner). Wait until the simple Spot → events linkage proves itself.                                                         |
+| `node_host` / `partner` role                                                       | Reserved    | Today "host-event-creator" is the proxy. Introduce a real role only when a real partner asks (e.g., Omah Baca Nawala wanting volunteer accounts).                          |
+| Partner dashboard                                                                  | Reserved    | Premature. Earliest signal would be a partner asking "where do I see visits to my Spot."                                                                                   |
+| Map clustering / geo-search / Google Maps clone                                    | Won't build | Out of scope. Use Leaflet + Carto tiles + light filters when the map layer ships.                                                                                          |
+| `BEFORE UPDATE` trigger hardening for `status` / `is_active` / `visibility` writes | Optional    | Application-layer admin gate is sufficient today. Promote to DB-level if RLS column-gap is ever exploited.                                                                 |
+| Seed script `scripts/seed-spots.mjs` for 3–5 JP-adjacent Spots                     | Not written | Anti-empty-state requirement before any public surface. Write before slice 5, don't auto-run in CI.                                                                        |
 
 If you find yourself wanting to build one of these "while you're in there," **stop**. Open an issue, link this section, get explicit approval. The foundation is small on purpose.
 

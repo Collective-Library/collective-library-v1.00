@@ -7,9 +7,11 @@ import type { Profile } from "@/types";
 /** Wraps app pages with the TopBar + BottomNav and the parchment canvas. */
 export function PageShell({
   profile,
+  unreadCount = 0,
   children,
 }: {
   profile: Profile | null;
+  unreadCount?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -24,7 +26,7 @@ export function PageShell({
       >
         Skip to main content
       </a>
-      <TopBar profile={profile} />
+      <TopBar profile={profile} unreadCount={unreadCount} />
       <main id="main" className="pb-24 md:pb-12">
         <div className="mx-auto max-w-6xl px-4 md:px-6 py-6">{children}</div>
       </main>

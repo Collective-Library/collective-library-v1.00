@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
 import { isProfileComplete } from "@/types";
+import { getUnreadCount } from "@/lib/notifications";
 import { PageShell } from "@/components/layout/page-shell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -13,5 +14,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Authed but profile incomplete (missing username or any contact) → finish onboarding.
   if (!isProfileComplete(profile)) redirect("/onboarding");
 
-  return <PageShell profile={profile}>{children}</PageShell>;
+  const unreadCount = await getUnreadCount(profile.id);
+
+  return (
+    <PageShell profile={profile} unreadCount={unreadCount}>
+      {children}
+    </PageShell>
+  );
 }
