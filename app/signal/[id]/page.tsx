@@ -56,8 +56,7 @@ export default async function SignalDetailPage({ params }: { params: Params }) {
   const def = signal.definition;
   const [owner] = await Promise.all([getOwnerProfile(signal.user_id)]);
 
-  const base = getAppUrl();
-  const signalUrl = `${base}/signal/${id}`;
+  const signalUrl = `${getAppUrl()}/signal/${id}`;
 
   const dateStr = new Date(signal.unlocked_at).toLocaleDateString("id-ID", {
     day: "numeric",
@@ -107,33 +106,22 @@ export default async function SignalDetailPage({ params }: { params: Params }) {
       <div className="flex flex-col sm:flex-row items-center justify-center gap-2 w-full">
         <CopySignalLink url={signalUrl} />
 
-        {/* Card export buttons — wired up in Slice 7 */}
         <a
-          href={`${base}/api/og/signal/${id}?format=story`}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-disabled="true"
-          tabIndex={-1}
-          onClick={(e) => e.preventDefault()}
-          title="Signal Card — tersedia segera"
+          href={`/api/og/signal/${id}?format=story`}
+          download="signal-story.png"
           className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-pill
             bg-paper border border-hairline text-ink-soft text-body-sm font-medium
-            opacity-50 cursor-not-allowed select-none"
+            hover:bg-cream transition-colors"
         >
           Share Story
         </a>
 
         <a
-          href={`${base}/api/og/signal/${id}?format=feed`}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-disabled="true"
-          tabIndex={-1}
-          onClick={(e) => e.preventDefault()}
-          title="Signal Card — tersedia segera"
+          href={`/api/og/signal/${id}?format=feed`}
+          download="signal-feed.png"
           className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-pill
             bg-paper border border-hairline text-ink-soft text-body-sm font-medium
-            opacity-50 cursor-not-allowed select-none"
+            hover:bg-cream transition-colors"
         >
           Download Feed
         </a>
