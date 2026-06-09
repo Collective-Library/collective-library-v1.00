@@ -59,7 +59,7 @@ export function SpotStatusControl({
         "rounded-pill bg-paper border border-hairline-strong text-ink-soft font-medium",
         "focus:outline-none focus:border-ink",
         "disabled:opacity-60",
-        size === "md" ? "h-10 px-3 text-body-sm" : "h-8 px-2.5 text-caption",
+        size === "md" ? "h-10 px-3 text-body-sm" : "h-8 px-2.5 text-caption"
       )}
     >
       {SPOT_STATUS_OPTIONS.map((o) => (
@@ -118,7 +118,7 @@ export function SpotActiveToggle({
         isActive
           ? "bg-ink text-parchment border-ink hover:bg-ink-soft"
           : "bg-paper text-muted border-hairline hover:bg-cream",
-        size === "md" ? "h-10 px-3 text-body-sm" : "h-8 px-2.5 text-caption",
+        size === "md" ? "h-10 px-3 text-body-sm" : "h-8 px-2.5 text-caption"
       )}
     >
       <span aria-hidden>{isActive ? "●" : "○"}</span>

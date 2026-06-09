@@ -3,11 +3,7 @@ import type { Metadata } from "next";
 import { Logo } from "@/components/layout/logo";
 import { Footer } from "@/components/layout/footer";
 import { ButtonLink } from "@/components/ui/button";
-import {
-  SPOT_TYPE_OPTIONS,
-  listPublicSpots,
-  listSpotCities,
-} from "@/lib/spots";
+import { SPOT_TYPE_OPTIONS, listPublicSpots, listSpotCities } from "@/lib/spots";
 import type { SpotType } from "@/types";
 import { getCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -27,11 +23,7 @@ export const metadata: Metadata = {
 
 type SP = { q?: string; type?: SpotType | "all"; city?: string };
 
-export default async function PublicSpotsPage({
-  searchParams,
-}: {
-  searchParams: Promise<SP>;
-}) {
+export default async function PublicSpotsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const { q, type = "all", city } = await searchParams;
   const [spots, cities, user] = await Promise.all([
     listPublicSpots({ type, search: q ? q : city }),
@@ -41,9 +33,7 @@ export default async function PublicSpotsPage({
 
   // City filter applied in-memory because RLS already capped result set
   // (200 max) and we'd otherwise need a 2nd ilike OR branch.
-  const filtered = city
-    ? spots.filter((s) => s.city.toLowerCase() === city.toLowerCase())
-    : spots;
+  const filtered = city ? spots.filter((s) => s.city.toLowerCase() === city.toLowerCase()) : spots;
 
   return (
     <div className="min-h-screen bg-parchment text-ink flex flex-col">
@@ -81,17 +71,14 @@ export default async function PublicSpotsPage({
         <div className="max-w-5xl mx-auto flex flex-col gap-6">
           {/* Hero — Steve Krug 5-second test */}
           <section className="mt-2 md:mt-6">
-            <p className="text-caption text-muted uppercase tracking-wide font-semibold">
-              Spots
-            </p>
+            <p className="text-caption text-muted uppercase tracking-wide font-semibold">Spots</p>
             <h1 className="mt-1 font-display text-display-xl text-ink leading-tight">
               Tempat baca, ke-map.
             </h1>
             <p className="mt-3 text-body-lg text-ink-soft max-w-2xl leading-relaxed">
-              Cafe, rak buku publik, ruang komunitas, dan partner reading point —
-              tempat fisik di mana buku, event, dan komunitas Collective Library
-              ketemu di dunia nyata. Klik satu buat lihat lokasinya + event yang
-              lagi rame di sana.
+              Cafe, rak buku publik, ruang komunitas, dan partner reading point — tempat fisik di
+              mana buku, event, dan komunitas Collective Library ketemu di dunia nyata. Klik satu
+              buat lihat lokasinya + event yang lagi rame di sana.
             </p>
           </section>
 
@@ -116,9 +103,7 @@ export default async function PublicSpotsPage({
             </form>
 
             <div className="flex flex-col gap-2">
-              <p className="text-[11px] font-semibold text-muted uppercase tracking-wide">
-                Tipe
-              </p>
+              <p className="text-[11px] font-semibold text-muted uppercase tracking-wide">Tipe</p>
               <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-1 px-1">
                 <FilterPill
                   href={hrefWith({ q, type: "all", city })}
@@ -138,9 +123,7 @@ export default async function PublicSpotsPage({
 
             {cities.length > 0 && (
               <div className="flex flex-col gap-2">
-                <p className="text-[11px] font-semibold text-muted uppercase tracking-wide">
-                  Kota
-                </p>
+                <p className="text-[11px] font-semibold text-muted uppercase tracking-wide">Kota</p>
                 <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-1 px-1">
                   <FilterPill
                     href={hrefWith({ q, type, city: undefined })}
@@ -238,11 +221,14 @@ export default async function PublicSpotsPage({
           {/* Footer-y info strip */}
           <section className="mt-4 rounded-card-lg border border-hairline bg-cream/40 p-5 text-body-sm text-ink-soft">
             <p className="font-medium text-ink mb-1">Apa itu Spot?</p>
-            Spot adalah <em>tempat baca</em> yang punya identitas digital di Collective
-            Library — cafe, rak buku publik, ruang komunitas, kampus, partner
-            reading point. Spot bisa nge-host event, terhubung sama komunitas, dan
-            (nanti) jadi titik QR check-in. Mau usulin tempat lo?{" "}
-            <Link href="/feedback" className="text-ink underline underline-offset-4 hover:text-ink-soft">
+            Spot adalah <em>tempat baca</em> yang punya identitas digital di Collective Library —
+            cafe, rak buku publik, ruang komunitas, kampus, partner reading point. Spot bisa
+            nge-host event, terhubung sama komunitas, dan (nanti) jadi titik QR check-in. Mau usulin
+            tempat lo?{" "}
+            <Link
+              href="/feedback"
+              className="text-ink underline underline-offset-4 hover:text-ink-soft"
+            >
               Kirim via feedback
             </Link>
             .
@@ -272,7 +258,7 @@ function FilterPill({ href, active, label }: { href: string; active: boolean; la
         "shrink-0 inline-flex items-center h-9 px-4 rounded-pill text-body-sm font-medium transition-colors",
         active
           ? "bg-ink text-parchment"
-          : "bg-paper text-ink-soft border border-hairline hover:bg-cream",
+          : "bg-paper text-ink-soft border border-hairline hover:bg-cream"
       )}
     >
       {label}

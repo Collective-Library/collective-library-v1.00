@@ -20,7 +20,7 @@ test.describe("Public landing", () => {
     const fatal = errors.filter(
       (e) =>
         !/sentry|hcaptcha|next-route-announcer|hydration|favicon/i.test(e) &&
-        !/Failed to load resource/i.test(e),
+        !/Failed to load resource/i.test(e)
     );
     expect(fatal, fatal.join("\n")).toEqual([]);
   });

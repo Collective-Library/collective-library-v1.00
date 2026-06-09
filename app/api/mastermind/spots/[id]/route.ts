@@ -26,10 +26,7 @@ const VALID_VISIBILITY = SPOT_VISIBILITY_OPTIONS.map((o) => o.value);
  *
  * Returns 400 on validation failure, 403 on non-admin, 500 on DB error.
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getAdminProfileOrNull();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -39,7 +36,11 @@ export async function PATCH(
   }
 
   const body = (await request.json().catch(() => null)) as
-    | (Partial<SpotFormValues> & { status?: SpotStatus; is_active?: boolean; visibility?: SpotVisibility })
+    | (Partial<SpotFormValues> & {
+        status?: SpotStatus;
+        is_active?: boolean;
+        visibility?: SpotVisibility;
+      })
     | null;
   if (!body) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
@@ -50,7 +51,10 @@ export async function PATCH(
   if (body.status !== undefined && !VALID_STATUS.includes(body.status as SpotStatus)) {
     return NextResponse.json({ error: "status is invalid" }, { status: 400 });
   }
-  if (body.visibility !== undefined && !VALID_VISIBILITY.includes(body.visibility as SpotVisibility)) {
+  if (
+    body.visibility !== undefined &&
+    !VALID_VISIBILITY.includes(body.visibility as SpotVisibility)
+  ) {
     return NextResponse.json({ error: "visibility is invalid" }, { status: 400 });
   }
   if (body.is_active !== undefined && typeof body.is_active !== "boolean") {
@@ -99,7 +103,7 @@ export async function PATCH(
 /** DELETE /api/mastermind/spots/[id] — admin hard-delete. */
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const admin = await getAdminProfileOrNull();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -8,7 +8,9 @@ export type ActivityType =
   | "WTB_POSTED"
   | "EVENT_CREATED"
   | "EVENT_RSVPED"
-  | "MANIFEST_POSTED";
+  | "MANIFEST_POSTED"
+  | "NODE_CREATED"
+  | "SIGNAL_UNLOCKED";
 
 export interface ActivityActor {
   id: string;

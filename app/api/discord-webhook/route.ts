@@ -40,6 +40,7 @@ const TYPE_COPY: Record<string, { label: string; color: number }> = {
   BOOK_ADDED: { label: "Buku baru di rak", color: 0x166534 },
   BOOK_STATUS_CHANGED: { label: "Update status buku", color: 0x6d28d9 },
   WTB_POSTED: { label: "Buku dicari", color: 0xb45309 },
+  SIGNAL_UNLOCKED: { label: "✦ Signal Drop", color: 0xd4a853 },
   MANIFEST_POSTED: { label: "Manifest baru", color: 0x92400e },
 };
 
@@ -53,6 +54,7 @@ interface SupabaseWebhookPayload {
     type: string;
     book_id: string | null;
     wanted_id: string | null;
+    user_signal_id: string | null;
     manifest_id: string | null;
     metadata: { old_status?: string; new_status?: string } | null;
     created_at: string;
@@ -127,6 +129,20 @@ export async function POST(request: NextRequest) {
     if (w) wanted = w as unknown as WantedCtx;
   }
 
+  type SignalCtx = { name: string; emoji: string | null; card_subcopy: string | null };
+  let signal: SignalCtx | null = null;
+  if (row.user_signal_id) {
+    const { data: us } = await supabase
+      .from("user_signals")
+      .select("definition:signal_definitions!signal_slug(name, emoji, card_subcopy)")
+      .eq("id", row.user_signal_id)
+      .maybeSingle();
+    if (us) {
+      const def = Array.isArray(us.definition) ? us.definition[0] : us.definition;
+      if (def) signal = def as unknown as SignalCtx;
+    }
+  }
+
   // Enrich manifest for MANIFEST_POSTED
   type ManifestCtx = { body: string; topic: string | null; mood: string | null };
   let manifest: ManifestCtx | null = null;
@@ -139,7 +155,16 @@ export async function POST(request: NextRequest) {
     if (mf) manifest = mf as unknown as ManifestCtx;
   }
 
-  const embed = buildEmbed(row, actorName, actorUsername, actorPhoto, book, wanted, manifest);
+  const embed = buildEmbed(
+    row,
+    actorName,
+    actorUsername,
+    actorPhoto,
+    book,
+    wanted,
+    signal,
+    manifest
+  );
   if (!embed) {
     return NextResponse.json({ ok: true, skipped: "no embed for type" });
   }
@@ -174,6 +199,7 @@ function buildEmbed(
   actorPhoto: string | null,
   book: { title: string; author: string; cover_url: string | null; status: string } | null,
   wanted: { title: string; author: string | null } | null,
+  signal: { name: string; emoji: string | null; card_subcopy: string | null } | null,
   manifest: { body: string; topic: string | null; mood: string | null } | null
 ) {
   const cfg = TYPE_COPY[row.type];
@@ -185,6 +211,7 @@ function buildEmbed(
   let description = "";
   let url = `${base}/aktivitas`;
   let thumbnail: string | null = null;
+  let imageUrl: string | null = null;
 
   // Voice: Seth-Godin-flavored. Specific, anticipatory, invitational. Each
   // event becomes a tiny community moment, not a bot log.
@@ -229,6 +256,23 @@ function buildEmbed(
       url = `${base}/wanted`;
       break;
     }
+    case "SIGNAL_UNLOCKED": {
+      const sigName = signal?.name ?? "Signal";
+      const sigEmoji = signal?.emoji ?? "✦";
+      title = `${sigEmoji} ${actorName} unlock **${sigName}**.`;
+      const signalUrl = row.user_signal_id ? `${base}/signal/${row.user_signal_id}` : null;
+      description = [
+        signal?.card_subcopy ?? "",
+        signalUrl ? `\n[Lihat Signal →](${signalUrl})` : "",
+      ]
+        .filter(Boolean)
+        .join("");
+      if (signalUrl) {
+        url = signalUrl;
+        imageUrl = `${base}/api/og/signal/${row.user_signal_id}?format=preview`;
+      }
+      break;
+    }
     case "MANIFEST_POSTED": {
       const preview = manifest
         ? manifest.body.length > 180
@@ -257,6 +301,7 @@ function buildEmbed(
       ? { name: actorName, url: profileUrl, icon_url: actorPhoto ?? undefined }
       : { name: actorName, icon_url: actorPhoto ?? undefined },
     thumbnail: thumbnail ? { url: thumbnail } : undefined,
+    image: imageUrl ? { url: imageUrl } : undefined,
     footer: { text: cfg.label },
   };
 }

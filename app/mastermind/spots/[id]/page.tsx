@@ -17,16 +17,9 @@ import { formatRelativeID } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function SpotEditPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function SpotEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [spot, communities] = await Promise.all([
-    getSpotByIdAdmin(id),
-    listCommunitiesForPicker(),
-  ]);
+  const [spot, communities] = await Promise.all([getSpotByIdAdmin(id), listCommunitiesForPicker()]);
   if (!spot) notFound();
 
   const typeOpt = SPOT_TYPE_OPTIONS.find((t) => t.value === spot.type);
@@ -50,9 +43,8 @@ export default async function SpotEditPage({
         </h1>
         <p className="text-caption text-muted font-mono">{spot.slug}</p>
         <p className="text-body text-ink-soft">
-          {typeOpt?.label ?? spot.type} · {spot.city} · dibikin{" "}
-          {formatRelativeID(spot.created_at)} · update terakhir{" "}
-          {formatRelativeID(spot.updated_at)}
+          {typeOpt?.label ?? spot.type} · {spot.city} · dibikin {formatRelativeID(spot.created_at)}{" "}
+          · update terakhir {formatRelativeID(spot.updated_at)}
         </p>
       </header>
 
@@ -61,8 +53,8 @@ export default async function SpotEditPage({
         <h2 className="font-display text-title-md text-ink mb-1">Status &amp; visibility</h2>
         <p className="text-caption text-muted mb-3">
           Promosi ke <code className="font-mono">active</code> meng-emit{" "}
-          <code className="font-mono">NODE_CREATED</code> ke activity feed (cuma sekali per
-          transisi — re-promote nggak duplikat).
+          <code className="font-mono">NODE_CREATED</code> ke activity feed (cuma sekali per transisi
+          — re-promote nggak duplikat).
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex flex-col gap-1">
@@ -105,8 +97,8 @@ export default async function SpotEditPage({
         </div>
         {statusOpt && (
           <p className="mt-3 text-caption text-muted">
-            Status saat ini: <strong className="text-ink-soft">{statusOpt.label}</strong>.{" "}
-            Public surface (deferred) hanya akan menampilkan Spot dengan kombinasi
+            Status saat ini: <strong className="text-ink-soft">{statusOpt.label}</strong>. Public
+            surface (deferred) hanya akan menampilkan Spot dengan kombinasi
             <code className="font-mono"> active + public + is_active=true</code>.
           </p>
         )}
@@ -116,10 +108,14 @@ export default async function SpotEditPage({
       <section className="bg-paper border border-hairline rounded-card-lg shadow-card p-5 flex flex-col gap-3">
         <h2 className="font-display text-title-md text-ink">Public URL &amp; QR</h2>
         <p className="text-caption text-muted leading-relaxed">
-          URL ini stabil — boleh dipakai sebagai target QR code (cetak di rak / meja).
-          QR generator built-in belum ada — copy URL, tempel ke generator favorit lo
-          (qrcode-monkey, qr.io, dll). Spot baru bakal accessible publik begitu
-          <code className="font-mono"> status=active &amp; is_active=true &amp; visibility=public</code>.
+          URL ini stabil — boleh dipakai sebagai target QR code (cetak di rak / meja). QR generator
+          built-in belum ada — copy URL, tempel ke generator favorit lo (qrcode-monkey, qr.io, dll).
+          Spot baru bakal accessible publik begitu
+          <code className="font-mono">
+            {" "}
+            status=active &amp; is_active=true &amp; visibility=public
+          </code>
+          .
         </p>
         <div className="flex items-stretch gap-2 rounded-button border border-hairline-strong bg-cream/60 overflow-hidden">
           <span className="flex-1 min-w-0 px-3.5 py-2.5 font-mono text-body-sm text-ink-soft truncate">
@@ -137,8 +133,12 @@ export default async function SpotEditPage({
           </Link>
         ) : (
           <p className="text-caption text-muted italic">
-            Public page belum bisa diakses sampai status di-promote ke <code className="font-mono">active</code>
-            {" + "}<code className="font-mono">is_active=true</code>{" + "}<code className="font-mono">visibility=public</code>.
+            Public page belum bisa diakses sampai status di-promote ke{" "}
+            <code className="font-mono">active</code>
+            {" + "}
+            <code className="font-mono">is_active=true</code>
+            {" + "}
+            <code className="font-mono">visibility=public</code>.
           </p>
         )}
       </section>
@@ -153,9 +153,8 @@ export default async function SpotEditPage({
       <section className="rounded-card-lg border border-red-200 bg-red-50 p-5">
         <h2 className="font-display text-title-md text-red-800 mb-1">Danger zone</h2>
         <p className="text-caption text-red-700 mb-3">
-          Delete permanen — row hilang dan{" "}
-          <code className="font-mono">activity_log</code> entries terkait ikut cascade.
-          Untuk takedown tanpa kehilangan history, pakai{" "}
+          Delete permanen — row hilang dan <code className="font-mono">activity_log</code> entries
+          terkait ikut cascade. Untuk takedown tanpa kehilangan history, pakai{" "}
           <code className="font-mono">is_active=false</code> atau{" "}
           <code className="font-mono">status=inactive</code> di atas.
         </p>

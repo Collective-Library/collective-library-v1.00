@@ -4,9 +4,16 @@ import { AvatarMenu } from "./avatar-menu";
 import { DesktopNav } from "./desktop-nav";
 import { TopBarSearch } from "./topbar-search";
 import { HamburgerMenu } from "./hamburger-menu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import type { Profile } from "@/types";
 
-export function TopBar({ profile }: { profile: Profile | null }) {
+export function TopBar({
+  profile,
+  unreadCount = 0,
+}: {
+  profile: Profile | null;
+  unreadCount?: number;
+}) {
   return (
     <header className="sticky top-0 z-40 bg-paper/85 backdrop-blur-md border-b border-hairline-soft">
       <div className="mx-auto max-w-6xl px-4 md:px-6 h-16 flex items-center justify-between gap-2 md:gap-3">
@@ -43,7 +50,10 @@ export function TopBar({ profile }: { profile: Profile | null }) {
             <SearchIcon />
           </Link>
           {profile ? (
-            <AvatarMenu profile={profile} />
+            <>
+              <NotificationBell profile={profile} initialUnreadCount={unreadCount} />
+              <AvatarMenu profile={profile} />
+            </>
           ) : (
             <Link
               href="/auth/login"

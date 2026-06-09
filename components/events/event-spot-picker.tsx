@@ -94,9 +94,7 @@ export function EventSpotPicker({ value, onChange, spots, eligibleHost }: Props)
       setAllSpots((prev) => [created, ...prev]);
       onChange(created.id, created);
       cancelInline();
-      toast.success(
-        "Spot baru dibikin — pending review admin. Event lo udah terhubung.",
-      );
+      toast.success("Spot baru dibikin — pending review admin. Event lo udah terhubung.");
     });
   }
 
@@ -105,12 +103,12 @@ export function EventSpotPicker({ value, onChange, spots, eligibleHost }: Props)
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-body-sm font-semibold text-ink">
-            Spot{" "}
-            <span className="text-caption text-muted font-normal">(opsional)</span>
+            Spot <span className="text-caption text-muted font-normal">(opsional)</span>
           </p>
           <p className="text-caption text-muted leading-snug">
             Tautkan event ke tempat fisik (cafe / rak buku publik / community space) biar
-            event-event lain di sana ke-stack. Free-text lokasi di bawah tetap aktif sebagai fallback.
+            event-event lain di sana ke-stack. Free-text lokasi di bawah tetap aktif sebagai
+            fallback.
           </p>
         </div>
         {value && (
@@ -132,20 +130,20 @@ export function EventSpotPicker({ value, onChange, spots, eligibleHost }: Props)
           <div className="flex-1 min-w-0">
             <p className="text-body-sm text-ink font-medium truncate">{selectedSpot.name}</p>
             <p className="text-caption text-muted truncate">
-              {SPOT_TYPE_OPTIONS.find((t) => t.value === selectedSpot.type)?.label ?? selectedSpot.type}
-              {" · "}{selectedSpot.city}
+              {SPOT_TYPE_OPTIONS.find((t) => t.value === selectedSpot.type)?.label ??
+                selectedSpot.type}
+              {" · "}
+              {selectedSpot.city}
             </p>
           </div>
         </div>
       ) : (
-        <Select
-          value=""
-          onChange={(e) => pick(e.target.value)}
-        >
+        <Select value="" onChange={(e) => pick(e.target.value)}>
           <option value="">— Pilih Spot atau lewati —</option>
           {allSpots.length === 0 && (
             <option value="" disabled>
-              Belum ada Spot aktif. {eligibleHost ? "Bikin baru di bawah ↓" : "Pakai free-text lokasi aja."}
+              Belum ada Spot aktif.{" "}
+              {eligibleHost ? "Bikin baru di bawah ↓" : "Pakai free-text lokasi aja."}
             </option>
           )}
           {allSpots.map((s) => (
@@ -232,8 +230,8 @@ export function EventSpotPicker({ value, onChange, spots, eligibleHost }: Props)
 
       {!eligibleHost && !selectedSpot && (
         <p className="text-caption text-muted italic">
-          Cuma host yang udah pernah bikin event yang bisa bikin Spot baru. Lo masih bisa pilih
-          dari Spot yang udah ada, atau pakai free-text lokasi di bawah.
+          Cuma host yang udah pernah bikin event yang bisa bikin Spot baru. Lo masih bisa pilih dari
+          Spot yang udah ada, atau pakai free-text lokasi di bawah.
         </p>
       )}
     </div>

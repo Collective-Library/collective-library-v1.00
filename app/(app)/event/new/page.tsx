@@ -17,23 +17,14 @@ export default async function NewEventPage() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
       <div>
-        <p className="text-caption text-muted uppercase tracking-wide font-semibold">
-          Bikin event
-        </p>
-        <h1 className="mt-1 font-display text-display-xl text-ink leading-tight">
-          Ngumpul yuk
-        </h1>
+        <p className="text-caption text-muted uppercase tracking-wide font-semibold">Bikin event</p>
+        <h1 className="mt-1 font-display text-display-xl text-ink leading-tight">Ngumpul yuk</h1>
         <p className="mt-2 text-body text-ink-soft">
           Diskusi buku, kopdar, workshop — apa aja yang bikin orang ketemu offline (atau online).
         </p>
       </div>
 
-      <EventForm
-        userId={user.id}
-        mode="create"
-        spots={spots}
-        eligibleHost={eligibleHost}
-      />
+      <EventForm userId={user.id} mode="create" spots={spots} eligibleHost={eligibleHost} />
     </div>
   );
 }

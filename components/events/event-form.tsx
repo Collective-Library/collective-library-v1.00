@@ -59,11 +59,9 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
   // Step 1: When & Where
   const [title, setTitle] = useState(initial?.title ?? "");
   const [startsAt, setStartsAt] = useState(
-    initial?.starts_at ? initial.starts_at.slice(0, 16) : "",
+    initial?.starts_at ? initial.starts_at.slice(0, 16) : ""
   );
-  const [endsAt, setEndsAt] = useState(
-    initial?.ends_at ? initial.ends_at.slice(0, 16) : "",
-  );
+  const [endsAt, setEndsAt] = useState(initial?.ends_at ? initial.ends_at.slice(0, 16) : "");
   const [locationText, setLocationText] = useState(initial?.location_text ?? "");
   const [locationUrl, setLocationUrl] = useState(initial?.location_url ?? "");
   const [isOnline, setIsOnline] = useState(initial?.is_online ?? false);
@@ -72,9 +70,7 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
   // Step 2: Description & vibe
   const [theme, setTheme] = useState(initial?.theme ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [whatToExpect, setWhatToExpect] = useState(
-    (initial?.what_to_expect ?? []).join("\n"),
-  );
+  const [whatToExpect, setWhatToExpect] = useState((initial?.what_to_expect ?? []).join("\n"));
   const [reminderText, setReminderText] = useState(initial?.reminder_text ?? "");
   const [hashtags, setHashtags] = useState((initial?.hashtags ?? []).join(" "));
   const [coverUrl, setCoverUrl] = useState(initial?.cover_url ?? "");
@@ -83,21 +79,19 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
   const [registrationUrl, setRegistrationUrl] = useState(initial?.registration_url ?? "");
   const [registrationLabel, setRegistrationLabel] = useState(initial?.registration_label ?? "");
   const [registrationDeadline, setRegistrationDeadline] = useState(
-    initial?.registration_deadline ? initial.registration_deadline.slice(0, 16) : "",
+    initial?.registration_deadline ? initial.registration_deadline.slice(0, 16) : ""
   );
   const [instagramUrl, setInstagramUrl] = useState(initial?.instagram_url ?? "");
   const [communityName, setCommunityName] = useState(initial?.community_name ?? "");
   const [communityInstagramUrl, setCommunityInstagramUrl] = useState(
-    initial?.community_instagram_url ?? "",
+    initial?.community_instagram_url ?? ""
   );
   const [communityLogoUrl, setCommunityLogoUrl] = useState(initial?.community_logo_url ?? "");
   const [capacity, setCapacity] = useState(initial?.capacity?.toString() ?? "");
   const [contactMethod, setContactMethod] = useState<ContactMethod>(
-    initial?.contact_method ?? "whatsapp",
+    initial?.contact_method ?? "whatsapp"
   );
-  const [visibility, setVisibility] = useState<EventVisibility>(
-    initial?.visibility ?? "public",
-  );
+  const [visibility, setVisibility] = useState<EventVisibility>(initial?.visibility ?? "public");
 
   function validateStep1(): string | null {
     if (title.trim().length < 3) return "Judul event minimal 3 karakter.";
@@ -225,9 +219,7 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
               />
             </div>
             <div>
-              <label className="block text-body-sm font-semibold text-ink mb-1.5">
-                Selesai
-              </label>
+              <label className="block text-body-sm font-semibold text-ink mb-1.5">Selesai</label>
               <Input
                 type="datetime-local"
                 value={endsAt}
@@ -300,7 +292,10 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
           <Button
             onClick={() => {
               const err = validateStep1();
-              if (err) { setError(err); return; }
+              if (err) {
+                setError(err);
+                return;
+              }
               setError(null);
               setStep(2);
             }}
@@ -349,7 +344,9 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
             <Textarea
               value={whatToExpect}
               onChange={(e) => setWhatToExpect(e.target.value)}
-              placeholder={"baca buku favorit dalam suasana santai\nkenalan sama pembaca lain\nshare insight dari buku yang lagi dibaca"}
+              placeholder={
+                "baca buku favorit dalam suasana santai\nkenalan sama pembaca lain\nshare insight dari buku yang lagi dibaca"
+              }
               rows={4}
             />
             <p className="text-caption text-muted mt-1">
@@ -379,9 +376,7 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
               onChange={(e) => setHashtags(e.target.value)}
               placeholder="ShareConnect BookClubSemarang TumbuhBersama"
             />
-            <p className="text-caption text-muted mt-1">
-              Pisahkan dengan spasi. Tanpa tanda #.
-            </p>
+            <p className="text-caption text-muted mt-1">Pisahkan dengan spasi. Tanpa tanda #.</p>
           </div>
 
           <div>
@@ -399,12 +394,21 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
           <div className="flex gap-3">
             <Button
               variant="secondary"
-              onClick={() => { setError(null); setStep(1); }}
+              onClick={() => {
+                setError(null);
+                setStep(1);
+              }}
               className="flex-1"
             >
               ← Balik
             </Button>
-            <Button onClick={() => { setError(null); setStep(3); }} className="flex-1">
+            <Button
+              onClick={() => {
+                setError(null);
+                setStep(3);
+              }}
+              className="flex-1"
+            >
               Lanjut →
             </Button>
           </div>
@@ -513,9 +517,7 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-body-sm font-semibold text-ink mb-1.5">
-                Kapasitas
-              </label>
+              <label className="block text-body-sm font-semibold text-ink mb-1.5">Kapasitas</label>
               <Input
                 type="number"
                 value={capacity}
@@ -533,7 +535,9 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
                 onChange={(e) => setContactMethod(e.target.value as ContactMethod)}
               >
                 {CONTACT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </Select>
             </div>
@@ -548,7 +552,9 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
               onChange={(e) => setVisibility(e.target.value as EventVisibility)}
             >
               {VISIBILITY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -556,7 +562,10 @@ export function EventForm({ userId, mode, initial, spots = [], eligibleHost = fa
           <div className="flex gap-3">
             <Button
               variant="secondary"
-              onClick={() => { setError(null); setStep(2); }}
+              onClick={() => {
+                setError(null);
+                setStep(2);
+              }}
               className="flex-1"
               disabled={saving}
             >
