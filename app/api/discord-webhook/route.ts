@@ -41,6 +41,7 @@ const TYPE_COPY: Record<string, { label: string; color: number }> = {
   BOOK_STATUS_CHANGED: { label: "Update status buku", color: 0x6d28d9 },
   WTB_POSTED: { label: "Buku dicari", color: 0xb45309 },
   SIGNAL_UNLOCKED: { label: "✦ Signal Drop", color: 0xd4a853 },
+  MANIFEST_POSTED: { label: "Manifest baru", color: 0x92400e },
 };
 
 interface SupabaseWebhookPayload {
@@ -50,10 +51,11 @@ interface SupabaseWebhookPayload {
   record: {
     id: string;
     actor_user_id: string | null;
-    type: keyof typeof TYPE_COPY;
+    type: string;
     book_id: string | null;
     wanted_id: string | null;
     user_signal_id: string | null;
+    manifest_id: string | null;
     metadata: { old_status?: string; new_status?: string } | null;
     created_at: string;
   };
@@ -141,7 +143,28 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const embed = buildEmbed(row, actorName, actorUsername, actorPhoto, book, wanted, signal);
+  // Enrich manifest for MANIFEST_POSTED
+  type ManifestCtx = { body: string; topic: string | null; mood: string | null };
+  let manifest: ManifestCtx | null = null;
+  if (row.manifest_id) {
+    const { data: mf } = await supabase
+      .from("manifests")
+      .select("body, topic, mood")
+      .eq("id", row.manifest_id)
+      .maybeSingle();
+    if (mf) manifest = mf as unknown as ManifestCtx;
+  }
+
+  const embed = buildEmbed(
+    row,
+    actorName,
+    actorUsername,
+    actorPhoto,
+    book,
+    wanted,
+    signal,
+    manifest
+  );
   if (!embed) {
     return NextResponse.json({ ok: true, skipped: "no embed for type" });
   }
@@ -176,7 +199,8 @@ function buildEmbed(
   actorPhoto: string | null,
   book: { title: string; author: string; cover_url: string | null; status: string } | null,
   wanted: { title: string; author: string | null } | null,
-  signal: { name: string; emoji: string | null; card_subcopy: string | null } | null
+  signal: { name: string; emoji: string | null; card_subcopy: string | null } | null,
+  manifest: { body: string; topic: string | null; mood: string | null } | null
 ) {
   const cfg = TYPE_COPY[row.type];
   if (!cfg) return null;
@@ -247,6 +271,22 @@ function buildEmbed(
         url = signalUrl;
         imageUrl = `${base}/api/og/signal/${row.user_signal_id}?format=preview`;
       }
+      break;
+    }
+    case "MANIFEST_POSTED": {
+      const preview = manifest
+        ? manifest.body.length > 180
+          ? manifest.body.slice(0, 177) + "..."
+          : manifest.body
+        : null;
+      const manifestUrl = row.manifest_id
+        ? `${base}/manifest/${row.manifest_id}`
+        : `${base}/manifest`;
+      title = `${actorName} nulis manifest.`;
+      description = preview
+        ? `*"${preview}"*${manifest?.topic ? `\n\nTopik: **${manifest.topic}**` : ""}\n\n[Baca →](${manifestUrl})`
+        : `[Baca manifest →](${manifestUrl})`;
+      url = manifestUrl;
       break;
     }
   }

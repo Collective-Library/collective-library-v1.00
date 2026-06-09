@@ -59,7 +59,9 @@ export function ManifestForm({ userId }: { userId: string }) {
         topic: topic.trim() || null,
         is_anonymous: isAnonymous,
         visibility,
-        status: "pending",
+        // Autobase mode: publish immediately, no admin pre-approval gate.
+        status: "approved",
+        approved_at: new Date().toISOString(),
       })
       .select("id")
       .single();
@@ -67,10 +69,10 @@ export function ManifestForm({ userId }: { userId: string }) {
     setSaving(false);
 
     if (insertErr || !data) {
-      setError(insertErr?.message ?? "Gagal kirim manifesto.");
+      setError(insertErr?.message ?? "Gagal kirim manifest.");
       return;
     }
-    toast.success("Manifesto terkirim — nungguin approval admin.");
+    toast.success("Manifest lo udah tayang.");
     router.replace(`/manifest/${data.id as string}`);
   }
 
@@ -84,9 +86,9 @@ export function ManifestForm({ userId }: { userId: string }) {
 
       <div className="p-4 rounded-card bg-cream/60 border border-hairline">
         <p className="text-caption text-ink-soft leading-relaxed">
-          💭 <strong>Manifesto</strong> = pemikiran pendek lo soal buku, komunitas, atau dunia.
-          Bisa observasi, frustrasi, harapan, atau pengamatan kecil yang penting.
-          Bukan blog post — 1-3 kalimat punchy aja. Admin akan review sebelum publik.
+          💭 <strong>Manifest</strong> = pemikiran pendek lo soal buku, komunitas, atau dunia. Bisa
+          observasi, frustrasi, harapan, atau pengamatan kecil yang penting. Bukan blog post — 1-3
+          kalimat punchy aja. Langsung tayang dan masuk ke aktivitas komunitas.
         </p>
       </div>
 
@@ -110,8 +112,7 @@ export function ManifestForm({ userId }: { userId: string }) {
           </p>
           <p
             className={
-              "text-caption " +
-              (charsLeft < 0 ? "text-red-700 font-semibold" : "text-muted")
+              "text-caption " + (charsLeft < 0 ? "text-red-700 font-semibold" : "text-muted")
             }
           >
             {charsLeft} char sisa
@@ -127,7 +128,9 @@ export function ManifestForm({ userId }: { userId: string }) {
           <Select value={mood} onChange={(e) => setMood(e.target.value as ManifestMood | "")}>
             <option value="">Pilih mood...</option>
             {MOODS.map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
             ))}
           </Select>
         </div>
@@ -153,7 +156,9 @@ export function ManifestForm({ userId }: { userId: string }) {
           onChange={(e) => setVisibility(e.target.value as ManifestVisibility)}
         >
           {VISIBILITY.map((v) => (
-            <option key={v.value} value={v.value}>{v.label}</option>
+            <option key={v.value} value={v.value}>
+              {v.label}
+            </option>
           ))}
         </Select>
       </div>
@@ -168,9 +173,7 @@ export function ManifestForm({ userId }: { userId: string }) {
         />
         <label htmlFor="anon" className="flex-1 text-body-sm text-ink leading-relaxed">
           Anonymous — tampil sebagai &ldquo;Anonymous&rdquo; ke publik.{" "}
-          <span className="text-muted">
-            (Admin tetap bisa liat identitas asli buat moderasi.)
-          </span>
+          <span className="text-muted">(Admin tetap bisa liat identitas asli buat moderasi.)</span>
         </label>
       </div>
 
@@ -178,7 +181,7 @@ export function ManifestForm({ userId }: { userId: string }) {
         {saving ? "Mengirim..." : "Kirim manifesto"}
       </Button>
       <p className="text-caption text-muted text-center leading-relaxed">
-        Setelah dikirim, admin review dulu. Kalau approve, manifesto muncul di feed publik + bisa di-share ke X.
+        Setelah submit, manifest langsung muncul di feed komunitas dan bisa di-share ke X.
       </p>
     </div>
   );

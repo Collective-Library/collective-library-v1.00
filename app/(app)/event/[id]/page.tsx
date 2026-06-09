@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getEvent, listEventRsvps } from "@/lib/events";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentProfile } from "@/lib/auth";
 import { formatEventWhen } from "@/lib/format";
 import { getAppUrl } from "@/lib/url";
 import { EventDetailTabs } from "@/components/events/event-detail-tabs";
@@ -10,6 +10,7 @@ import { RsvpButton } from "@/components/events/rsvp-button";
 import { DiscordAnnounceButton } from "@/components/events/discord-announce-button";
 import { CalendarButton } from "@/components/events/calendar-button";
 import { RsvpContextPrompt } from "@/components/events/rsvp-context-prompt";
+import { ShareToXButton } from "@/components/events/share-to-x-button";
 import { CoverImage } from "@/components/books/cover-image";
 import { CommunityBadge } from "@/components/ui/community-badge";
 
@@ -26,7 +27,7 @@ export async function generateMetadata({
 
   const when = formatEventWhen(event.starts_at, event.ends_at, event.timezone);
   const host = event.host.full_name ?? event.host.username ?? "anggota";
-  const where = event.is_online ? "online" : event.location_text ?? "Semarang";
+  const where = event.is_online ? "online" : (event.location_text ?? "Semarang");
   const themeOrDesc = event.theme ?? event.description ?? "";
   const description = `${event.title} — ${when} di ${where}. Host: ${host}.${themeOrDesc ? ` ${themeOrDesc.slice(0, 120)}` : ""}`;
 
@@ -42,33 +43,34 @@ export async function generateMetadata({
   };
 }
 
-export default async function EventDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [user, eventEarly] = await Promise.all([getCurrentUser(), getEvent(id)]);
+  // Slice 7B: getCurrentProfile() replaces getCurrentUser() so we get is_admin
+  // in the same fetch — avoids a second profile query just for the admin gate
+  // on <ShareToXButton>. Same total DB cost: auth.getUser() + one profile select.
+  const [profile, eventEarly] = await Promise.all([getCurrentProfile(), getEvent(id)]);
   if (!eventEarly) notFound();
 
   // Re-fetch event with viewer's RSVP state if authed
-  const event = user ? await getEvent(id, user.id) : eventEarly;
+  const event = profile ? await getEvent(id, profile.id) : eventEarly;
   if (!event) notFound();
 
   const rsvps = await listEventRsvps(id);
-  const isHost = user?.id === event.host_id;
+  const isHost = profile?.id === event.host_id;
+  const isAdmin = profile?.is_admin === true;
   const hostName = event.host.full_name ?? event.host.username ?? "anggota";
   const publicUrl = `${getAppUrl()}/event/${event.id}`;
 
   // Viewer's own RSVP row — used to pre-populate context prompt
-  const viewerRsvp = user
-    ? rsvps.find((r) => r.profile_id === user.id) ?? null
-    : null;
+  const viewerRsvp = profile ? (rsvps.find((r) => r.profile_id === profile.id) ?? null) : null;
 
   // Registration deadline: hide CTA after deadline passes
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const registrationOpen =
     Boolean(event.registration_url) &&
-    (!event.registration_deadline || new Date(event.registration_deadline).getTime() > Date.now());
+    (!event.registration_deadline || new Date(event.registration_deadline).getTime() > now);
+  const eventInFuture = new Date(event.starts_at).getTime() > now;
 
   return (
     <article className="max-w-4xl mx-auto">
@@ -127,9 +129,7 @@ export default async function EventDetailPage({
           </h1>
 
           {event.theme && (
-            <p className="text-body-lg text-ink-soft italic leading-relaxed mt-1">
-              {event.theme}
-            </p>
+            <p className="text-body-lg text-ink-soft italic leading-relaxed mt-1">{event.theme}</p>
           )}
 
           <p className="text-body text-ink-soft mt-1">
@@ -162,6 +162,20 @@ export default async function EventDetailPage({
               </>
             )}
           </p>
+
+          {/* Linked Spot chip — additive, only renders when event.node_id present */}
+          {event.node && (
+            <Link
+              href={`/spots/${event.node.slug}`}
+              className="mt-2 self-start inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-paper border border-hairline-strong text-body-sm text-ink-soft hover:bg-cream hover:text-ink transition-colors"
+            >
+              <span aria-hidden>📍</span>
+              <span>
+                Di <span className="font-medium text-ink">{event.node.name}</span>
+                <span className="text-muted"> · {event.node.city}</span>
+              </span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -179,15 +193,15 @@ export default async function EventDetailPage({
                 <RsvpButton
                   eventId={event.id}
                   initialStatus={event.viewer_rsvp}
-                  isAuthed={Boolean(user)}
+                  isAuthed={Boolean(profile)}
                   rsvpCount={event.rsvp_count}
                   capacity={event.capacity}
                 />
 
-                {user && viewerRsvp && (
+                {profile && viewerRsvp && (
                   <RsvpContextPrompt
                     eventId={event.id}
-                    profileId={user.id}
+                    profileId={profile.id}
                     initialContext={{
                       origin_city: viewerRsvp.origin_city,
                       bringing_book: viewerRsvp.bringing_book,
@@ -209,10 +223,13 @@ export default async function EventDetailPage({
                       📝 {event.registration_label || "Daftar via form penyelenggara"}
                     </a>
                     <p className="text-caption text-muted text-center leading-relaxed">
-                      RSVP di sini ngebantu orang lain liat siapa yang tertarik hadir. Untuk pendaftaran resmi, ikutin form di atas.
+                      RSVP di sini ngebantu orang lain liat siapa yang tertarik hadir. Untuk
+                      pendaftaran resmi, ikutin form di atas.
                       {event.registration_deadline && (
                         <>
-                          {" "}Deadline: {formatEventWhen(event.registration_deadline, null, event.timezone)}.
+                          {" "}
+                          Deadline:{" "}
+                          {formatEventWhen(event.registration_deadline, null, event.timezone)}.
                         </>
                       )}
                     </p>
@@ -228,6 +245,21 @@ export default async function EventDetailPage({
                     <DiscordAnnounceButton
                       eventId={event.id}
                       discordAnnouncedAt={event.discord_announced_at}
+                    />
+                  </>
+                )}
+
+                {/* Slice 7B: manual X share for host or admin on future events. */}
+                {(isHost || isAdmin) && eventInFuture && (
+                  <>
+                    <div className="h-px bg-hairline" />
+                    <ShareToXButton
+                      eventId={event.id}
+                      title={event.title}
+                      startsAt={event.starts_at}
+                      timezone={event.timezone}
+                      eventUrl={publicUrl}
+                      hashtags={event.hashtags}
                     />
                   </>
                 )}

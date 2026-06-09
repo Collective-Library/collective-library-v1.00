@@ -18,12 +18,13 @@ export function TopBar({
     <header className="sticky top-0 z-40 bg-paper/85 backdrop-blur-md border-b border-hairline-soft">
       <div className="mx-auto max-w-6xl px-4 md:px-6 h-16 flex items-center justify-between gap-2 md:gap-3">
         <div className="flex items-center gap-1 md:gap-2 shrink-0">
+          {/* Hamburger hidden on lg+ where DesktopNav takes over. */}
           <div className="lg:hidden">
             <HamburgerMenu profile={profile} />
           </div>
 
           <Link
-            href="/library"
+            href="/home"
             aria-label="Collective Library — Beranda"
             className="flex items-center gap-2"
           >

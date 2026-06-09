@@ -12,11 +12,10 @@ import type {
 
 const HOST_SELECT = `id, full_name, username, photo_url, city, whatsapp, whatsapp_public, instagram, discord`;
 
-const EVENT_LIST_COLUMNS = `id, host_id, community_id, title, starts_at, ends_at, timezone, location_text, location_url, is_online, capacity, cover_url, visibility, status, is_hidden, discord_announced_at, created_at, updated_at`;
+const EVENT_LIST_COLUMNS = `id, host_id, community_id, title, starts_at, ends_at, timezone, location_text, location_url, is_online, capacity, cover_url, visibility, status, is_hidden, discord_announced_at, node_id, created_at, updated_at`;
 
 // Supabase returns embedded relations as arrays; flatten to single object.
-const flatten = <T,>(v: T | T[] | null): T | null =>
-  Array.isArray(v) ? (v[0] ?? null) : v;
+const flatten = <T>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
 /**
  * List events with optional filter, pagination, and host scoping.
@@ -42,8 +41,9 @@ export async function listEvents(opts?: {
       `${EVENT_LIST_COLUMNS},
        host:profiles_public!events_host_id_fkey(${HOST_SELECT}),
        community:communities(id, name, slug),
+       node:library_nodes(id, name, slug, type, city),
        rsvps:event_rsvps(count)`,
-      { count: "exact" },
+      { count: "exact" }
     )
     .eq("is_hidden", false)
     .range(from, to);
@@ -54,9 +54,7 @@ export async function listEvents(opts?: {
       .in("status", ["scheduled"])
       .order("starts_at", { ascending: true });
   } else if (filter === "past") {
-    query = query
-      .lt("starts_at", now)
-      .order("starts_at", { ascending: false });
+    query = query.lt("starts_at", now).order("starts_at", { ascending: false });
   } else {
     query = query.order("starts_at", { ascending: false });
   }
@@ -74,6 +72,7 @@ export async function listEvents(opts?: {
   type Row = {
     host: unknown;
     community: unknown;
+    node: unknown;
     rsvps: Array<{ count: number }> | null;
   } & Record<string, unknown>;
 
@@ -81,11 +80,101 @@ export async function listEvents(opts?: {
     ...r,
     host: flatten(r.host as never),
     community: flatten(r.community as never),
+    node: flatten(r.node as never),
     rsvp_count: r.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: null,
   })) as unknown as EventWithHost[];
 
   return { events, total: count ?? 0 };
+}
+
+/* =============================================================================
+ * Map loader (Collective Maps / Slice 4). Upcoming public events anchored to a
+ * coord-bearing, public+active Spot. Events have no coordinates of their own,
+ * so the linked Spot supplies them. A DEDICATED loader (not the shared `node`
+ * join above) keeps `EventWithHost` and every existing event surface untouched.
+ * Fails soft.
+ * ============================================================================= */
+
+/** Display-safe upcoming-event shape for /peta. Coordinates come from the linked Spot. */
+export interface EventForMap {
+  id: string;
+  title: string;
+  starts_at: string;
+  timezone: string;
+  cover_url: string | null;
+  spot: { name: string; slug: string; city: string | null };
+  latitude: number;
+  longitude: number;
+}
+
+export async function listEventsForMap(): Promise<EventForMap[]> {
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("events")
+    .select(
+      `id, title, starts_at, timezone, cover_url, node_id,
+       node:library_nodes(name, slug, city, latitude, longitude, status, is_active, visibility)`
+    )
+    .eq("is_hidden", false)
+    .eq("visibility", "public")
+    .eq("status", "scheduled")
+    .not("node_id", "is", null)
+    .gte("starts_at", now)
+    .order("starts_at", { ascending: true })
+    .limit(200);
+
+  if (error || !data) {
+    if (error) console.error("listEventsForMap", error);
+    return [];
+  }
+
+  type NodeRow = {
+    name: string;
+    slug: string;
+    city: string | null;
+    latitude: number | string | null;
+    longitude: number | string | null;
+    status: string | null;
+    is_active: boolean | null;
+    visibility: string | null;
+  };
+  type Row = {
+    id: string;
+    title: string;
+    starts_at: string;
+    timezone: string;
+    cover_url: string | null;
+    node: NodeRow | NodeRow[] | null;
+  };
+
+  return (data as unknown as Row[]).flatMap((r) => {
+    const node = flatten(r.node);
+    if (!node) return [];
+    // Defensive privacy gate: only surface events whose linked Spot is itself
+    // publicly visible. (Online-only / location-text-only events are already
+    // excluded by the node_id filter; this also blocks an owner/admin's RLS
+    // from leaking a non-public Spot's coordinate onto the map.)
+    if (node.status !== "active" || node.is_active !== true || node.visibility !== "public") {
+      return [];
+    }
+    const latitude = Number(node.latitude);
+    const longitude = Number(node.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
+    return [
+      {
+        id: r.id,
+        title: r.title,
+        starts_at: r.starts_at,
+        timezone: r.timezone,
+        cover_url: r.cover_url ?? null,
+        spot: { name: node.name, slug: node.slug, city: node.city ?? null },
+        latitude,
+        longitude,
+      },
+    ];
+  });
 }
 
 /**
@@ -102,7 +191,8 @@ export async function getUpcomingEvents(limit = 8): Promise<EventWithHost[]> {
       `${EVENT_LIST_COLUMNS},
        host:profiles_public!events_host_id_fkey(${HOST_SELECT}),
        community:communities(id, name, slug),
-       rsvps:event_rsvps(count)`,
+       node:library_nodes(id, name, slug, type, city),
+       rsvps:event_rsvps(count)`
     )
     .eq("is_hidden", false)
     .eq("status", "scheduled")
@@ -118,6 +208,7 @@ export async function getUpcomingEvents(limit = 8): Promise<EventWithHost[]> {
   type Row = {
     host: unknown;
     community: unknown;
+    node: unknown;
     rsvps: Array<{ count: number }> | null;
   } & Record<string, unknown>;
 
@@ -125,6 +216,7 @@ export async function getUpcomingEvents(limit = 8): Promise<EventWithHost[]> {
     ...r,
     host: flatten(r.host as never),
     community: flatten(r.community as never),
+    node: flatten(r.node as never),
     rsvp_count: r.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: null,
   })) as unknown as EventWithHost[];
@@ -135,10 +227,7 @@ export async function getUpcomingEvents(limit = 8): Promise<EventWithHost[]> {
  * requesting viewer's own RSVP status (null when called server-side without
  * a viewer session — callers supply viewerId explicitly).
  */
-export async function getEvent(
-  id: string,
-  viewerId?: string,
-): Promise<EventWithHost | null> {
+export async function getEvent(id: string, viewerId?: string): Promise<EventWithHost | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -147,7 +236,8 @@ export async function getEvent(
       `*,
        host:profiles_public!events_host_id_fkey(${HOST_SELECT}),
        community:communities(id, name, slug),
-       rsvps:event_rsvps(count)`,
+       node:library_nodes(id, name, slug, type, city),
+       rsvps:event_rsvps(count)`
     )
     .eq("id", id)
     .eq("is_hidden", false)
@@ -162,6 +252,7 @@ export async function getEvent(
   type Row = {
     host: unknown;
     community: unknown;
+    node: unknown;
     rsvps: Array<{ count: number }> | null;
   } & Record<string, unknown>;
 
@@ -182,6 +273,7 @@ export async function getEvent(
     ...row,
     host: flatten(row.host as never),
     community: flatten(row.community as never),
+    node: flatten(row.node as never),
     rsvp_count: row.rsvps?.[0]?.count ?? 0,
     viewer_rsvp: viewerRsvp,
   } as unknown as EventWithHost;
@@ -190,7 +282,7 @@ export async function getEvent(
 /** Create a new event. Returns the new row id on success or an error string. */
 export async function createEvent(
   hostId: string,
-  values: EventFormValues,
+  values: EventFormValues
 ): Promise<{ id: string } | { error: string }> {
   const supabase = await createClient();
 
@@ -221,6 +313,7 @@ export async function createEvent(
       community_name: values.community_name ?? null,
       community_instagram_url: values.community_instagram_url ?? null,
       community_logo_url: values.community_logo_url ?? null,
+      node_id: values.node_id ?? null,
     })
     .select("id")
     .single();
@@ -235,7 +328,7 @@ export async function createEvent(
 /** Update an event. Host ownership is enforced by RLS. */
 export async function updateEvent(
   id: string,
-  patch: Partial<EventFormValues> & { status?: EventStatus },
+  patch: Partial<EventFormValues> & { status?: EventStatus }
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
@@ -260,12 +353,21 @@ export async function updateEvent(
       ...(patch.hashtags !== undefined && { hashtags: patch.hashtags }),
       ...(patch.reminder_text !== undefined && { reminder_text: patch.reminder_text }),
       ...(patch.registration_url !== undefined && { registration_url: patch.registration_url }),
-      ...(patch.registration_label !== undefined && { registration_label: patch.registration_label }),
-      ...(patch.registration_deadline !== undefined && { registration_deadline: patch.registration_deadline }),
+      ...(patch.registration_label !== undefined && {
+        registration_label: patch.registration_label,
+      }),
+      ...(patch.registration_deadline !== undefined && {
+        registration_deadline: patch.registration_deadline,
+      }),
       ...(patch.instagram_url !== undefined && { instagram_url: patch.instagram_url }),
       ...(patch.community_name !== undefined && { community_name: patch.community_name }),
-      ...(patch.community_instagram_url !== undefined && { community_instagram_url: patch.community_instagram_url }),
-      ...(patch.community_logo_url !== undefined && { community_logo_url: patch.community_logo_url }),
+      ...(patch.community_instagram_url !== undefined && {
+        community_instagram_url: patch.community_instagram_url,
+      }),
+      ...(patch.community_logo_url !== undefined && {
+        community_logo_url: patch.community_logo_url,
+      }),
+      ...(patch.node_id !== undefined && { node_id: patch.node_id }),
     })
     .eq("id", id);
 
@@ -276,18 +378,26 @@ export async function updateEvent(
   return { ok: true };
 }
 
-/** Soft-delete: set is_hidden = true so activity_log cascade keeps history. */
+/**
+ * Hard delete via the events_delete_own RLS policy. FK cascades remove the
+ * event's RSVPs and its activity_log row, so a deleted event no longer lingers
+ * in the activity feed / landing strips.
+ *
+ * `.select("id")` is intentional: RLS silently deletes 0 rows for non-owners
+ * without raising an error, so we check the row count to distinguish a real
+ * delete from an unauthorised no-op and return a clear error to the caller.
+ */
 export async function deleteEvent(id: string): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
-  const { error } = await supabase
-    .from("events")
-    .update({ is_hidden: true, status: "cancelled" })
-    .eq("id", id);
+  const { data, error } = await supabase.from("events").delete().eq("id", id).select("id");
 
   if (error) {
     console.error("deleteEvent", error);
     return { error: error.message };
+  }
+  if (!data || data.length === 0) {
+    return { error: "Unauthorized or not found" };
   }
   return { ok: true };
 }
@@ -304,7 +414,7 @@ export async function rsvpEvent(
   eventId: string,
   profileId: string,
   status: EventRsvpStatus,
-  context?: RsvpContextValues,
+  context?: RsvpContextValues
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
@@ -342,7 +452,7 @@ export async function rsvpEvent(
 export async function updateRsvpContext(
   eventId: string,
   profileId: string,
-  context: RsvpContextValues,
+  context: RsvpContextValues
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
@@ -351,7 +461,9 @@ export async function updateRsvpContext(
     .update({
       ...(context.origin_city !== undefined && { origin_city: context.origin_city || null }),
       ...(context.bringing_book !== undefined && { bringing_book: context.bringing_book || null }),
-      ...(context.conversation_topic !== undefined && { conversation_topic: context.conversation_topic || null }),
+      ...(context.conversation_topic !== undefined && {
+        conversation_topic: context.conversation_topic || null,
+      }),
       ...(context.note !== undefined && { note: context.note || null }),
     })
     .eq("event_id", eventId)
@@ -367,7 +479,7 @@ export async function updateRsvpContext(
 /** Remove a profile's RSVP entirely (cancel attendance). */
 export async function cancelRsvp(
   eventId: string,
-  profileId: string,
+  profileId: string
 ): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
 
@@ -435,9 +547,7 @@ export async function listEventRsvps(eventId: string): Promise<EventRsvpWithProf
   })) as unknown as Array<EventRsvpWithProfile & { profile: AttendeeProfile }>;
 
   // Batch-fetch book counts for all attendees in one query (no N+1)
-  const attendeeIds = rows
-    .map((r) => r.profile?.id)
-    .filter((id): id is string => Boolean(id));
+  const attendeeIds = rows.map((r) => r.profile?.id).filter((id): id is string => Boolean(id));
 
   const bookCounts = new Map<string, number>();
   if (attendeeIds.length > 0) {
@@ -458,7 +568,7 @@ export async function listEventRsvps(eventId: string): Promise<EventRsvpWithProf
     ...r,
     profile: {
       ...r.profile,
-      book_count: r.profile?.id ? bookCounts.get(r.profile.id) ?? 0 : 0,
+      book_count: r.profile?.id ? (bookCounts.get(r.profile.id) ?? 0) : 0,
     },
   })) as EventRsvpWithProfile[];
 }
@@ -467,11 +577,7 @@ export async function listEventRsvps(eventId: string): Promise<EventRsvpWithProf
 export async function getRawEvent(id: string): Promise<Event | null> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await supabase.from("events").select("*").eq("id", id).maybeSingle();
 
   if (error) {
     console.error("getRawEvent", error);

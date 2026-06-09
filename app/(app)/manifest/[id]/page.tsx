@@ -29,7 +29,9 @@ export async function generateMetadata({
   if (!m) return { title: "Manifesto gak ditemukan" };
   if (m.status !== "approved") return { title: "Manifesto · Collective Library" };
 
-  const displayName = m.is_anonymous ? "Anonymous" : m.author.full_name ?? m.author.username ?? "Anggota";
+  const displayName = m.is_anonymous
+    ? "Anonymous"
+    : (m.author.full_name ?? m.author.username ?? "Anggota");
   const snippet = m.body.slice(0, 140) + (m.body.length > 140 ? "…" : "");
   return {
     title: `"${snippet}"`,
@@ -42,11 +44,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function ManifestDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ManifestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [user, viewerProfile, manifest] = await Promise.all([
     getCurrentUser(),
@@ -57,15 +55,15 @@ export default async function ManifestDetailPage({
 
   const isAuthor = user?.id === manifest.author_id;
   const isAdmin = viewerProfile?.is_admin ?? false;
-  const canSee =
-    manifest.status === "approved" ||
-    isAuthor ||
-    isAdmin;
+  const canSee = manifest.status === "approved" || isAuthor || isAdmin;
   if (!canSee) notFound();
 
   const isAnon = manifest.is_anonymous;
-  const displayName = isAnon ? "Anonymous" : manifest.author.full_name ?? manifest.author.username ?? "Anggota";
-  const authorHref = isAnon || !manifest.author.username ? null : `/profile/${manifest.author.username}`;
+  const displayName = isAnon
+    ? "Anonymous"
+    : (manifest.author.full_name ?? manifest.author.username ?? "Anggota");
+  const authorHref =
+    isAnon || !manifest.author.username ? null : `/profile/${manifest.author.username}`;
   const moodEmoji = manifest.mood ? MOOD_EMOJI[manifest.mood] : null;
   const manifestUrl = `${getAppUrl()}/manifest/${manifest.id}`;
   const showXTemplate = manifest.status === "approved" && (isAuthor || isAdmin);
@@ -76,7 +74,8 @@ export default async function ManifestDetailPage({
       {manifest.status === "pending" && (
         <div className="px-4 py-3 rounded-card bg-amber-50 border border-amber-200">
           <p className="text-body-sm text-amber-900">
-            ⏳ <strong>Pending review.</strong> Manifesto kamu nungguin approval admin. Cuma kamu + admin yang bisa liat ini sekarang.
+            <strong>Manifest ini belum publik.</strong> Hanya kamu dan admin yang bisa melihat
+            halaman ini sekarang.
           </p>
         </div>
       )}
@@ -86,7 +85,8 @@ export default async function ManifestDetailPage({
             ❌ <strong>Rejected.</strong>
             {manifest.moderation_note && (
               <>
-                {" "}Catatan moderator: <em>&ldquo;{manifest.moderation_note}&rdquo;</em>
+                {" "}
+                Catatan moderator: <em>&ldquo;{manifest.moderation_note}&rdquo;</em>
               </>
             )}
           </p>
@@ -104,7 +104,10 @@ export default async function ManifestDetailPage({
         )}
         <div className="min-w-0 flex-1">
           {authorHref ? (
-            <Link href={authorHref} className="text-body font-semibold text-ink hover:underline underline-offset-4">
+            <Link
+              href={authorHref}
+              className="text-body font-semibold text-ink hover:underline underline-offset-4"
+            >
               {displayName}
             </Link>
           ) : (
@@ -117,9 +120,15 @@ export default async function ManifestDetailPage({
         </div>
         {(moodEmoji || manifest.topic) && (
           <div className="flex flex-wrap gap-1.5 text-caption shrink-0">
-            {moodEmoji && <span className="text-title-md" aria-label={manifest.mood ?? undefined}>{moodEmoji}</span>}
+            {moodEmoji && (
+              <span className="text-title-md" aria-label={manifest.mood ?? undefined}>
+                {moodEmoji}
+              </span>
+            )}
             {manifest.topic && (
-              <span className="bg-cream text-ink-soft px-2 py-1 rounded-pill">{manifest.topic}</span>
+              <span className="bg-cream text-ink-soft px-2 py-1 rounded-pill">
+                {manifest.topic}
+              </span>
             )}
           </div>
         )}

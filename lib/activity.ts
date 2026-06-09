@@ -17,6 +17,7 @@ export interface ActivityActor {
   full_name: string | null;
   username: string | null;
   photo_url: string | null;
+  city: string | null;
 }
 
 export interface ActivityBook {
@@ -62,7 +63,7 @@ export interface ActivityItem {
 
 const SELECT = `
   id, type, created_at, metadata,
-  actor:profiles_public!actor_user_id(id, full_name, username, photo_url),
+  actor:profiles_public!actor_user_id(id, full_name, username, photo_url, city),
   book:books(id, title, author, cover_url, status),
   wanted:wanted_requests(id, title, author),
   event:events(id, title, starts_at, cover_url),

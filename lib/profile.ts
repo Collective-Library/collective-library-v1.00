@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { bucketMemberBooks } from "@/lib/member-books";
 import type { Community, Profile } from "@/types";
 
 /** Get a profile by username. Uses the public view (whatsapp masked unless public/self). */
@@ -13,7 +14,10 @@ export async function getProfileByUsername(username: string): Promise<Profile | 
 }
 
 /** Check if a username is available (case-insensitive). */
-export async function isUsernameAvailable(username: string, excludeUserId?: string): Promise<boolean> {
+export async function isUsernameAvailable(
+  username: string,
+  excludeUserId?: string
+): Promise<boolean> {
   const supabase = await createClient();
   let q = supabase.from("profiles_public").select("id").ilike("username", username);
   if (excludeUserId) q = q.neq("id", excludeUserId);
@@ -37,6 +41,7 @@ export interface MemberSummary {
   open_for_lending: boolean;
   open_for_selling: boolean;
   open_for_trade: boolean;
+  open_for_discussion: boolean;
   is_admin: boolean;
   created_at: string;
   book_count: number;
@@ -83,7 +88,7 @@ export async function listAreas(): Promise<AreaOption[]> {
     (a, b) =>
       b.member_count - a.member_count ||
       a.city.localeCompare(b.city) ||
-      (a.area ?? "").localeCompare(b.area ?? ""),
+      (a.area ?? "").localeCompare(b.area ?? "")
   );
 }
 
@@ -99,7 +104,7 @@ export async function listMembers(opts?: {
   let query = supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, bio, profession, campus_or_workplace, interests, intents, open_for_lending, open_for_selling, open_for_trade, is_admin, created_at",
+      "id, full_name, username, photo_url, city, address_area, bio, profession, campus_or_workplace, interests, intents, open_for_lending, open_for_selling, open_for_trade, open_for_discussion, is_admin, created_at"
     )
     .not("username", "is", null)
     .order("created_at", { ascending: false })
@@ -179,7 +184,7 @@ export async function listMembersForMap(): Promise<MapMember[]> {
   const { data: profiles, error } = await supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, bio, profession, interests, intents, open_for_lending, open_for_selling, open_for_trade, map_lat, map_lng",
+      "id, full_name, username, photo_url, city, address_area, bio, profession, interests, intents, open_for_lending, open_for_selling, open_for_trade, map_lat, map_lng"
     )
     .eq("show_on_map", true)
     .not("map_lat", "is", null)
@@ -259,7 +264,7 @@ export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
   const { data: profiles, error } = await supabase
     .from("profiles_public")
     .select(
-      "id, full_name, username, photo_url, city, address_area, profession, is_admin, updated_at",
+      "id, full_name, username, photo_url, city, address_area, profession, is_admin, updated_at"
     )
     .eq("show_on_map", true)
     .not("username", "is", null)
@@ -274,25 +279,19 @@ export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
   const ids = profiles.map((p) => p.id as string);
   if (ids.length === 0) return [];
 
-  // Fetch covers — one trip, bucket client-side (cap 3 per owner)
+  // Fetch books for this opt-in cohort (≤12 members), newest-first, then bucket
+  // client-side. No global row cap: a per-cohort `.limit()` previously starved
+  // members whose books weren't among the most-recent rows, showing them as
+  // "0 buku" despite owning many. Counting must see the full row set.
   const { data: books } = await supabase
     .from("books")
-    .select("owner_id, cover_url, created_at")
+    .select("owner_id, cover_url")
     .in("owner_id", ids)
     .eq("is_hidden", false)
     .eq("visibility", "public")
-    .order("created_at", { ascending: false })
-    .limit(ids.length * 6);
+    .order("created_at", { ascending: false });
 
-  const coversByOwner = new Map<string, string[]>();
-  const countByOwner = new Map<string, number>();
-  for (const b of books ?? []) {
-    const owner = b.owner_id as string;
-    countByOwner.set(owner, (countByOwner.get(owner) ?? 0) + 1);
-    const arr = coversByOwner.get(owner) ?? [];
-    if (arr.length < 3 && b.cover_url) arr.push(b.cover_url as string);
-    coversByOwner.set(owner, arr);
-  }
+  const { countByOwner, coversByOwner } = bucketMemberBooks(books ?? []);
 
   return profiles.map((p) => ({
     id: p.id as string,
@@ -310,7 +309,7 @@ export async function listLandingMembers(limit = 12): Promise<LandingMember[]> {
 
 /** Fetch the communities a user belongs to. */
 export async function getProfileCommunities(
-  userId: string,
+  userId: string
 ): Promise<Pick<Community, "id" | "name" | "slug">[]> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -320,9 +319,14 @@ export async function getProfileCommunities(
     .order("joined_at", { ascending: true });
   // Each row is { community: {...} } — Supabase types this as an array even
   // for to-one relations, so cast through unknown and normalize either shape.
-  type Row = { community: { id: string; name: string; slug: string } | { id: string; name: string; slug: string }[] | null };
+  type Row = {
+    community:
+      | { id: string; name: string; slug: string }
+      | { id: string; name: string; slug: string }[]
+      | null;
+  };
   const rows = (data ?? []) as unknown as Row[];
   return rows
-    .map((row) => (Array.isArray(row.community) ? row.community[0] ?? null : row.community))
+    .map((row) => (Array.isArray(row.community) ? (row.community[0] ?? null) : row.community))
     .filter((c): c is { id: string; name: string; slug: string } => c !== null);
 }

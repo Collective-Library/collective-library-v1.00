@@ -24,11 +24,11 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
+            response.cookies.set(name, value, options)
           );
         },
       },
-    },
+    }
   );
 
   const {
@@ -41,6 +41,7 @@ export async function proxy(request: NextRequest) {
   // /book/[id] is also still auth-gated for V1; flip to public if we ever
   // want SEO-discoverable book detail.
   const isAppRoute =
+    pathname.startsWith("/home") ||
     pathname.startsWith("/shelf") ||
     pathname.startsWith("/book") ||
     pathname.startsWith("/wanted") ||
@@ -71,7 +72,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Signed in & on a login/register page → shelf
+  // Signed in & on a login/register page → home (ecosystem cockpit).
+  // Slice 3C: switched default landing from `/shelf` to `/home`. `/shelf`
+  // remains reachable directly and via nav as the focused book surface.
   if (
     user &&
     isAuthPage &&
@@ -79,7 +82,7 @@ export async function proxy(request: NextRequest) {
     !pathname.startsWith("/auth/logout")
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/shelf";
+    url.pathname = "/home";
     return NextResponse.redirect(url);
   }
 

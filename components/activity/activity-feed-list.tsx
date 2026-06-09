@@ -8,8 +8,9 @@ import { activityVerb, activityTargetUrl } from "./activity-copy";
 import { CoverImage } from "@/components/books/cover-image";
 
 /**
- * Long-format activity feed for the /aktivitas page. Supports all event types
- * (USER_JOINED / BOOK_ADDED / BOOK_STATUS_CHANGED / WTB_POSTED). Day-bucketed.
+ * Long-format activity feed for the /aktivitas page. Handles all 7 activity
+ * types: USER_JOINED, BOOK_ADDED, BOOK_STATUS_CHANGED, WTB_POSTED,
+ * EVENT_CREATED, EVENT_RSVPED, MANIFEST_POSTED. Day-bucketed.
  */
 export function ActivityFeedList({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
@@ -61,7 +62,10 @@ function ActivityRow({ item }: { item: GroupedActivityItem }) {
                 {item.actor?.full_name ?? item.actor?.username ?? "Anggota"}
               </p>
               {item.actor?.username && (
-                <p className="text-caption text-muted leading-tight">@{item.actor.username}</p>
+                <p className="text-caption text-muted leading-tight">
+                  @{item.actor.username}
+                  {item.actor.city && <span> · {item.actor.city}</span>}
+                </p>
               )}
             </div>
           </Link>

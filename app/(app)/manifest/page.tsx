@@ -16,11 +16,7 @@ type SP = { page?: string };
 
 const PAGE_SIZE = 12;
 
-export default async function ManifestListPage({
-  searchParams,
-}: {
-  searchParams: Promise<SP>;
-}) {
+export default async function ManifestListPage({ searchParams }: { searchParams: Promise<SP> }) {
   const { page: pageStr } = await searchParams;
   const page = Math.max(1, parseInt(pageStr ?? "1", 10) || 1);
 
@@ -38,8 +34,8 @@ export default async function ManifestListPage({
             Yang lagi dipikirin pembaca
           </h1>
           <p className="mt-2 text-body text-ink-soft max-w-xl">
-            Pemikiran pendek anggota — observasi, harapan, frustrasi, refleksi.
-            Setelah di-approve admin, manifesto bisa di-share ke X.
+            Pemikiran pendek anggota — observasi, harapan, frustrasi, refleksi. Langsung tayang dan
+            bisa di-share ke X.
           </p>
         </div>
         <ButtonLink href="/manifest/new" className="shrink-0">
@@ -49,9 +45,7 @@ export default async function ManifestListPage({
 
       {manifests.length === 0 ? (
         <div className="rounded-card-lg border border-hairline bg-paper p-10 text-center">
-          <p className="font-display text-title-lg text-ink">
-            Belum ada manifesto yang publik.
-          </p>
+          <p className="font-display text-title-lg text-ink">Belum ada manifesto yang publik.</p>
           <p className="mt-2 text-body text-muted">
             Lo bisa jadi yang pertama — 1-3 kalimat aja udah cukup.
           </p>
@@ -72,7 +66,10 @@ export default async function ManifestListPage({
             ))}
           </ul>
           {totalPages > 1 && (
-            <nav aria-label="Pagination" className="flex items-center justify-between gap-3 pt-2 border-t border-hairline-soft">
+            <nav
+              aria-label="Pagination"
+              className="flex items-center justify-between gap-3 pt-2 border-t border-hairline-soft"
+            >
               <p className="text-caption text-muted">
                 Hal. <span className="font-semibold text-ink-soft">{page}</span> / {totalPages}
               </p>

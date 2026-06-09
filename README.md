@@ -60,6 +60,7 @@ For a complete list, see [`docs/FEATURES.md`](./docs/FEATURES.md).
 - Expanded community event workflows
 
 See:
+
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 - [`docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)
 
@@ -158,6 +159,7 @@ We welcome builders, writers, organizers, and curious learners.
 Build a contributor badge system for Collective Library users, starting with manual admin assignment and future support for Discord role sync.
 
 This feature turns community contribution into visible identity:
+
 - Inventor
 - Builder
 - Explorer
@@ -171,12 +173,14 @@ This feature turns community contribution into visible identity:
 - Pull Request Hero
 
 MVP:
+
 - define contributor role data model
 - allow role assignment to users
 - show public badges on user profile
 - document Discord sync as future integration
 
 Future:
+
 - Discord OAuth
 - Discord bot role sync
 - GitHub contribution badge sync
@@ -203,19 +207,32 @@ Template files:
 
 ## Docs index
 
+Strategic source of truth:
+
+- [`docs/BUSINESS_PROCESS.md`](./docs/BUSINESS_PROCESS.md) — the ecosystem loop, the Product Surface Matrix, Discord/X as layers, guardrails, metrics that matter
+- [`docs/BRAND_AND_VOICE.md`](./docs/BRAND_AND_VOICE.md) — design tokens, copy register, founder voice, empty-state patterns
 - [`docs/PROJECT_VISION.md`](./docs/PROJECT_VISION.md)
+- [`docs/ROADMAP.md`](./docs/ROADMAP.md)
+- [`docs/STATE.md`](./docs/STATE.md) — living handoff doc, decision log, current state snapshot
+
+Reference docs:
+
 - [`docs/FEATURES.md`](./docs/FEATURES.md)
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
-- [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 - [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
+- [`docs/AGENT_WORKFLOW.md`](./docs/AGENT_WORKFLOW.md) — how AI agents build here: small slices, validation ladder, timeout rules, stop conditions, map-safety guards
 - [`docs/DISCORD_ROLES.md`](./docs/DISCORD_ROLES.md)
+- [`docs/spots/README.md`](./docs/spots/README.md) — Spots (library_nodes) subsystem deep-dive
+- [`docs/MAPS_PRODUCT_NORTH_STAR.md`](./docs/MAPS_PRODUCT_NORTH_STAR.md) — Collective Maps product vision: the killer-feature north star (V1 → V3), differentiation, user loop, privacy, metrics
+- [`docs/MAPS_AUDIT.md`](./docs/MAPS_AUDIT.md) — Collective Maps audit: the `/peta`, profile-location, Spots, and Events stacks today
+- [`docs/MAPS_ROADMAP.md`](./docs/MAPS_ROADMAP.md) — Collective Maps design + sliced plan for evolving `/peta` into the spatial discovery surface
+- [`docs/MAPS_V15_V2_PLAN.md`](./docs/MAPS_V15_V2_PLAN.md) — Collective Maps V1.5→V2 full plan: `/maps` fullscreen route, Add flow, feedback loop, admin tooling, Google Places future layer
 - [`docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md`](./docs/features/CONTRIBUTOR_ROLES_AND_DISCORD_SYNC.md)
 
-Legacy context docs:
+Historical:
 
-- [`docs/STATE.md`](./docs/STATE.md)
-- [`docs/AUDIT.md`](./docs/AUDIT.md)
-- [`docs/PRE-DEPLOY-CHECKLIST.md`](./docs/PRE-DEPLOY-CHECKLIST.md)
+- [`docs/AUDIT.md`](./docs/AUDIT.md) — three-lens pre-launch audit (still useful for voice + strategic-secret framing)
+- [`docs/PRE-DEPLOY-CHECKLIST.md`](./docs/PRE-DEPLOY-CHECKLIST.md) — deprecated; superseded by `STATE.md` migration table
 
 ---
 
